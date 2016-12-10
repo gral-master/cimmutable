@@ -1,5 +1,6 @@
 CC = clang
 CFLAGS = -Wall -Wextra -std=gnu11
+LDFLAGS = -I../../include
 
-compile: finger.c
-	$(CC) $(CFLAGS) -o ../../bin/finger.o
+../../bin/finger.o: finger.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -c -o ../../bin/finger.o finger.c

@@ -1,5 +1,6 @@
 CC = clang
 CFLAGS = -Wall -Wextra -std=gnu11
+LDFLAGS = -I../../include
 
-compile: avl.c
-	$(CC) $(CFLAGS) -o ../../bin/avl.o
+../../bin/avl.o: avl.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -c -o ../../bin/avl.o avl.c
