@@ -18,7 +18,7 @@ typedef struct imc_leaf {
 
 typedef union imc_node {
     imc_intern_t intern;
-    imc_leaf_t leaf; 
+    imc_leaf_t leaf;
 } imc_note_t;
 
 #endif
