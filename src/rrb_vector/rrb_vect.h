@@ -37,9 +37,8 @@
  * @see https://github.com/nicolasstucki/scala-rrb-vector
  */
 
-#ifndef _RRB_VECT_H
-#define _RRB_VECT_H
-
+#ifndef _IMC_RRB_VECT_H
+#define _IMC_RRB_VECT_H
 
 /* ARRAY_SIZE should be a power of 2 */
 #define ARRAY_SIZE 32
@@ -50,18 +49,12 @@ typedef imc_rrb_node_t;
 typedef imc_data_t;
 
 typedef struct imc_rrb {
-    int max_depth;
-    int m;
-    imc_intern_t* root;
-} imc_rrb_t;
-
-typedef struct imc_rrb_intern {
     int level;
     int refs;
-    int is_unbalanced;
+    int element_count;
     int* meta;
     imc_rrb_node_t* childs;
-} imc_rrb_intern_t;
+} imc_rrb_t;
 
 typedef struct imc_rrb_leaf {
     imc_data_t* data;
@@ -70,9 +63,11 @@ typedef struct imc_rrb_leaf {
 typedef union imc_rrb_node {
     imc_intern_t intern;
     imc_leaf_t leaf; 
-} imc_rrb_note_t;
+} imc_rrb_node_t;
 
 imc_rrb_t* imc_vector_concrete_create();
+
+int imc_vector_concrete_size(imc_rrb_t* vec);
 
 imc_rrb_t* imc_vector_concrete_lookup(imc_rrb_t* vec, int index);
 

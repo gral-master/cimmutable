@@ -1,28 +1,38 @@
-#include "rrb_vect.h"
+#include <stdio.h>
+#include <stdin.h>
+#include <string.h>
+#include <errno.h>
 
-/* Allocates an empty internal node for the rrb vector */
-imc_rrb_intern_t* alloc_empty_internal_node(){
-    imc_rrb_intern_t* root = malloc(sizeof(imc_rrb_intern_t));
-    root -> level = 1;
-    root -> refs = 1;
-    root -> is_unbalenced = 0;
-    root -> meta = malloc(sizeof(int) * ARRAY_SIZE);
-    root -> childs = malloc(sizeof(imc_rrb_node_t) * ARRAY_SIZE);
-
-    return root;
-}
+#include "../debug.h"
+#include "./rrb_vect.h"
 
 /* --> rrb_vect.h */
-imc_rrb_t* imc_vector_concrete_create(){
-    imc_rrb_t* rrb = malloc(sizeof(imc_rrb_t));
-    rrb -> max_depth = MAX_DEPTH;
-    rrb -> m = ARRAY_SIZE;
-    rrb -> root = alloc_empty_internal_node();
+/* TODO -> invariant , pre/post cond */
+imc_rrb_t* imc_vector_concrete_create() {
+    imc_rrb_t* vec = malloc(sizeof(imc_rrb_t));
+    
+    if(vec == NULL){
+        LOG(1, "Allocation failure %s", strerror(errno));
+        return NULL;
+    }
+    vec -> level = 1;
+    vec -> refs = 1;
+    vec -> element_count = 0;
+    vec -> meta = NULL;
+    vec -> childs = malloc(sizeof(imc_rrb_node_t) * ARRAY_SIZE);
 
-    return rrb;
+    if(vec -> childs == NULL){
+        LOG(1, "Allocation failure %s", strerror(errno));
+        free(vec);
+        return NULL;
+    }
+    return vec;
+
 }
 
-
-
+/* TODO -> invariant , pre/post cond */
+int imc_vector_concrete_size(imc_rrb_t* vec) {
+    return vec -> element_count;
+}
 
 
