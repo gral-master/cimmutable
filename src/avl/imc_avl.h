@@ -8,7 +8,7 @@ typedef imc_key_t;
 //----------------------------------------------------------------------------//
 //----------------------------Data Structure----------------------------------//
 //----------------------------------------------------------------------------//
-typdef struct imc_avl_node_t{
+typedef struct imc_avl_node_t{
     int balance; // Show if the tree is equilibrate (0) or
                  //  balance to the left (-1) or right (1).
     int ref_counter; //Used to free unreferenced internal nodes.
@@ -23,8 +23,6 @@ typdef struct imc_avl_node_t{
 //----------------------------------------------------------------------------//
 //--------------------------Primitive FUnctions-------------------------------//
 //----------------------------------------------------------------------------//
-imc_avl_t* imc_avl_create(imc_data_t* data, imc_key_t* key);
-
 int imc_avl_size(imc_avl_t* vec);
 
 imc_data_t* imc_avl_lookup(imc_avl_t* vec, imc_key_t* key);
@@ -38,6 +36,10 @@ imc_avl_t* imc_avl_insert(imc_avl_t* vec,
 imc_avl_t* imc_avl_remove(imc_avl_t* vec,
 			     imc_data_t** data);
 
+//Modify de the value associate to key
+imc_avl_t* imc_avl_update(imc_avl_t* vec,
+			      imc_data_t* data, imc_key_t* key);
+
 int imc_avl_split(imc_avl_t* vec_in,
 		     imc_key_t* key,
 		     imc_avl_t** vec_out1,
@@ -48,7 +50,7 @@ imc_avl_t* imc_avl_merge(imc_avl_t* vec_front,
 
 /* user-side memory management */
 
-int imc_avl_unref(imc_avl_t* vec);
+int imc_avl_unref(imc_avl_t* tree);
 
-void imc_avl_dump(imc_avl_t* vec);
+void imc_avl_dump(imc_avl_t* tree);
 #endif

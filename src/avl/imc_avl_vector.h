@@ -3,10 +3,12 @@
 
 #include "imc_avl.h"
 
+typedef imc_data_t;
+typedef imc_key_t;
 //----------------------------------------------------------------------------//
 //----------------------------Data Structure----------------------------------//
 //----------------------------------------------------------------------------//
-typdef struct imc_avl_vector_t{
+typedef struct imc_avl_vector_t{
     imc_avl_node_t* tree;
     int size;
 } imc_avl_vector_t;

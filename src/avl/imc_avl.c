@@ -1,6 +1,7 @@
 #include "imc_avl.h"
 #include <stdlib.h>
 
+
 // TODO : manage the balance attribute
 imc_avl_node_t* zig(imc_avl_node_t* tree){
     if(tree == NULL || tree->left == NULL){
@@ -64,3 +65,22 @@ imc_avl_node_t* zag(imc_avl_node_t* tree){
 
     return new_root;
 }
+
+//----------------------------------------------------------------------------//
+//-------------------------Memory Management----------------------------------//
+//----------------------------------------------------------------------------//
+
+int imc_avl_unref(imc_avl_t* tree){
+	tree->ref_counter--;
+	
+	if(tree->ref_counter == 0){
+		imc_avl_unref(tree->left);
+		imc_avl_unref(tree->right);
+		free(tree);
+		return 0;
+	}
+	
+	return tree->ref_counter;
+}
+
+
