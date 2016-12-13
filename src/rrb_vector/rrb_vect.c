@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdin.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
@@ -12,7 +12,7 @@ imc_rrb_t* imc_vector_concrete_create() {
     imc_rrb_t* vec = malloc(sizeof(imc_rrb_t));
     
     if(vec == NULL){
-        LOG(1, "Allocation failure %s", strerror(errno));
+        LOG(LOG_FATAL, "Allocation failure %s", strerror(errno));
         return NULL;
     }
     vec -> level = 1;

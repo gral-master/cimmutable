@@ -40,20 +40,22 @@
 #ifndef _IMC_RRB_VECT_H
 #define _IMC_RRB_VECT_H
 
+#include "../../include/vector.h"
+
 /* ARRAY_SIZE should be a power of 2 */
 #define ARRAY_SIZE 32
 #define MAX_DEPTH 7
 
-typedef imc_rrb_node_t;
 //TODO define imc_data_t in a data.h file
-typedef imc_data_t;
+
+union imc_rrb_node;
 
 typedef struct imc_rrb {
     int level;
     int refs;
     int element_count;
     int* meta;
-    imc_rrb_node_t* childs;
+    union imc_rrb_node* childs;
 } imc_rrb_t;
 
 typedef struct imc_rrb_leaf {
@@ -61,8 +63,8 @@ typedef struct imc_rrb_leaf {
 } imc_rrb_leaf_t;
 
 typedef union imc_rrb_node {
-    imc_intern_t intern;
-    imc_leaf_t leaf; 
+    struct imc_rrb intern;
+    struct imc_rrb_leaf leaf; 
 } imc_rrb_node_t;
 
 imc_rrb_t* imc_vector_concrete_create();
@@ -71,8 +73,8 @@ int imc_vector_concrete_size(imc_rrb_t* vec);
 
 imc_rrb_t* imc_vector_concrete_lookup(imc_rrb_t* vec, int index);
 
-imc_rrb_t* imc_vector_push(imc_rrb_t* vec, imc_data_t* data);
+imc_rrb_t* imc_vector_concrete_push(imc_rrb_t* vec, imc_data_t* data);
 
-imc_rrb_t* imc_vector_emmit(imc_rrb_t* vec);
+imc_rrb_t* imc_vector_concrete_emit(imc_rrb_t* vec);
 
 #endif

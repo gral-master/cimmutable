@@ -2,35 +2,44 @@
 # From : https://gist.github.com/xuhdev/1873316
 # TODO finish it
 
-LIBNAME=cimmutable
+LIBNAME = cimmutable.so
+
+UTILDIR = ./src
+OBJDIR = ./obj
+INCLUDDIR = ./include
+#AVLDIR = ./src/avl
+#FINGERDIR = ./src/finger
+RRBDIR = ./src/rrb_vector
+
+SHELL = /bin/sh
+CC = gcc
+CFLAGS = -Wall -Wextra -Wimplicit -std=c11 -g -fPIC
+LFLAGS = -shared
+
+RM = rm -f
+ECHO = echo -e
+
+SRC := $(wildcard $(UTILDIR)/*.c) $(wildcard $(RRBDIR)/*.c)
+INCLUDE := $(wildcard $(UTILDIR)/*.h) $(wildcard $(RRBDIR)/*.h)
+INCLUDE += $(wildcard $(INCLUDDIR)/*.h)
+
+OBJ := $(SRC:%.c=%.o)
+ROBJ := $(foreach obj, $(notdir $(OBJ)), $(OBJDIR)/$(obj))
 
 
-CC = gcc # C compiler 
-CFLAGS = -fPIC -Wall -Wextra -O2 -g # C flags
-LDFLAGS = -shared  # linking flags
-RM = rm -f  # rm command
-TARGET_LIB = $(LIBNAME).so # target lib
+all: clean $(LIBNAME)
 
-SRCDIR= ./src
-OBJDIR= ./obj
-LIBDIR= ./lib
-BINDIR= ./bin
+$(LIBNAME): $(ROBJ) $(INCLUDE)
+	$(CC) $(LFLAGS) -o $@ $^
+	@$(ECHO) "\e[32mLibrary "$@" linked!\e[0m"
 
-SOURCES = $(wildcard $(SRCDIR)/*.c)
-INCLUDES = $(wildcard $(SRCDIR)/*.h)
-OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+$(OBJ): %.o : %.c
+	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(ECHO) "\e[34mCompiled "$<" successfully!\e[0m"
 
-.PHONY: all
-all: ${TARGET_LIB}
+$(ROBJ): $(OBJ)
+	@find ./src -type f -iname '*.o' -exec mv -t $(OBJDIR)/ {} \+
 
-$(TARGET_LIB): $(OBJS)
-	$(CC) ${LDFLAGS} -o $@ $^
-
-$(SOURCES:.c=.d):%.d:%.c
-	$(CC) $(CFLAGS) -MM $< >$@
-
-include $(SRCS:.c=.d)
-
-.PHONY: clean
 clean:
-	-${RM} ${TARGET_LIB} ${OBJS} $(SRCS:.c=.d)
+	@find ./src -type f -iname '*.o' -delete
+	@$(RM) $(OBJDIR)/*.o 
