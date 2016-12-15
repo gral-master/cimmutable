@@ -19,4 +19,4 @@ $(ODIR)/%.o: %.c
 	$(CC) -o $@ $(CFLAGS) $<
     
 clean:
-	rm -f $(BDIR)/* $(ODIR)/*
+	rm -f $(BDIR)/* $(ODIR)/* ../debug.o
