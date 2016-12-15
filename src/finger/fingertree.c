@@ -15,8 +15,7 @@ ft* ft_init() {
 void ft_add(void* data, ft* fgt) {
     if (fgt->type == EMPTY_TYPE) {
         create_single(fgt);
-        fgt->true_ft->single->type = DATA_TYPE;
-        fgt->true_ft->single->true_node = malloc(sizeof(true_node_t));
+	create_node_d(fgt->true_ft->single);
         fgt->true_ft->single->true_node->data = data;
     }
     else {
@@ -74,6 +73,11 @@ void create_deep(ft* fgt){
     fgt->true_ft->d->suffix[i]= malloc(sizeof(node));
   }
   fgt->true_ft->d->deeper = malloc(sizeof(ft));
+}
+
+void create_node_d(node* n){
+ n->type = DATA_TYPE;
+ n->true_node = malloc(sizeof(true_node_t));
 }
 
 void checkInvariants() {

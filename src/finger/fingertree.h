@@ -44,5 +44,6 @@ void ft_display(ft* fgt);
 void node_display(node* node);
 void create_single(ft* fgt);
 void create_deep(ft* fgt);
+void create_node_d(node* n);
 void checkInvariants();
 #endif
