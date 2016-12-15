@@ -23,34 +23,34 @@ typedef struct imc_avl_node_t{
 //----------------------------------------------------------------------------//
 //--------------------------Primitive FUnctions-------------------------------//
 //----------------------------------------------------------------------------//
-int imc_avl_size(imc_avl_t* vec);
+int imc_avl_size(imc_avl_node_t* vec);
 
-imc_data_t* imc_avl_lookup(imc_avl_t* vec, imc_key_t* key);
+imc_data_t* imc_avl_lookup(imc_avl_node_t* vec, imc_key_t* key);
 
 /* stack operations */
 
 // add at the end <--- DOXYGENIZE PLEASE!
-imc_avl_t* imc_avl_insert(imc_avl_t* vec,
+imc_avl_node_t* imc_avl_insert(imc_avl_node_t* vec,
 			      imc_data_t* data, imc_key_t* key);
 
-imc_avl_t* imc_avl_remove(imc_avl_t* vec,
+imc_avl_node_t* imc_avl_remove(imc_avl_node_t* vec,
 			     imc_data_t** data);
 
 //Modify de the value associate to key
-imc_avl_t* imc_avl_update(imc_avl_t* vec,
+imc_avl_node_t* imc_avl_update(imc_avl_node_t* vec,
 			      imc_data_t* data, imc_key_t* key);
 
-int imc_avl_split(imc_avl_t* vec_in,
+int imc_avl_split(imc_avl_node_t* vec_in,
 		     imc_key_t* key,
-		     imc_avl_t** vec_out1,
-		     imc_avl_t** vec_out2);
+		     imc_avl_node_t** vec_out1,
+		     imc_avl_node_t** vec_out2);
 
-imc_avl_t* imc_avl_merge(imc_avl_t* vec_front,
-			       imc_avl_t* vec_tail);
+imc_avl_node_t* imc_avl_merge(imc_avl_node_t* vec_front,
+			       imc_avl_node_t* vec_tail);
 
 /* user-side memory management */
 
-int imc_avl_unref(imc_avl_t* tree);
+int imc_avl_unref(imc_avl_node_t* tree);
 
-void imc_avl_dump(imc_avl_t* tree);
+void imc_avl_dump(imc_avl_node_t* tree);
 #endif
