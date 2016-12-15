@@ -9,6 +9,7 @@ typedef union true_node_t true_node_t;
 typedef struct {
     true_node_t* true_node;
     enum node_type type;
+    int size_monoid;
     int ref_count;
 } node;
 
@@ -26,6 +27,7 @@ typedef struct {
     true_ft_t* true_ft;
     enum ft_type type;
     int ref_count;
+    int size;
 } ft;
 
 typedef struct {

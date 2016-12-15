@@ -7,22 +7,30 @@ ft* ft_init() {
 
     fingerTree->type = EMPTY_TYPE;
     fingerTree->ref_count = 1;
-
+    fingerTree->size = 0;
     return fingerTree;
 }
 
 /*
  * For the moment, only works to add 1 element */
 ft* ft_add(void* data, ft* fgt) {
-    ft* res:
+    ft* res;
     if (fgt->type == EMPTY_TYPE) {
         res = ft_init();
         create_single(res);
-        create_node_d(res->true_ft->single);
+        create_data_node(res->true_ft->single);
         res->true_ft->single->true_node->data = data;
+        res->size = 1;
+
         return res;
     }
     else {
+        if (fgt->type == SINGLE_TYPE) {
+            res=ft_init();
+            create_deep(res);
+
+            return res;
+        }
         printf("Error: Unsupported operation.\n");
         return NULL;
     }
@@ -67,6 +75,7 @@ void create_single(ft* fgt){
     fgt->true_ft = malloc(sizeof(true_ft_t));
     fgt->true_ft->single = malloc(sizeof(node));
     fgt->ref_count = 1;
+    fgt->size = 1;
 }
 
 
@@ -75,17 +84,19 @@ void create_deep(ft* fgt){
   fgt->type = DEEP_TYPE;
   fgt->true_ft->d = malloc(sizeof(true_ft_t));
   for(i=0;i<4;i++){
-    fgt->true_ft->d->prefix[i]= malloc(sizeof(node));
-    fgt->true_ft->d->suffix[i]= malloc(sizeof(node));
+    fgt->true_ft->d->prefix[i]= NULL;
+    fgt->true_ft->d->suffix[i]= NULL;
   }
-  fgt->true_ft->d->deeper = malloc(sizeof(ft));
+  fgt->true_ft->d->deeper = ft_init();
   fgt->ref_count = 1;
+  fgt->size = 0; // The caller of this function should put the right size.
 }
 
 void create_data_node(node* n){
     n->type = DATA_TYPE;
     n->true_node = malloc(sizeof(true_node_t));
     n->ref_count = 1;
+    n->size = 1;
 }
 
 void checkInvariants() {
