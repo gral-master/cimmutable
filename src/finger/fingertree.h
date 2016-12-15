@@ -9,6 +9,7 @@ typedef union true_node_t true_node_t;
 typedef struct {
     true_node_t* true_node;
     enum node_type type;
+    int ref_count;
 } node;
 
 union true_node_t {
@@ -24,26 +25,28 @@ typedef union true_ft_t true_ft_t;
 typedef struct {
     true_ft_t* true_ft;
     enum ft_type type;
+    int ref_count;
 } ft;
 
 typedef struct {
     node* prefix[4];
     node* suffix[4];
     ft* deeper;
+    int ref_count;
 } deep;
 
 union true_ft_t {
     node* single;
     deep* d;
 };
-  
+
 ft* ft_init();
-void ft_add(void* data,ft* fgt);
+ft* ft_add(void* data,ft* fgt);
 ft* ft_concat(ft* fin1,ft* fin2);
 void ft_display(ft* fgt);
 void node_display(node* node);
 void create_single(ft* fgt);
 void create_deep(ft* fgt);
-void create_node_d(node* n);
+void create_data_node(node* n);
 void checkInvariants();
 #endif
