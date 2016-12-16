@@ -67,7 +67,7 @@ imc_avl_node_t* zag(imc_avl_node_t* tree){
 }
 
 //***********************COMPARE FUNCTION*************************************//
-int isSup(int* x, int* y)
+int isSup(imc_key_t* x, imc_key_t* y)
 {
     return *x > *y;
 }
@@ -77,19 +77,19 @@ int isSup(int* x, int* y)
 
 
 //----------------------------------------------------------------------------//
-//-------------------------Main Functions-------------------------------------//
+//-------------------------Lookup Functions-----------------------------------//
 //----------------------------------------------------------------------------//
-imc_data_t* imc_avl_lookup(imc_avl_node_t* vec, imc_key_t* key) {
+imc_data_t* imc_avl_lookup(imc_avl_node_t* vec, imc_key_t* key,int (*comparaison)(imc_key_t*, imc_key_t*)) {
     if (vec != NULL) {
         if (*vec->key == *key) {
             return vec->data;
         }
         else {
-            if (isSup(key, vec->key)) {
-                return imc_avl_lookup(vec->right, key);
+            if (comparaison(key, vec->key)) {
+                return imc_avl_lookup(vec->right, key,comparaison);
             }
             else {
-                return imc_avl_lookup(vec->left, key);
+                return imc_avl_lookup(vec->left, key,comparaison);
             }
         }
     }
@@ -99,7 +99,7 @@ imc_data_t* imc_avl_lookup(imc_avl_node_t* vec, imc_key_t* key) {
 }
 
 //----------------------------------------------------------------------------//
-//-------------------------Main Functions-------------------------------------//
+//-------------------------Insert Functions-----------------------------------//
 //----------------------------------------------------------------------------//
 
 /**
@@ -137,7 +137,7 @@ void imc_avl_insert_update_balance(imc_avl_node_t* vec) {
         if (vec->right == NULL) {
             vec->balance = - abs(vec->left->balance) - 1;
         }
-    
+
         else if (vec->left == NULL) {
             vec->balance = abs(vec->right->balance) + 1;
         }
@@ -152,7 +152,7 @@ imc_avl_node_t* imc_avl_insert_rec(imc_avl_node_t* vec,
 {
     imc_avl_node_t* new_node = malloc(sizeof(imc_avl_node_t));
 
-    if (vec == NULL) {    
+    if (vec == NULL) {
         // we add a new node without any childrens
         new_node->key = key;
         new_node->data = data;
@@ -186,7 +186,7 @@ imc_avl_node_t* imc_avl_insert_rec(imc_avl_node_t* vec,
 
 imc_avl_node_t* imc_avl_insert(imc_avl_node_t* vec,
                   imc_data_t* data, imc_key_t* key) {
-    if (imc_avl_lookup(vec, key) != NULL) {
+    if (imc_avl_lookup(vec, key,isSup) != NULL) {
         return NULL;
     }
     else {
@@ -207,15 +207,13 @@ imc_avl_node_t* imc_avl_insert(imc_avl_node_t* vec,
 
 int imc_avl_unref(imc_avl_node_t* tree){
 	tree->ref_counter--;
-	
+
 	if(tree->ref_counter == 0){
 		imc_avl_unref(tree->left);
 		imc_avl_unref(tree->right);
 		free(tree);
 		return 0;
 	}
-	
+
 	return tree->ref_counter;
 }
-
-
