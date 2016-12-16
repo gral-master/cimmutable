@@ -50,4 +50,7 @@ ft* ft_concat(ft* fin1,ft* fin2);
 void ft_display(ft* fgt);
 void node_display(node* node);
 void checkInvariants();
+ft* add_elem_deep_simple(ft* fgt,ft* old,int index,void* data);
+ft* add_elem_deep_recur(ft* fgt,ft* old,void* data);
+int check_available_space(ft* fgt);
 #endif
