@@ -3,7 +3,7 @@
 
 
 // TODO : manage the balance attribute
-imc_avl_node_t* zig(imc_avl_node_t* tree){
+imc_avl_node_t* right_rotation(imc_avl_node_t* tree){
     if(tree == NULL || tree->left == NULL){
         return NULL;
     }
@@ -35,7 +35,7 @@ imc_avl_node_t* zig(imc_avl_node_t* tree){
 }
 
 // TODO : manage the balance attribute
-imc_avl_node_t* zag(imc_avl_node_t* tree){
+imc_avl_node_t* left_rotation(imc_avl_node_t* tree){
     if(tree == NULL || tree->left == NULL){
         return NULL;
     }
@@ -67,7 +67,7 @@ imc_avl_node_t* zag(imc_avl_node_t* tree){
 }
 
 //***********************COMPARE FUNCTION*************************************//
-int isSup(imc_key_t* x, imc_key_t* y)
+int is_sup(imc_key_t* x, imc_key_t* y)
 {
     return *x > *y;
 }
@@ -79,21 +79,19 @@ int isSup(imc_key_t* x, imc_key_t* y)
 //----------------------------------------------------------------------------//
 //-------------------------Lookup Functions-----------------------------------//
 //----------------------------------------------------------------------------//
-imc_data_t* imc_avl_lookup(imc_avl_node_t* vec, imc_key_t* key,int (*comparaison)(imc_key_t*, imc_key_t*)) {
+imc_data_t* imc_avl_lookup(imc_avl_node_t* vec, imc_key_t* key,
+                           int (*comparator)(imc_key_t*, imc_key_t*)) {
     if (vec != NULL) {
         if (*vec->key == *key) {
             return vec->data;
-        }
-        else {
-            if (comparaison(key, vec->key)) {
-                return imc_avl_lookup(vec->right, key,comparaison);
-            }
-            else {
-                return imc_avl_lookup(vec->left, key,comparaison);
+        } else {
+            if (comparator(key, vec->key)) {
+                return imc_avl_lookup(vec->right, key,comparator);
+            } else {
+                return imc_avl_lookup(vec->left, key,comparator);
             }
         }
-    }
-    else {
+    } else {
         return NULL;
     }
 }
@@ -104,23 +102,23 @@ imc_data_t* imc_avl_lookup(imc_avl_node_t* vec, imc_key_t* key,int (*comparaison
 
 /**
  * Function to do one or two rotation to have a well structure tree
- **/
+ */
 imc_avl_node_t* imc_avl_insert_do_balance(imc_avl_node_t* vec) {
 
     if (vec->balance == 2) {
         if (vec->right->balance == 1) {
-            return zag(vec);
+            return left_rotation(vec);
         }
         else if (vec->right->balance == -1) {
-            return zag(zig(vec));
+            return left_rotation(right_rotation(vec));
         }
     }
     else {
         if (vec->right->balance == 1) {
-            return zig(zag(vec));
+            return right_rotation(left_rotation(vec));
         }
         else if (vec->right->balance == -1) {
-            return zig(vec);
+            return right_rotation(vec);
         }
     }
 }
@@ -128,7 +126,7 @@ imc_avl_node_t* imc_avl_insert_do_balance(imc_avl_node_t* vec) {
 
 /**
  * Function to update the balance of a node
- **/
+ */
 void imc_avl_insert_update_balance(imc_avl_node_t* vec) {
     if (vec->right == NULL && vec->left == NULL) {
         vec->balance = 0;
@@ -159,25 +157,25 @@ imc_avl_node_t* imc_avl_insert_rec(imc_avl_node_t* vec,
         new_node->balance = 0;
         new_node->ref_counter = 1;
         return vec;
-    }
-    else {
+    } else {
         // we recreate the node
         new_node->data = vec->data;
         new_node->key = vec->key;
         new_node->ref_counter = 1;
-        if (isSup(key, vec->key)) {
-            vec->right = imc_avl_insert_rec(vec->right, data, key);
-            vec->left = vec->left;
+        if (is_sup(key, vec->key)) {
+            new_node->right = imc_avl_insert_rec(vec->right, data, key);
+            new_node->left = vec->left;
+            vec->left->ref_counter++;
+        } else {
+            new_node->left = imc_avl_insert_rec(vec->left, data, key);
+            new_node->right = vec->right;
+            vec->right->ref_counter++;
         }
-        else {
-            vec->left = imc_avl_insert_rec(vec->left, data, key);
-            vec-> right = vec->right;
-        }
-
-        imc_avl_insert_update_balance(new_node);
-        if (new_node->balance == 2 || new_node->balance == -2) {
-            new_node = imc_avl_insert_do_balance(vec);
-        }
+        //TODO redo balance management
+        // imc_avl_insert_update_balance(new_node);
+        // if (new_node->balance == 2 || new_node->balance == -2) {
+        //     new_node = imc_avl_insert_do_balance(vec);
+        // }
 
     }
 
@@ -186,19 +184,8 @@ imc_avl_node_t* imc_avl_insert_rec(imc_avl_node_t* vec,
 
 imc_avl_node_t* imc_avl_insert(imc_avl_node_t* vec,
                   imc_data_t* data, imc_key_t* key) {
-    if (imc_avl_lookup(vec, key,isSup) != NULL) {
-        return NULL;
-    }
-    else {
-        return imc_avl_insert_rec(vec, data, key);
-    }
+    return imc_avl_insert_rec(vec, data, key); // OR I RETURN NULL IN THE FUNCTION
 }
-
-
-
-
-
-
 
 
 //----------------------------------------------------------------------------//
@@ -207,8 +194,8 @@ imc_avl_node_t* imc_avl_insert(imc_avl_node_t* vec,
 
 int imc_avl_unref(imc_avl_node_t* tree){
 	tree->ref_counter--;
-
-	if(tree->ref_counter == 0){
+//TODO not thread safe
+	if(tree->ref_counter <= 0){
 		imc_avl_unref(tree->left);
 		imc_avl_unref(tree->right);
 		free(tree);
