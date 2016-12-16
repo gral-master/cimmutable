@@ -34,7 +34,6 @@ typedef struct {
     node* prefix[4];
     node* suffix[4];
     ft* deeper;
-    int ref_count;
 } deep;
 
 union true_ft_t {
@@ -42,13 +41,13 @@ union true_ft_t {
     deep* d;
 };
 
-ft* ft_init();
+ft* create_empty();
+ft* create_single();
+ft* create_deep();
+node* create_data_node();
 ft* ft_add(void* data,ft* fgt);
 ft* ft_concat(ft* fin1,ft* fin2);
 void ft_display(ft* fgt);
 void node_display(node* node);
-void create_single(ft* fgt);
-void create_deep(ft* fgt);
-void create_data_node(node* n);
 void checkInvariants();
 #endif
