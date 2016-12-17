@@ -45,12 +45,12 @@ ft* create_empty();
 ft* create_single();
 ft* create_deep();
 node* create_data_node();
-ft* ft_add(void* data,ft* fgt);
+node* create_node_node();
+ft* ft_add(void* data,ft* fgt,int preorsuf);
 ft* ft_concat(ft* fin1,ft* fin2);
 void ft_display(ft* fgt);
 void node_display(node* node);
 void checkInvariants();
-ft* add_elem_deep_simple(ft* fgt,ft* old,int index,void* data);
-ft* add_elem_deep_recur(ft* fgt,ft* old,void* data);
-int check_available_space(ft* fgt);
+ft* add_elem_deep_recur(ft* fgt,int preorsuff,node*data);
+int check_available_space(ft* fgt,int preorsuf, int deepness);
 #endif
