@@ -41,7 +41,7 @@
 
 typedef struct imc_vector{} imc_vector_t;
 
-typedef imc_data_t;
+typedef struct imc_data{} imc_data_t;
 
 imc_vector_t* imc_vector_create();
 

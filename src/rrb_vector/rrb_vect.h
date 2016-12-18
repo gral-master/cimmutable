@@ -40,30 +40,47 @@
 #ifndef _IMC_RRB_VECT_H
 #define _IMC_RRB_VECT_H
 
+#include "../../include/vector.h" //-I -L à la compile pour faire #include <vector.h>
+
 /* ARRAY_SIZE should be a power of 2 */
 #define ARRAY_SIZE 32
 #define MAX_DEPTH 7
 
-typedef imc_rrb_node_t;
 //TODO define imc_data_t in a data.h file
-typedef imc_data_t;
 
 typedef struct imc_rrb {
     int level;
     int refs;
     int element_count;
     int* meta;
-    imc_rrb_node_t* childs;
+    union {
+      struct imc_rrb** subtrees;
+      imc_data_t** data;
+    } children;
 } imc_rrb_t;
 
-typedef struct imc_rrb_leaf {
-    imc_data_t* data;
-} imc_rrb_leaf_t;
+imc_rrb_t* imc_vector_concrete_create();
 
-typedef union imc_rrb_node {
-    imc_intern_t intern;
-    imc_leaf_t leaf;
-} imc_note_t;
+int imc_vector_concrete_size(imc_rrb_t* vec);
 
+imc_data_t* imc_vector_concrete_lookup(imc_rrb_t* vec, int index);
+
+imc_rrb_t* imc_vector_concrete_push(imc_rrb_t* vec, imc_data_t* data);
+
+void imc_vector_concrete_emit(imc_rrb_t* vec);
+
+int imc_vector_concrete_full(imc_rrb_t* vec);
+
+imc_rrb_t* imc_vector_concrete_new_root(imc_rrb_t* vec);
+
+int imc_vector_concrete_balanced(imc_rrb_t* vec);
+
+int imc_vector_concrete_subindex(imc_rrb_t* vec, int index);
+
+imc_rrb_t* imc_vector_concrete_copy_leaf(imc_rrb_t* vec);
+
+imc_rrb_t* imc_vector_concrete_copy(imc_rrb_t* vec);
+
+imc_rrb_t* imc_vector_concrete_create_leaf();
 
 #endif

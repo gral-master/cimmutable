@@ -17,7 +17,7 @@ imc_data_t* imc_map_lookup(imc_map_t* map, imc_key_t* key);
 
 imc_map_t* imc_map_remove(imc_map_t* map, imc_key_t* key,imc_data_t** data);
 
-imc_key_t*[] imc_map_keys(imc_map_t* map);
+imc_key_t** imc_map_keys(imc_map_t* map);
 
 // iterator ?
 typedef imc_map_iterator_t;
