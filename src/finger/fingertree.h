@@ -41,16 +41,31 @@ union true_ft_t {
     deep* d;
 };
 
+typedef struct view_t view;
+
+struct view_t{
+  void* elem;
+  ft* fg;
+};
+
+
+
 ft* create_empty();
 ft* create_single();
 ft* create_deep();
 node* create_data_node();
 node* create_node_node();
+/* preofsuff=0 for add on the left and 1 for an add on the right*/
 ft* ft_add(void* data,ft* fgt,int preorsuf);
+view ft_delete(ft*fgt,int preorsuf);
 ft* ft_concat(ft* fin1,ft* fin2);
 void ft_display(ft* fgt);
 void node_display(node* node);
 void checkInvariants();
 ft* add_elem_deep_recur(ft* fgt,int preorsuff,node*data);
-int check_available_space(ft* fgt,int preorsuf, int deepness);
+int check_available_space(ft* fgt,int preorsuf);
+view ft_delete(ft* fgt,int preorsuf);
+void copy_pref(ft*to,ft* from);
+void copy_suff(ft*to,ft* from);
+node ** get_right_infix(ft*res,int preorsuf, int inv);
 #endif

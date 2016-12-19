@@ -76,7 +76,7 @@ ft* ft_add(void* data, ft* fgt,int preorsuf) {
 /*
  * For the moment, only works for trees with 1 element */
 void node_display(node* node) {
-  if (node == NULL)
+   if (node == NULL)
     printf("NULL");
   switch (node->type) {
    
@@ -119,7 +119,7 @@ void ft_display(ft* fgt) {
       if (fgt->true_ft->d->prefix[i] != NULL){
 	node_display(fgt->true_ft->d->prefix[i]);
 	printf(",");}
-      }
+    }
     printf("],");
     // Deeper
     ft_display(fgt->true_ft->d->deeper);
@@ -144,8 +144,8 @@ void ft_display(ft* fgt) {
  */
 ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data){
   ft*res;
-   node**t;
-    node**r;
+  node**t;
+  node**r;
   if(fgt->type==EMPTY_TYPE){
     res = create_single();
     res->true_ft->single=data;
@@ -164,38 +164,38 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data){
     r[0] = fgt->true_ft->single;
     t[0]=data;
   }
+  
   else{
     res = create_deep();
-    int index=check_available_space(fgt,preorsuf,0);
-   
-    if(preorsuf){
-      t=fgt->true_ft->d->suffix;
-      r=res->true_ft->d->suffix;
-    }
-    else{
-      t=fgt->true_ft->d->prefix;
-      r=res->true_ft->d->prefix;
-    }
+    int index=check_available_space(fgt,preorsuf);
+    r=get_right_infix(res,preorsuf,0);
+    t=get_right_infix(fgt,preorsuf,0);
+    /* if(preorsuf){ */
+    /*   t=fgt->true_ft->d->suffix; */
+    /*   r=res->true_ft->d->suffix; */
+    /* } */
+    /* else{ */
+    /*   t=fgt->true_ft->d->prefix; */
+    /*   r=res->true_ft->d->prefix; */
+    /* } */
     int i;
     /* copy the pref and suff*/
- 
-    for(i=0;i<4;i++){
-      res->true_ft->d->prefix[i]=fgt->true_ft->d->prefix[i];
-      if(fgt->true_ft->d->prefix[i]!=NULL)fgt->true_ft->d->prefix[i]->ref_count++;
-      res->true_ft->d->suffix[i]=fgt->true_ft->d->suffix[i];
-      if(fgt->true_ft->d->suffix[i]!=NULL)fgt->true_ft->d->suffix[i]->ref_count++;
-    }
- 
+    copy_pref(res,fgt);
+    copy_suff(res,fgt);
     if(index==-1){
       node* new_node = create_node_node();
       int i;
+      ft_display(fgt);
       for(i=0;i<3;i++){
 	new_node->true_node->internal_node[i]=create_data_node();
-	new_node->true_node->internal_node[i]->true_node->data= fgt->true_ft->d->suffix[i+1]->true_node->data;
+	/* node_display(fgt->true_ft->d->suffix[i+1]); */
+	new_node->true_node->internal_node[i] = t[i+1];
       }
       /* creating the new suffix or prefix*/
       r[0]=data;
-      r[1]=t[0];r[2]=NULL;r[3]=NULL;
+      r[1]=t[0];
+      t[0]->ref_count++;
+      r[2]=NULL;r[3]=NULL;
       /* recursive call to the same function with deeper*/
       res->true_ft->d->deeper=add_elem_deep_recur(fgt->true_ft->d->deeper,preorsuf,new_node);
      
@@ -211,7 +211,7 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data){
       /* add the new element*/
       t[0]->ref_count--;
       r[0]=data;
-     }
+    }
   }
         
   return res;}
@@ -219,9 +219,8 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data){
 /* checks if there is available space in the suffix of the deep
  * to make it generic we use 
  * preorsuf to search in the prefix or suffix (0 for prefix, 1 for suffix)
- * deepness to konw at which level of the tree we are
  */
-int check_available_space(ft* fgt,int preorsuf, int deepness){
+int check_available_space(ft* fgt,int preorsuf){
   if(fgt->type!=DEEP_TYPE){
     printf("error not a deep\n");
     exit(-1);}
@@ -240,39 +239,182 @@ int check_available_space(ft* fgt,int preorsuf, int deepness){
   }
   return res;
 }
- 
-void checkInvariants() {
-  // === Node Invariants===
-  // Nodes are either NODE_TYPE or DATA_TYPE
 
-  // A DATA_TYPE Node does not contain another Node
 
-  // A NODE_TYPE Node does contain 2 or 3 Nodes
+view ft_delete(ft* fgt,int preorsuf){
+  ft* res;
+  view stres;
+  node**t;
+  node**r;
+  if(fgt->type==EMPTY_TYPE){
+    res = create_empty();
+    stres.fg=res;
+    stres.elem=NULL;
+  }
+  else if(fgt->type == SINGLE_TYPE) {
+    res = create_empty();
+    stres.fg=res;
+    stres.elem=fgt->true_ft->single;
+  }
+    else{
+      
+      if(preorsuf) stres.elem = fgt->true_ft->d->suffix[0];
+      else stres.elem = fgt->true_ft->d->prefix[0];
+      
 
-  // ===Finger tree Invariant===
-  // Finger trees are either DEEP_TYPE, SINGLE_TYPE or EMPTY_TYPE
+      int index = check_available_space(fgt,preorsuf);
+      if(index==-1 || index>1){
+	int i;
+	/* the tree is of type deep*/
+	res = create_deep();
+	r=get_right_infix(res,preorsuf,0);
+	t=get_right_infix(fgt,preorsuf,0);
+	if(index==-1)index=3;
+	/* here is the simple case*/
+	copy_pref(res,fgt);
+	copy_suff(res,fgt);
+	res->true_ft->d->deeper = fgt->true_ft->d->deeper;
+	fgt->true_ft->d->deeper->ref_count++;
+	for(i=0;i<index;i++)
+	  r[i]=r[i+1];
+	r[index-1]=NULL;
+      }
+      else{
+	/* there is only one element in the infix*/
+	if(fgt->true_ft->d->deeper->type==EMPTY_TYPE){
+	  /* the deeper is empty, we look the other side and see if we can take one element*/
+	  int inv;
+	  if(preorsuf)inv=0;else inv=1;
+	  index = check_available_space(fgt,inv);
+	  if(index!=1){
+	    if(index==-1)index=3;
+	    else index--;
+	    /* we can take an element from the other side*/
+	    res=create_deep();
+	    r=get_right_infix(res,preorsuf,0);
+	    t=get_right_infix(fgt,preorsuf,1);
+	    r[0]=t[index];
+	    t[index]->ref_count++;
+	    t=get_right_infix(fgt,preorsuf,0);
+	    if(preorsuf)copy_pref(res,fgt); else copy_suff(res,fgt);
+	     r=get_right_infix(res,preorsuf,1);
+	    r[index]=NULL;
+	  }
+	  else{
+	    res=create_single();
+	    t=get_right_infix(fgt,preorsuf,1);
+	    res->true_ft->single = t[0];
+	    t[0]->ref_count++;
+	  }
+	}
+	else if(fgt->true_ft->d->deeper->type==SINGLE_TYPE){
+	  node**tmp;
+	  res = create_deep();
+	  res->true_ft->d->deeper=create_empty();
+	  r=get_right_infix(res,preorsuf,0);
+	  t=get_right_infix(fgt,preorsuf,1);
+	  if(preorsuf) copy_pref(res,fgt); else copy_suff(res,fgt);
+	  tmp = fgt->true_ft->d->deeper->true_ft->single->true_node->internal_node;
+	  r[0]=tmp[0];
+	  r[1]=tmp[1];
+	  r[2]=tmp[2];
+	  
+	}
+	else{
+	  /* the deeper is of type deep*/
+	  node* getres;
+	  res = create_deep();
+	  if(preorsuf) copy_pref(res,fgt); else copy_suff(res,fgt);
+	  view tmp =ft_delete(fgt->true_ft->d->deeper,preorsuf);
+	  r=get_right_infix(res,preorsuf,0);
+	  t=get_right_infix(fgt,preorsuf,0);
+	  getres = tmp.elem;
+	  r[0]=getres->true_node->internal_node[0];
+	  r[1]=getres->true_node->internal_node[1];
+	  r[2]=getres->true_node->internal_node[2];
+	  res->true_ft->d->deeper= tmp.fg;
 
-  // A SINGLE_TYPE Finger tree contains only one Node (and no infix).
+	}
+      }
+    }
+    stres.fg=res;
+    return stres;
+  }
 
-  // Any Node in the infix and any Single at level 0 (the highest level) are
-  // DATA_TYPE.
 
-  // Any Node in the infix and any Single at level n (the deeper level, the
-  // greater n) are NODE_TYPE^n(DATA_TYPE).
 
-  // A DEEP_TYPE Finger tree contains infixes and a deeper Finger tree.
+  void copy_pref(ft*res,ft* fgt){
+    int i;
+    for(i=0;i<4;i++){
+      res->true_ft->d->prefix[i]=fgt->true_ft->d->prefix[i];
+      if(fgt->true_ft->d->prefix[i]!=NULL)fgt->true_ft->d->prefix[i]->ref_count++;
+    }
 
-  // The infixes contain at least one elem each (i.e. at least 1 Node contains
-  // effective data)
 
-  // The infixes are arrays of size four (i.e. contains 4 Node, even if
-  // unused)
+  }
 
-  // In an infix containing n elements, these elements correspond to the n
-  // leftmost indexes of the array.
 
-  // ===ref_count Invariants===
+  void copy_suff(ft*res,ft* fgt){
+    int i;
+    for(i=0;i<4;i++){
+      res->true_ft->d->suffix[i]=fgt->true_ft->d->suffix[i];
+      if(fgt->true_ft->d->suffix[i]!=NULL)fgt->true_ft->d->suffix[i]->ref_count++;
+    }
 
-  // ===size Invariants===
 
+  }
+
+
+node ** get_right_infix(ft*res,int preorsuf, int inv){
+  node**r;
+  if(inv){
+    if(preorsuf)
+      preorsuf=0;
+    else
+      preorsuf=1;
+  }
+  
+  if(preorsuf)
+    r=res->true_ft->d->suffix;
+  else
+    r=res->true_ft->d->prefix;
+  return r;
 }
+
+
+
+  void checkInvariants() {
+    // === Node Invariants===
+    // Nodes are either NODE_TYPE or DATA_TYPE
+
+    // A DATA_TYPE Node does not contain another Node
+
+    // A NODE_TYPE Node does contain 2 or 3 Nodes
+
+    // ===Finger tree Invariant===
+    // Finger trees are either DEEP_TYPE, SINGLE_TYPE or EMPTY_TYPE
+
+    // A SINGLE_TYPE Finger tree contains only one Node (and no infix).
+
+    // Any Node in the infix and any Single at level 0 (the highest level) are
+    // DATA_TYPE.
+
+    // Any Node in the infix and any Single at level n (the deeper level, the
+    // greater n) are NODE_TYPE^n(DATA_TYPE).
+
+    // A DEEP_TYPE Finger tree contains infixes and a deeper Finger tree.
+
+    // The infixes contain at least one elem each (i.e. at least 1 Node contains
+    // effective data)
+
+    // The infixes are arrays of size four (i.e. contains 4 Node, even if
+    // unused)
+
+    // In an infix containing n elements, these elements correspond to the n
+    // leftmost indexes of the array.
+
+    // ===ref_count Invariants===
+
+    // ===size Invariants===
+
+  }
