@@ -1,7 +1,6 @@
 #include "imc_avl.h"
 #include <stdlib.h>
 
-
 // TODO : manage the balance attribute
 imc_avl_node_t* right_rotation(imc_avl_node_t* tree){
     if(tree == NULL || tree->left == NULL){
@@ -100,91 +99,127 @@ imc_data_t* imc_avl_lookup(imc_avl_node_t* vec, imc_key_t* key,
 //-------------------------Insert Functions-----------------------------------//
 //----------------------------------------------------------------------------//
 
-/**
- * Function to do one or two rotation to have a well structure tree
- */
-imc_avl_node_t* imc_avl_insert_do_balance(imc_avl_node_t* vec) {
-
-    if (vec->balance == 2) {
-        if (vec->right->balance == 1) {
-            return left_rotation(vec);
-        }
-        else if (vec->right->balance == -1) {
-            return left_rotation(right_rotation(vec));
-        }
+// Mutable right rotation
+imc_avl_node_t *mutable_right_rotation(imc_avl_node_t* tree){
+    if(tree->left == NULL){
+        return tree;
     }
-    else {
-        if (vec->right->balance == 1) {
-            return right_rotation(left_rotation(vec));
-        }
-        else if (vec->right->balance == -1) {
-            return right_rotation(vec);
-        }
-    }
+    imc_avl_node_t* temp = tree->left;
+    tree->left = temp->right;
+    temp->right = tree;
+    return tree;
 }
 
-
-/**
- * Function to update the balance of a node
- */
-void imc_avl_insert_update_balance(imc_avl_node_t* vec) {
-    if (vec->right == NULL && vec->left == NULL) {
-        vec->balance = 0;
+// Mutable left rotation
+imc_avl_node_t *mutable_left_rotation(imc_avl_node_t* tree){
+    if(tree->left == NULL){
+        return tree;
     }
-    else {
-        if (vec->right == NULL) {
-            vec->balance = - abs(vec->left->balance) - 1;
-        }
-
-        else if (vec->left == NULL) {
-            vec->balance = abs(vec->right->balance) + 1;
-        }
-        else {
-            vec->balance = abs(vec->right->balance) - abs(vec->left->balance);
-        }
-    }
+    imc_avl_node_t* temp = tree->right;
+    tree->right = temp->left;
+    temp->left = tree;
+    return tree;
 }
 
-imc_avl_node_t* imc_avl_insert_rec(imc_avl_node_t* vec,
-                  imc_data_t* data, imc_key_t* key)
-{
+imc_avl_node_t* imc_avl_insert( imc_avl_node_t* vec,
+                                imc_data_t* data, imc_key_t* key,
+                                int (*comparator)(imc_key_t*, imc_key_t*),
+                                // Data replaced during the insertion
+                                imc_data_t** prev_data) {
+
     imc_avl_node_t* new_node = malloc(sizeof(imc_avl_node_t));
-
+    // we add a new node as a leaf
     if (vec == NULL) {
-        // we add a new node without any childrens
         new_node->key = key;
         new_node->data = data;
         new_node->balance = 0;
         new_node->ref_counter = 1;
-        return vec;
-    } else {
-        // we recreate the node
-        new_node->data = vec->data;
-        new_node->key = vec->key;
-        new_node->ref_counter = 1;
-        if (is_sup(key, vec->key)) {
-            new_node->right = imc_avl_insert_rec(vec->right, data, key);
-            new_node->left = vec->left;
-            vec->left->ref_counter++;
-        } else {
-            new_node->left = imc_avl_insert_rec(vec->left, data, key);
-            new_node->right = vec->right;
-            vec->right->ref_counter++;
-        }
-        //TODO redo balance management
-        // imc_avl_insert_update_balance(new_node);
-        // if (new_node->balance == 2 || new_node->balance == -2) {
-        //     new_node = imc_avl_insert_do_balance(vec);
-        // }
+        new_node->left = NULL;
+        new_node->right = NULL;
+        return new_node;
+    }
+    // we go through an internal node
+    int diff = comparator(key, vec->key);
 
+    if(diff == 0){ // The current node have the same key than the parameter.
+        // We duplicate the node and replace the data.
+        new_node->key = key;
+        new_node->data = data;
+        new_node->balance = vec->balance;
+        new_node->ref_counter = 1;
+        new_node->left = vec->left;
+        if(vec->left != NULL) vec->left->ref_counter++;
+        new_node->right = vec->right;
+        if(vec->right != NULL) vec->right->ref_counter++;
+        //We return the previous data.
+        *prev_data = vec->data;
+        return new_node;
+
+    }
+    // we recreate the current node
+    new_node->data = vec->data;
+    new_node->key = vec->key;
+    new_node->ref_counter = 1;
+
+    if (diff > 0) { // We insert in the right branch.
+        new_node->right = imc_avl_insert(vec->right, data, key, comparator, prev_data);
+        new_node->left = vec->left;
+        if(vec->left != NULL) vec->left->ref_counter++;
+    } else { // diff < 0 => We insert in the left branch.
+        new_node->left = imc_avl_insert(vec->left, data, key, comparator, prev_data);
+        new_node->right = vec->right;
+        if(vec->right != NULL) vec->right->ref_counter++;
+    }
+
+    // Now we rebalance the tree.
+    if(*prev_data != NULL){ // The structure of the tree wasn't modify.
+        new_node->balance = vec->balance;
+        return new_node;
+    }
+    // The structure of the tree was modify.
+    if(diff > 0){ // Case where the right branch was modify.
+        // The size of the right branch was unchanged.
+        if(vec->right->balance == new_node->right->balance
+          || new_node->right->balance == 0){
+            new_node->balance = vec->balance;
+        } else { // The size of the right branch have increase
+            if(vec->balance == 1){ // Rotation is needed
+                new_node->balance = 0;
+                new_node->right->balance = 0;
+                if(new_node->right->balance == 1){
+                    new_node = mutable_left_rotation(new_node);
+                } else {
+                    new_node->right->left->balance = 0;
+                    new_node->right = mutable_right_rotation(new_node->right);
+                    new_node = mutable_left_rotation(new_node);
+                }
+            } else { // The tree is still balanced
+                new_node->balance = vec->balance +1;
+            }
+        }
+    } else { // diff < 0 => Case where the left branch was modify.
+        // The size of the left branch was unchanged.
+        if(vec->left->balance == new_node->left->balance
+          || new_node->left->balance == 0){
+            new_node->balance = vec->balance;
+        } else { // The size of the left branch have increase
+            if(vec->balance == -1){ // Rotation is needed
+                new_node->balance = 0;
+                new_node->left->balance = 0;
+                if(new_node->left->balance == -1){
+                    new_node = mutable_right_rotation(new_node);
+                } else {
+                    new_node->left->right->balance = 0;
+                    new_node->left = mutable_left_rotation(new_node->left);
+                    new_node = mutable_right_rotation(new_node);
+                }
+            } else { // The tree is still balanced
+                new_node->balance = vec->balance -1;
+            }
+        }
     }
 
     return new_node;
-}
-
-imc_avl_node_t* imc_avl_insert(imc_avl_node_t* vec,
-                  imc_data_t* data, imc_key_t* key) {
-    return imc_avl_insert_rec(vec, data, key); // OR I RETURN NULL IN THE FUNCTION
 }
 
 
@@ -195,12 +230,17 @@ imc_avl_node_t* imc_avl_insert(imc_avl_node_t* vec,
 int imc_avl_unref(imc_avl_node_t* tree){
 	tree->ref_counter--;
 //TODO not thread safe
-	if(tree->ref_counter <= 0){
-		imc_avl_unref(tree->left);
-		imc_avl_unref(tree->right);
-		free(tree);
-		return 0;
-	}
+    if(tree->ref_counter <= 0){
+        imc_avl_unref(tree->left);
+        imc_avl_unref(tree->right);
+        free(tree);
+        return 0;
+    }
 
-	return tree->ref_counter;
+    return tree->ref_counter;
+}
+
+int main(){
+    int i = 0;
+    return 0;
 }

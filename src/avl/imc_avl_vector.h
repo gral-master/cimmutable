@@ -1,5 +1,5 @@
-#ifndef IMC_AVL_VECTOR
-#define IMC_AVL_VECTOR
+#ifndef imc_vector_avl
+#define imc_vector_avl
 
 #include "imc_avl.h"
 
@@ -8,43 +8,43 @@ typedef imc_key_t;
 //----------------------------------------------------------------------------//
 //----------------------------Data Structure----------------------------------//
 //----------------------------------------------------------------------------//
-typedef struct imc_avl_vector_t{
+typedef struct imc_vector_avl_t{
     imc_avl_node_t* tree;
     int size;
-} imc_avl_vector_t;
+} imc_vector_avl_t;
 
 
 //----------------------------------------------------------------------------//
 //--------------------------Vector functions----------------------------------//
 //----------------------------------------------------------------------------//
-imc_avl_vector_t* imc_avl_vector_create();
+imc_vector_avl_t* imc_vector_avl_create();
 
-int imc_avl_vector_size(imc_avl_vector_t* vec);
+int imc_vector_avl_size(imc_vector_avl_t* vec);
 
-imc_avl_vector_t* imc_avl_vector_update(imc_avl_vector_t* vec, int index, imc_data_t* data);
+imc_vector_avl_t* imc_vector_avl_update(imc_vector_avl_t* vec, int index, imc_data_t* data);
 
-imc_data_t* imc_avl_vector_lookup(imc_avl_vector_t* vec, int index);
+imc_data_t* imc_vector_avl_lookup(imc_vector_avl_t* vec, int index);
 
 /* stack operations */
 
 // add at the end <--- DOXYGENIZE PLEASE!
-imc_avl_vector_t* imc_avl_vector_push(imc_avl_vector_t* vec,
+imc_vector_avl_t* imc_vector_avl_push(imc_vector_avl_t* vec,
 			      imc_data_t* data);
 
-imc_avl_vector_t* imc_avl_vector_pop(imc_avl_vector_t* vec,
+imc_vector_avl_t* imc_vector_avl_pop(imc_vector_avl_t* vec,
 			     imc_data_t** data);
 
-int imc_avl_vector_split(imc_avl_vector_t* vec_in,
+int imc_vector_avl_split(imc_vector_avl_t* vec_in,
 		     int index,
-		     imc_avl_vector_t** vec_out1,
-		     imc_avl_vector_t** vec_out2);
+		     imc_vector_avl_t** vec_out1,
+		     imc_vector_avl_t** vec_out2);
 
-imc_avl_vector_t* imc_avl_vector_merge(imc_avl_vector_t* vec_front,
-			       imc_avl_vector_t* vec_tail);
+imc_vector_avl_t* imc_vector_avl_merge(imc_vector_avl_t* vec_front,
+			       imc_vector_avl_t* vec_tail);
 
 /* user-side memory management */
 
-int imc_avl_vector_unref(imc_avl_vector_t* vec);
+int imc_vector_avl_unref(imc_vector_avl_t* vec);
 
-void imc_avl_vector_dump(imc_avl_vector_t* vec);
+void imc_vector_avl_dump(imc_vector_avl_t* vec);
 #endif
