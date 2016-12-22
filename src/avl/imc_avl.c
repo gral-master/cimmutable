@@ -65,15 +65,21 @@ imc_avl_node_t* left_rotation(imc_avl_node_t* tree){
     return new_root;
 }
 
-//***********************COMPARE FUNCTION*************************************//
-int is_sup(imc_key_t* x, imc_key_t* y)
-{
-    return *x > *y;
+//----------------------------------------------------------------------------//
+//---------------------------Size Functions-----------------------------------//
+//----------------------------------------------------------------------------//
+int imc_avl_size(imc_avl_node_t* vec){
+    imc_avl_node_t* longest_branch = vec;
+    int size=0;
+    while(longest_branch != NULL){
+        size++;
+        if(longest_branch->balance==1)
+            longest_branch = longest_branch->right;
+        else
+            longest_branch = longest_branch->left;
+    }
+    return size;
 }
-//***********************COMPARE FUNCTION*************************************//
-
-
-
 
 //----------------------------------------------------------------------------//
 //-------------------------Lookup Functions-----------------------------------//
@@ -162,11 +168,13 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* vec,
     new_node->ref_counter = 1;
 
     if (diff > 0) { // We insert in the right branch.
-        new_node->right = imc_avl_insert(vec->right, data, key, comparator, prev_data);
+        new_node->right = imc_avl_insert(vec->right, data, key,
+                                         comparator, prev_data);
         new_node->left = vec->left;
         if(vec->left != NULL) vec->left->ref_counter++;
     } else { // diff < 0 => We insert in the left branch.
-        new_node->left = imc_avl_insert(vec->left, data, key, comparator, prev_data);
+        new_node->left = imc_avl_insert(vec->left, data, key,
+                                        comparator, prev_data);
         new_node->right = vec->right;
         if(vec->right != NULL) vec->right->ref_counter++;
     }
@@ -222,7 +230,6 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* vec,
     return new_node;
 }
 
-
 //----------------------------------------------------------------------------//
 //-------------------------Memory Management----------------------------------//
 //----------------------------------------------------------------------------//
@@ -238,6 +245,12 @@ int imc_avl_unref(imc_avl_node_t* tree){
     }
 
     return tree->ref_counter;
+}
+
+//***********************Test part FUNCTION***********************************//
+int is_sup(imc_key_t* x, imc_key_t* y)
+{
+    return *x > *y;
 }
 
 int main(){
