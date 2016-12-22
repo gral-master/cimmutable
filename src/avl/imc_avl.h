@@ -25,7 +25,8 @@ typedef struct imc_avl_node_t{
 //----------------------------------------------------------------------------//
 int imc_avl_size(imc_avl_node_t* vec);
 
-imc_data_t* imc_avl_lookup(imc_avl_node_t* vec, imc_key_t* key, int (*comparator)(imc_key_t*, imc_key_t*) );
+imc_data_t* imc_avl_lookup(imc_avl_node_t* vec, imc_key_t* key,
+                           int (*comparator)(imc_key_t*, imc_key_t*) );
 
 /* stack operations */
 
@@ -37,7 +38,9 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* vec,
                                 imc_data_t** prev_data);
 
 imc_avl_node_t* imc_avl_remove( imc_avl_node_t* vec,
-                                imc_data_t** data);
+                                imc_data_t** data
+                                int (*comparator)(imc_key_t*, imc_key_t*),
+                                imc_data_t** removed_data);
 
 int imc_avl_split(  imc_avl_node_t* vec_in,
                     imc_key_t* key,
