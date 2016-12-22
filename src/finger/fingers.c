@@ -20,13 +20,13 @@ fingernode_t* make_tree_node(int child_count, fingernode_t* children) {
   tn->ref_counter = 1;
   tn->tag = 0;
   tn->nb_children = 0;
-  tn->children = malloc(child_count * sizeof(tree_node_t));
-  memcpy(tn->children, children, child_count * sizeof(fingernode_t));
+  tn->children = malloc(child_count * sizeof(tree_node_t*));
+  memcpy(tn->children, children, child_count * sizeof(fingernode_t*));
   return res;
 }
 
 /**
- * Build a data node, which is an internal node in a side finger.
+ * Build a data node, which is a leaf node in a side finger.
  * Data are assumed unsafe and are binary-copied from input.
  * The reference to the node is assumed kept from this call (ref_counter is 1)
  */
@@ -37,8 +37,8 @@ fingernode_t* make_data_node(int data_count, finger_data_t* data) {
   dn->ref_counter = 1;
   dn->tag = 0;
   dn->nb_data = data_count;
-  dn->data = malloc(data_count * sizeof(data_node_t));
-  memcpy(dn->data, data, (data_count * sizeof(finger_data_t)));
+  dn->data = malloc(data_count * sizeof(data_node_t*));
+  memcpy(dn->data, data, (data_count * sizeof(finger_data_t*)));
   return res;
 }
 
@@ -66,8 +66,57 @@ void destroy_data_node(data_node_t* node) {
 }
 
 void destroy_deep_node(deep_t* deep) {
-  // Needs more logic?
   free(deep);
+}
+
+int unref_tree_node(tree_node_t* node) {
+  node->ref_counter--;
+  if (node->ref_counter) {
+    return 0;
+  }
+  for (int i=0; i<node->nb_children; i++) {
+    unref_fingernode(node->children[i]);
+  }
+  destroy_tree_node(node);
+  return 1;
+}
+
+int unref_data_node(data_node_t* node) {
+  node->ref_counter--;
+  if (node->ref_counter) {
+    return 0;
+  }
+  for (int i=0; i<node->nb_data; i++) {
+    unref_fingernode(node->data[i]);
+  }
+  destroy_data_node(node);
+  return 1;
+}
+
+int unref_fingernode(fingernode_t* node) {
+  switch(node->node_type) {
+  case TREE_NODE:
+    return unref_tree_node(node->content.tree_node);
+    break;
+  case DATA_NODE:
+    return unref_data_node(node->content.data_node);
+    break;
+  default: /* This should not happen (famous last words ??) */
+    fprintf(stderr, "UNKNOWN NODE TYPE");
+    return -1;
+  }
+}
+
+int unref_deep(deep_t* deep) {
+  deep->ref_counter--;
+  if (deep->ref_counter) {
+    return 0;
+  }
+  unref_fingernode(deep->left);
+  unref_fingernode(deep->right);
+  unref_deep(deep->deep_child);
+  destroy_deep_node(deep);
+  return 1;
 }
 
 deep_t* push(deep_t* tree, finger_data_t* value) {
