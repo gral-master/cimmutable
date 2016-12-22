@@ -3,10 +3,13 @@
 CC=gcc
 CFLAGS=-Wall -Wextra
 
-all: finger
+all: vector
 
-finger: fingers.c types.h
-	$(CC) $(CFLAGS) fingers.c -o fingers
+vector: fingers.o
+	$(CC) $(CFLAGS) fingers.o vector.c
+
+%.o: %.c
+	$(CC) $(CFLAGS) $<
 
 clean:
 	rm -rf *.o
