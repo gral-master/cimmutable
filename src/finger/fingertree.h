@@ -1,6 +1,5 @@
 #ifndef FINGER_H
 #define FINGER_H
-
 // Nodes
 enum node_type {NODE_TYPE, DATA_TYPE};
 
@@ -17,6 +16,13 @@ union true_node_t {
     void* data;  //typedef imc_data_t;
     node* internal_node[3];
 };
+
+
+typedef struct list_t {
+    node* elem;
+    struct list_t * next;
+} list;
+
 
 // Finger Tree (Single, Deep)
 enum ft_type {DEEP_TYPE, SINGLE_TYPE, EMPTY_TYPE};
@@ -68,4 +74,9 @@ view ft_delete(ft* fgt,int preorsuf);
 void copy_pref(ft*to,ft* from);
 void copy_suff(ft*to,ft* from);
 node ** get_right_infix(ft*res,int preorsuf, int inv);
+ft* concat(ft* ft1,ft* ft2);
+ft* concat_w_middle(ft* ft1, list* l,ft* ft2);
+list* nodes(list*l);
+list* to_listn(node*n);
+list* to_list(ft*fg,int preorsuf);
 #endif

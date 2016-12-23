@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "fingertree.h"
-
+#include "list.h"
 ft* create_empty() {
   ft* fgt = malloc(sizeof(ft));
   fgt->type = EMPTY_TYPE;
@@ -76,8 +76,10 @@ ft* ft_add(void* data, ft* fgt,int preorsuf) {
 /*
  * For the moment, only works for trees with 1 element */
 void node_display(node* node) {
-   if (node == NULL)
+  if (node == NULL){
     printf("NULL");
+    return;
+  }
   switch (node->type) {
    
   case DATA_TYPE:
@@ -146,6 +148,7 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data){
   ft*res;
   node**t;
   node**r;
+  int i;
   if(fgt->type==EMPTY_TYPE){
     res = create_single();
     res->true_ft->single=data;
@@ -170,26 +173,16 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data){
     int index=check_available_space(fgt,preorsuf);
     r=get_right_infix(res,preorsuf,0);
     t=get_right_infix(fgt,preorsuf,0);
-    /* if(preorsuf){ */
-    /*   t=fgt->true_ft->d->suffix; */
-    /*   r=res->true_ft->d->suffix; */
-    /* } */
-    /* else{ */
-    /*   t=fgt->true_ft->d->prefix; */
-    /*   r=res->true_ft->d->prefix; */
-    /* } */
-    int i;
+
     /* copy the pref and suff*/
     copy_pref(res,fgt);
     copy_suff(res,fgt);
     if(index==-1){
       node* new_node = create_node_node();
       int i;
-      ft_display(fgt);
       for(i=0;i<3;i++){
-	new_node->true_node->internal_node[i]=create_data_node();
-	/* node_display(fgt->true_ft->d->suffix[i+1]); */
 	new_node->true_node->internal_node[i] = t[i+1];
+	t[i+1]->ref_count++;
       }
       /* creating the new suffix or prefix*/
       r[0]=data;
@@ -209,7 +202,6 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data){
 	r[i+1]=r[i];
 
       /* add the new element*/
-      t[0]->ref_count--;
       r[0]=data;
     }
   }
@@ -296,7 +288,6 @@ view ft_delete(ft* fgt,int preorsuf){
 	    r[0]=t[index];
 	    t[index]->ref_count++;
 	    t=get_right_infix(fgt,preorsuf,0);
-	    if(preorsuf)copy_pref(res,fgt); else copy_suff(res,fgt);
 	     r=get_right_infix(res,preorsuf,1);
 	    r[index]=NULL;
 	  }
@@ -315,9 +306,11 @@ view ft_delete(ft* fgt,int preorsuf){
 	  t=get_right_infix(fgt,preorsuf,1);
 	  if(preorsuf) copy_pref(res,fgt); else copy_suff(res,fgt);
 	  tmp = fgt->true_ft->d->deeper->true_ft->single->true_node->internal_node;
-	  r[0]=tmp[0];
-	  r[1]=tmp[1];
-	  r[2]=tmp[2];
+	  int i;
+	  for(i=0;i<3;i++){
+	  r[i]=tmp[i];
+	  tmp[i]->ref_count++;
+	  }
 	  
 	}
 	else{
@@ -381,6 +374,134 @@ node ** get_right_infix(ft*res,int preorsuf, int inv){
   return r;
 }
 
+
+ft* concat(ft* ft1,ft* ft2){
+  ft* res;
+  list* l=NULL;
+  res = concat_w_middle(ft1,l,ft2);
+  return res;
+}
+ft* concat_w_middle(ft* ft1, list* l,ft* ft2){
+  ft* res;
+  node* x;
+  /*we treat the different base cases first*/
+  if(ft1->type==EMPTY_TYPE && l==NULL)
+    return ft2;
+  else if(ft1->type==EMPTY_TYPE){
+     x = first(l);
+    res = concat_w_middle(ft1,removel(l),ft2);
+    res =  add_elem_deep_recur(res,0,x);
+  }
+  else if(ft1->type==SINGLE_TYPE){
+    ft* tmp = create_empty();
+    res = concat_w_middle(tmp,l,ft2);
+    res =  add_elem_deep_recur(res,0,ft1->true_ft->single);
+
+  }
+  else if(l==NULL && ft2->type==EMPTY_TYPE){
+    return ft1;
+  }
+  else if(ft2->type==EMPTY_TYPE){
+    node* x = last(l);
+    res = concat_w_middle(ft1,remove_last(l),ft2);
+    res =  add_elem_deep_recur(res,1,x);
+  }
+  else if(ft2->type==SINGLE_TYPE){
+    ft* tmp = create_empty();
+    res = concat_w_middle(ft1,l,tmp);
+    res =  add_elem_deep_recur(res,1,ft2->true_ft->single);
+  }
+  else{
+    res = create_deep();
+    /*copy prefix*/
+    copy_pref(res,ft1);
+    /*copy suffix*/
+    copy_suff(res,ft2);
+
+    ft*deeper_tmp=create_empty();
+    /* nodes on list*/
+    list* l1 = to_list(ft1,1);
+    list* l2 = to_list(ft2,0);
+    l = conacat(l1,l);
+    l = conacat(l,l2);
+    
+    puts("before");
+    list_display(l);
+    l = nodes(l);
+    puts("after");
+    list_display(l);
+    
+    deeper_tmp = concat_w_middle(ft1->true_ft->d->deeper,l,ft2->true_ft->d->deeper);
+    res->true_ft->d->deeper = deeper_tmp;
+      }
+  
+  return res;
+}
+
+
+list* nodes(list*l){
+  node* tmp;
+  list* res;
+
+  if(l==NULL){
+    printf("nodes: error list NULL\n");
+    exit(-1);
+  }
+  else if(l->next==NULL){
+    printf("nodes: error list->next =  NULL\n");
+    exit(-1);
+  }
+  else if(l->next->next==NULL){
+
+    tmp = create_node_node();
+    tmp->true_node->internal_node[0]= l->elem;
+    tmp->true_node->internal_node[1]= l->next->elem;
+    tmp->true_node->internal_node[2]= NULL;
+     
+    l=removel(l);
+    l=removel(l);
+    res = add(tmp,l);
+   
+  }
+  else if(l->next->next->next==NULL){
+
+    tmp = create_node_node();
+    tmp->true_node->internal_node[0]= l->elem;
+    tmp->true_node->internal_node[1]= l->next->elem;
+    tmp->true_node->internal_node[2]= l->next->next->elem;
+    l=removel(l);
+    l=removel(l);
+    l=removel(l);
+    res = add(tmp,l);
+  }
+  else{
+
+    res = create_lempty();
+    tmp = create_node_node();
+    tmp->true_node->internal_node[0]= l->elem;
+    tmp->true_node->internal_node[1]= l->next->elem;
+     tmp->true_node->internal_node[2]= NULL;
+    l=removel(l);
+    l=removel(l);
+    res = nodes(l);
+    res = add(tmp,res);
+  }
+
+  return res;
+}
+
+
+list* to_list(ft* fg,int preorsuf){
+  node** r;
+  list*l=NULL;
+  if(preorsuf) r=fg->true_ft->d->suffix; else r=fg->true_ft->d->prefix;
+  int i;
+  for(i=0;i<4;i++){
+    l=add(r[i],l);
+  }
+  return l;
+
+}
 
 
   void checkInvariants() {
