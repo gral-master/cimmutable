@@ -57,9 +57,9 @@ struct view_t{
 
 
 ft* create_empty();
-ft* create_single();
+ft* create_single(node* n);
 ft* create_deep();
-node* create_data_node();
+node* create_data_node(void* data);
 node* create_node_node();
 /* preofsuff=0 for add on the left and 1 for an add on the right*/
 ft* ft_add(void* data,ft* fgt,int preorsuf);
@@ -73,10 +73,8 @@ int check_available_space(ft* fgt,int preorsuf);
 view ft_delete(ft* fgt,int preorsuf);
 void copy_pref(ft*to,ft* from);
 void copy_suff(ft*to,ft* from);
-node ** get_right_infix(ft*res,int preorsuf, int inv);
-ft* concat(ft* ft1,ft* ft2);
+node ** get_right_affix(ft*res,int preorsuf, int inv);
 ft* concat_w_middle(ft* ft1, list* l,ft* ft2);
 list* nodes(list*l);
-list* to_listn(node*n);
-list* to_list(ft*fg,int preorsuf);
+list* affix_to_list(ft*fg,int preorsuf);
 #endif

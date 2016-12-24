@@ -10,7 +10,7 @@ list* create_lempty();
 list* create_lelem();
 list* add(node* x,list* l);
 list* removel(list* l);
-list* conacat(list* l1, list* l2);
+list* concat(list* l1, list* l2);
 node* first(list* l);
 node* last(list* l);
 void list_display(list*l);

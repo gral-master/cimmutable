@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-c -Wall -g 
+CFLAGS=-c -Wall -g
 BDIR=bin
 ODIR=obj
 SRC:=$(wildcard $(SDIR)/*.c)
@@ -8,9 +8,9 @@ MKDIR=mkdir -p
 
 all: clean cfingertree
 
-cfingertree: $(ODIR)/main.o $(ODIR)/fingertree.o ../debug.o list.o
+cfingertree: $(ODIR)/main.o $(ODIR)/fingertree.o ../debug.o $(ODIR)/list.o
 	$(MKDIR) $(BDIR)
-	$(CC) -o $(BDIR)/test $(ODIR)/main.o $(ODIR)/fingertree.o list.o
+	$(CC) -o $(BDIR)/test $(ODIR)/main.o $(ODIR)/fingertree.o $(ODIR)/list.o
 
 $(ODIR)/%.o: %.c
 	$(MKDIR) $(ODIR)

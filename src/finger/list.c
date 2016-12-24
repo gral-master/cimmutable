@@ -7,7 +7,7 @@ list* create_lempty(){
   list*l = NULL;
   return l;
 }
-  
+
 
 list* create_lelem(){
   list* res = malloc(sizeof(list));
@@ -23,7 +23,7 @@ list* add(node* x, list* l){
   list* res = create_lelem();
   res->elem = x;
   res->next=NULL;
- 
+
   if(l==NULL)
     return res;
   res->next=l;
@@ -37,7 +37,7 @@ list* removel(list* l){
   iter=l->next;
   free(l);
   return iter;
-  
+
 }
 
 list* remove_last(list* l){
@@ -60,10 +60,10 @@ node* first(list* l){
    if(l==NULL)
     return NULL;
   return l->elem;
-  
+
 }
 
-list* conacat(list* l1, list* l2){
+list* concat(list* l1, list* l2){
   list* iter=l1;
   if(iter==NULL)
     return l2;
@@ -93,4 +93,3 @@ void list_display(list*l){
   list_display(l);
 
 }
-

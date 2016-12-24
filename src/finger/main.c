@@ -7,7 +7,7 @@
 #include "fingertree.h"
 #include "list.h"
 
-#define MAX_TEST 20
+#define MAX_TEST 50
 
 int main(int argc, char **argv)
 {
@@ -23,6 +23,6 @@ int main(int argc, char **argv)
     }
     ft_display(fingerTreeArray[MAX_TEST]);
     printf("\n");
-  
+
     return 0;
 }
