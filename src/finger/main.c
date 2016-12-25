@@ -42,7 +42,11 @@ int main(int argc, char **argv)
         ft_display(viewArray[i].fg);
         printf("\n");
     }
-     
+    
+    // ft_unref
+    for (int i = 0; i < MAX_ADD+1; i++) {
+        ft_unref(fingerTreeArray[i]);
+    }
     
     // ft_concat
     /* TODO

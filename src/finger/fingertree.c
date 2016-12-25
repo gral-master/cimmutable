@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "fingertree.h"
 #include "invariants.h"
 #include "list.h"
+#include "reflist.h"
 
 ft* create_empty() {
     ft* fgt = malloc(sizeof(ft));
@@ -160,6 +162,19 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data_node){
     affix*old_affix;
     affix*new_affix;
     int i;
+    
+    // Save the reference counter of nodes and deeper of fgt.
+    reflist* rl_fgt = rl_of_ft(fgt);
+    refdeep rd_fgt, rd_res;
+    if (fgt->type == DEEP_TYPE && fgt->true_ft->d->deeper != NULL) {
+        rd_fgt.elem = fgt->true_ft->d->deeper;
+        rd_fgt.ref = rd_fgt.elem->ref_count;
+    }
+    else {
+        rd_fgt.elem = NULL;
+        rd_fgt.ref = 0;
+    }
+    
     if(fgt->type==EMPTY_TYPE){
         res = create_single(data_node);
         res->size = data_node->size;
@@ -226,6 +241,21 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data_node){
             new_affix->size += data_node->size;
 
             res->size = res->true_ft->d->deeper->size + res->true_ft->d->prefix->size+res->true_ft->d->suffix->size;
+        }
+    }
+    
+    // Compare the reference counters of nodes and deeper of fgt (before the function) and res
+    reflist* rl_res = rl_of_ft(res);
+    inter_verify(rl_fgt, rl_res);
+    if (res->type == DEEP_TYPE && res->true_ft->d->deeper != NULL) {
+        rd_res.elem = res->true_ft->d->deeper;
+        rd_res.ref = rd_res.elem->ref_count;
+        
+        // Compare rd_res and rd_fgt
+        if (rd_fgt.elem != NULL) {
+            if (rd_fgt.elem == rd_res.elem) {
+                assert(rd_fgt.ref + 1 == rd_res.ref);
+            }
         }
     }
 
@@ -331,9 +361,90 @@ void* ft_lookup(ft* ft, int index) {
     return NULL;
 }
 
+void node_unref(node* n) {
+    if (n == NULL)
+        return;
+    
+    n->ref_count--;
+    
+    if (n->ref_count == 0) {
+        if (n->type == DATA_TYPE) {
+            //free(n->true_node->data);
+            free(n->true_node);
+            free(n);
+        }
+        else {
+            for (int i = 0; i < 4; i++) {
+                if (n->true_node->internal_node[i] == NULL)
+                    break;
+                
+                node_unref(n->true_node->internal_node[i]);
+            }
+            free(n->true_node);
+            free(n);
+        }
+    }
+}
+
+void ft_unref(ft* ft) {
+    // Preconditions & Invariants
+    checkInvariants(ft);
+    
+    ft->ref_count--;
+    
+    if (ft->ref_count == 0) {
+        if (ft->type == EMPTY_TYPE) {
+            free(ft);
+        }
+        else if (ft->type == SINGLE_TYPE) {
+            node_unref(ft->true_ft->single);
+        }
+        else {
+            // Prefix
+            for (int i = 0; i < 4; i++) {
+                if(ft->true_ft->d->prefix->nodes[i] == NULL)
+                    break;
+                
+                node_unref(ft->true_ft->d->prefix->nodes[i]);
+            }
+            free(ft->true_ft->d->prefix);
+            
+            // Deep
+            ft_unref(ft->true_ft->d->deeper);
+            
+            // Suffix
+            for (int i = 0; i < 4; i++) {
+                if(ft->true_ft->d->suffix->nodes[i] == NULL)
+                    break;
+                
+                node_unref(ft->true_ft->d->suffix->nodes[i]);
+            }
+            free(ft->true_ft->d->suffix);
+            
+            free(ft->true_ft);
+            free(ft);
+        }
+    }
+    
+    // Postconditions & Invariants
+    
+}
+
 view ft_delete(ft* fgt,int preorsuf){
     // Preconditions & Invariants
     checkInvariants(fgt);
+    
+    // Save the reference counter of nodes and deeper of fgt.
+    reflist* rl_fgt = rl_of_ft(fgt);
+    refdeep rd_fgt, rd_res;
+    if (fgt->type == DEEP_TYPE && fgt->true_ft->d->deeper != NULL) {
+        rd_fgt.elem = fgt->true_ft->d->deeper;
+        rd_fgt.ref = rd_fgt.elem->ref_count;
+    }
+    else {
+        rd_fgt.elem = NULL;
+        rd_fgt.ref = 0;
+    }
     
     ft* res;
     view stres;
@@ -471,6 +582,21 @@ view ft_delete(ft* fgt,int preorsuf){
     
     // Postconditions & Invariants
     checkInvariants(stres.fg);
+    
+    // Compare the reference counters of nodes and deeper of fgt (before the function) and res
+    reflist* rl_res = rl_of_ft(stres.fg);
+    inter_verify(rl_fgt, rl_res);
+    if (stres.fg->type == DEEP_TYPE && stres.fg->true_ft->d->deeper != NULL) {
+        rd_res.elem = stres.fg->true_ft->d->deeper;
+        rd_res.ref = rd_res.elem->ref_count;
+        
+        // Compare rd_res and rd_fgt
+        if (rd_fgt.elem != NULL) {
+            if (rd_fgt.elem == rd_res.elem) {
+                assert(rd_fgt.ref + 1 >= rd_res.ref);
+            }
+        }
+    }
     
     return stres;
 }

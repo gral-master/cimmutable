@@ -72,6 +72,7 @@ view ft_delete(ft*fgt,int preorsuf);
 ft* ft_concat(ft* fin1,ft* fin2);
 void ft_display(ft* fgt);
 void* ft_lookup(ft* ft, int index); //typedef imc_data_t;
+void ft_unref(ft* ft);
 void node_display(node* node);
 ft* add_elem_deep_recur(ft* fgt,int preorsuff,node*data);
 int check_available_space(ft* fgt,int preorsuf);

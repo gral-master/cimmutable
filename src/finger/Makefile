@@ -8,9 +8,9 @@ MKDIR=mkdir -p
 
 all: clean cfingertree
 
-cfingertree: $(ODIR)/main.o $(ODIR)/fingertree.o ../debug.o $(ODIR)/list.o $(ODIR)/invariants.o
+cfingertree: $(ODIR)/main.o $(ODIR)/fingertree.o ../debug.o $(ODIR)/list.o $(ODIR)/invariants.o $(ODIR)/reflist.o
 	$(MKDIR) $(BDIR)
-	$(CC) -o $(BDIR)/test $(ODIR)/main.o $(ODIR)/fingertree.o $(ODIR)/list.o $(ODIR)/invariants.o
+	$(CC) -o $(BDIR)/test $(ODIR)/main.o $(ODIR)/fingertree.o $(ODIR)/list.o $(ODIR)/invariants.o $(ODIR)/reflist.o
 
 $(ODIR)/%.o: %.c
 	$(MKDIR) $(ODIR)
