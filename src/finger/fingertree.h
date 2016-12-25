@@ -37,8 +37,13 @@ typedef struct {
 } ft;
 
 typedef struct {
-    node* prefix[4];
-    node* suffix[4];
+    node* nodes[4];
+    int size;
+} affix;
+
+typedef struct {
+    affix* prefix; // node* prefix[4];
+    affix* suffix; // node* suffix[4];
     ft* deeper;
 } deep;
 
@@ -50,7 +55,7 @@ union true_ft_t {
 typedef struct view_t view;
 
 struct view_t{
-  void* elem;
+  node* elem;
   ft* fg;
 };
 
@@ -66,14 +71,14 @@ ft* ft_add(void* data,ft* fgt,int preorsuf);
 view ft_delete(ft*fgt,int preorsuf);
 ft* ft_concat(ft* fin1,ft* fin2);
 void ft_display(ft* fgt);
+void* ft_lookup(ft* ft, int index); //typedef imc_data_t;
 void node_display(node* node);
-void checkInvariants();
 ft* add_elem_deep_recur(ft* fgt,int preorsuff,node*data);
 int check_available_space(ft* fgt,int preorsuf);
 view ft_delete(ft* fgt,int preorsuf);
 void copy_pref(ft*to,ft* from);
 void copy_suff(ft*to,ft* from);
-node ** get_right_affix(ft*res,int preorsuf, int inv);
+affix* get_right_affix(ft*res,int preorsuf, int inv);
 ft* concat_w_middle(ft* ft1, list* l,ft* ft2);
 list* nodes(list*l);
 list* affix_to_list(ft*fg,int preorsuf);
