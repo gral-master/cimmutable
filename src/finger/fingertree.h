@@ -83,4 +83,5 @@ affix* get_right_affix(ft*res,int preorsuf, int inv);
 ft* concat_w_middle(ft* ft1, list* l,ft* ft2);
 list* nodes(list*l);
 list* affix_to_list(ft*fg,int preorsuf);
+void invers_recursif(node*elem);
 #endif
