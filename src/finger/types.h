@@ -30,25 +30,23 @@ typedef struct fingernode_t_def{
 } fingernode_t;
 
 typedef struct single_t_def {
-  int ref_counter;
-  int tag;
-  data_node_t* child;
-} single_t;
+  data_node_t* data;
+} single_node_t;
 
 typedef struct deep_node_t_def {
-  int ref_counter;
-  int tag;
-  struct deep_t_def* deep_child;
   fingernode_t* left;
   fingernode_t* right;
 } deep_node_t;
 
 typedef struct deep_t_def {
   deep_type_t deep_type;
+  int ref_counter;
+  int tag;
   union {
-    single_t* single;
+    single_node_t* single;
     deep_node_t* deep_node;
   } content;
+  struct deep_t_def* deeper;
 } deep_t;
 
 /* Node creation */
