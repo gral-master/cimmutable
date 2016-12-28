@@ -205,6 +205,10 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data_node){
 	  }
 	  
 	  new_affix->nodes[0]=tmp;
+	  invers_recursif(simpl[0]);
+	  invers_recursif(simpl[1]);
+	  invers_recursif(simpl[2]);
+
 
 	}
 	
@@ -277,6 +281,22 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data_node){
     }
 
     return res;
+}
+
+void invers_recursif(node*elem){
+  if(elem->type==DATA_TYPE)
+    return;
+  else{
+    node**simpl=elem->true_node->internal_node;
+    node*tmp=simpl[0];
+    simpl[0]=simpl[2];
+    simpl[2]=tmp;
+    invers_recursif(simpl[0]);
+    invers_recursif(simpl[1]);
+    invers_recursif(simpl[2]);
+
+  }
+
 }
 
 /* checks if there is available space in the suffix of the deep
