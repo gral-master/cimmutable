@@ -6,7 +6,7 @@
 
 #include "fingertree.h"
 
-#define MAX_ADD 20
+#define MAX_ADD 6
 #define MAX_DELETE 5
 
 int main(int argc, char **argv)
@@ -23,37 +23,55 @@ int main(int argc, char **argv)
     for (int i = 1; i < MAX_ADD+1; i++) {
         fingerTreeArray[i] = ft_add((void*)&data[i-1],fingerTreeArray[i-1],0);
     }
-    
     ft_display(fingerTreeArray[MAX_ADD]);
-    printf("\n");
+    puts("\n****************************");
     
-    // ft_lookup
-    int index = MAX_ADD/2;
-    int* lookup_res = (int*)ft_lookup(fingerTreeArray[MAX_ADD], index);
-    printf("Lookup result for %d: %d\n", index, *lookup_res);
+     view tmp;
+     ft* fingerTreeArray1[MAX_ADD+1];
+     fingerTreeArray1[0]= fingerTreeArray[MAX_ADD];
+     ft_display(fingerTreeArray[MAX_ADD]);
+     for(int i = 1; i< 4;i++){
+      tmp= ft_delete(fingerTreeArray1[i-1],1);
+      fingerTreeArray1[i] = tmp.fg;
+      puts("");
+      node_display(tmp.elem);
+      puts("");
+      ft_display(fingerTreeArray1[i]);
+     }
     
-    // ft_delete
-    view viewArray[MAX_DELETE+1];
-    viewArray[0].fg = fingerTreeArray[MAX_ADD];
+    /* ft_display(fingerTreeArray[MAX_ADD]); */
+    /* printf("\n"); */
     
-    for (int i = 1; i < MAX_DELETE+1; i++) {
-        viewArray[i] = ft_delete(viewArray[i-1].fg, 1);
-        printf("removed: %d rest:\n",*((int*)viewArray[i].elem->true_node->data));
-        ft_display(viewArray[i].fg);
-        printf("\n");
-    }
+    /* // ft_lookup */
+    /* int index = MAX_ADD/2; */
+    /* int* lookup_res = (int*)ft_lookup(fingerTreeArray[MAX_ADD], index); */
+    /* printf("Lookup result for %d: %d\n", index, *lookup_res); */
     
-    // ft_unref
-    for (int i = 0; i < MAX_ADD+1; i++) {
-        ft_unref(fingerTreeArray[i]);
-    }
+    /* // ft_delete */
+    /* view viewArray[MAX_DELETE+1]; */
+    /* viewArray[0].fg = fingerTreeArray[MAX_ADD]; */
+    
+    /* for (int i = 1; i < MAX_DELETE+1; i++) { */
+    /*     viewArray[i] = ft_delete(viewArray[i-1].fg, 1); */
+    /*     printf("removed: %d rest:\n",*((int*)viewArray[i].elem->true_node->data)); */
+    /*     ft_display(viewArray[i].fg); */
+    /*     printf("\n"); */
+    /* } */
+    
+    /* // ft_unref */
+    /* for (int i = 0; i < MAX_ADD+1; i++) { */
+    /*     ft_unref(fingerTreeArray[i]); */
+    /* } */
     
     // ft_concat
-    /* TODO
-    ft* concat_res = ft_concat(fingerTreeArray[MAX_ADD], fingerTreeArray[MAX_ADD-1]);
-    ft_display(concat_res);
-    printf("\n");
-     */
-    
+   //   TODO
+    /* puts("////////////////////////////////"); */
+    /* ft_display(fingerTreeArray[MAX_ADD]); */
+    /* puts("////////////////////////////////"); */
+    /* ft_display(fingerTreeArray[MAX_ADD-1]); */
+    /* puts("************************************"); */
+    /* ft* concat_res = ft_concat(fingerTreeArray[MAX_ADD], fingerTreeArray[MAX_ADD-1]); */
+    /* ft_display(concat_res); */
+    /* printf("\n");     */
     return 0;
 }

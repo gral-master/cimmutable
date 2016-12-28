@@ -190,7 +190,24 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data_node){
             old_affix=res->true_ft->d->prefix;
         }
         fgt->true_ft->single->ref_count++;
-        new_affix->nodes[0] = fgt->true_ft->single;
+	if(fgt->true_ft->single->type==DATA_TYPE)
+
+	  new_affix->nodes[0] = fgt->true_ft->single;
+	else{
+	  node*tmp=create_node_node();
+	  tmp->size=0;
+	  node**simpl=fgt->true_ft->single->true_node->internal_node;
+	  for(int i=0;i<3;i++){
+	    int j=2-i;
+	  tmp->true_node->internal_node[i]=simpl[j];
+	  tmp->size+=simpl[j]->size; 
+	  simpl[i]->ref_count++;
+	  }
+	  
+	  new_affix->nodes[0]=tmp;
+
+	}
+	
         old_affix->nodes[0] = data_node;
         new_affix->size = fgt->true_ft->single->size;
         old_affix->size = data_node->size;
@@ -451,6 +468,7 @@ view ft_delete(ft* fgt,int preorsuf){
     affix*old_affix;
     affix*new_affix;
     if(fgt->type==EMPTY_TYPE){
+      /* */
         res = create_empty();
         stres.fg=res;
         stres.elem=NULL;
@@ -507,10 +525,29 @@ view ft_delete(ft* fgt,int preorsuf){
                     res=create_deep();
                     new_affix=get_right_affix(res,preorsuf,0);
                     old_affix=get_right_affix(fgt,preorsuf,1);
-                    new_affix->nodes[0]=old_affix->nodes[index];
-                    new_affix->size = old_affix->nodes[index]->size;
+		    if(old_affix->nodes[index]->type==DATA_TYPE)
+		      {
+		    	new_affix->nodes[0]=old_affix->nodes[index];
+			old_affix->nodes[index]->ref_count++;
+		      }
+		    else{
+		      node* tmp = create_node_node();
+		      node**simpl=old_affix->nodes[index]->true_node->internal_node;
+		      for(int i=0;i<3;i++){
+			int j=2-i;
+			tmp->true_node->internal_node[i]=simpl[j];
+			tmp->size+=simpl[j]->size; 
+			simpl[i]->ref_count++;
+		      }
+	 
+		      
+		      new_affix->nodes[0] = tmp;
+		    }
+
+		    
+		    new_affix->size = old_affix->nodes[index]->size;
                     
-                    old_affix->nodes[index]->ref_count++;
+				
                     if(preorsuf) {
                         copy_pref(res,fgt);
                     } else {
@@ -543,12 +580,17 @@ view ft_delete(ft* fgt,int preorsuf){
                 }
                 tmp = fgt->true_ft->d->deeper->true_ft->single->
                 true_node->internal_node;
-                int i;
+                int i,j;
                 for(i=0;i<3;i++){
+		  if(preorsuf)
+		    j=2-i;
+		  else
+		    j=i;
                     if (tmp[i] == NULL) break;
-                    new_affix->size += tmp[i]->size;
-                    new_affix->nodes[i]=tmp[i];
-                    tmp[i]->ref_count++;
+		    if(preorsuf)
+                    new_affix->size += tmp[j]->size;
+                    new_affix->nodes[i]=tmp[j];
+                    tmp[j]->ref_count++;
                 }
                 
                 res->size = res->true_ft->d->prefix->size + res->true_ft->d->suffix->size + res->true_ft->d->deeper->size;
@@ -566,6 +608,7 @@ view ft_delete(ft* fgt,int preorsuf){
                 new_affix=get_right_affix(res,preorsuf,0);
                 getres = (tmp.elem)->true_node->internal_node;
                 for(int i=0;i<3;i++){
+		 
                     if (getres[i] == NULL) break;
                     
                     new_affix->size += getres[i]->size;
@@ -697,15 +740,8 @@ ft* concat_w_middle(ft* ft1, list* l,ft* ft2){
         list* l2 = affix_to_list(ft2,0);
         l = concat(l1,l);
         l = concat(l,l2);
-
-        puts("before");
-        list_display(l);
         l = nodes(l);
-        puts("after");
-        list_display(l);
-
-        deeper_tmp = concat_w_middle(ft1->true_ft->d->deeper,l,
-            ft2->true_ft->d->deeper);
+        deeper_tmp = concat_w_middle(ft1->true_ft->d->deeper,l,ft2->true_ft->d->deeper);
         res->true_ft->d->deeper = deeper_tmp;
     }
     return res;
