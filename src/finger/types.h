@@ -3,6 +3,7 @@
 
 typedef int finger_data_t;
 typedef enum {TREE_NODE, DATA_NODE} node_type_t;
+typedef enum {SINGLE_NODE, DEEP_NODE} deep_type_t;
 
 struct fingernode_t_def;
 
@@ -10,7 +11,7 @@ typedef struct {
   int ref_counter;
   int tag;
   int nb_data;
-  struct fingernode_t_def** data;
+  finger_data_t* data;
 } data_node_t;
 
 typedef struct {
@@ -28,12 +29,26 @@ typedef struct fingernode_t_def{
   } content;
 } fingernode_t;
 
-typedef struct deep_t_def {
+typedef struct single_t_def {
+  int ref_counter;
+  int tag;
+  data_node_t* child;
+} single_t;
+
+typedef struct deep_node_t_def {
   int ref_counter;
   int tag;
   struct deep_t_def* deep_child;
   fingernode_t* left;
   fingernode_t* right;
+} deep_node_t;
+
+typedef struct deep_t_def {
+  deep_type_t deep_type;
+  union {
+    single_t* single;
+    deep_node_t* deep_node;
+  } content;
 } deep_t;
 
 /* Node creation */
@@ -44,5 +59,8 @@ deep_t* make_deep();
 /* Node dereferencing */
 int unref_fingernode(fingernode_t* node);
 int unref_deep(deep_t* deep);
+
+/* Utilities */
+void dump_deep(deep_t* deep);
 
 #endif
