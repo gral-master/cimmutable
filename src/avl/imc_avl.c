@@ -1,5 +1,6 @@
 #include "imc_avl.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 imc_avl_node_t* immutable_right_rotation(imc_avl_node_t* tree){
     if(tree == NULL || tree->left == NULL){
@@ -420,6 +421,100 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
     }
     return new_node;
 }
+
+//----------------------------------------------------------------------------//
+//-------------------------Dump Function--------------------------------------//
+//----------------------------------------------------------------------------//
+
+
+
+
+int _print_t( imc_avl_node_t *tree,
+              int is_left, 
+              int offset, 
+              int depth, 
+              char s[20][255],
+              void (*print)(imc_key_t*)) {
+
+    char b[20];
+    int width = 5;
+
+    if (!tree) {
+        return 0;
+    }
+
+    // use the print function from parameter
+    print(tree->key);
+    //sprintf(b, "(%03d)", tree->key);
+
+    int left  = _print_t(tree->left,  1, offset,                depth + 1, s, print);
+    int right = _print_t(tree->right, 0, offset + left + width, depth + 1, s, print);
+
+#ifdef COMPACT
+    for (int i = 0; i < width; i++) {
+        s[depth][offset + left + i] = b[i];
+    }
+
+    if (depth && is_left) {
+
+        for (int i = 0; i < width + right; i++) {
+            s[depth - 1][offset + left + width/2 + i] = '-';
+        }
+
+        s[depth - 1][offset + left + width/2] = '.';
+
+    } else if (depth && !is_left) {
+
+        for (int i = 0; i < left + width; i++) {
+            s[depth - 1][offset - width/2 + i] = '-';
+        }
+
+        s[depth - 1][offset + left + width/2] = '.';
+    }
+#else
+    for (int i = 0; i < width; i++) {
+        s[2 * depth][offset + left + i] = b[i];
+    }
+
+    if (depth && is_left) {
+
+        for (int i = 0; i < width + right; i++)
+            s[2 * depth - 1][offset + left + width/2 + i] = '-';
+
+        s[2 * depth - 1][offset + left + width/2] = '+';
+        s[2 * depth - 1][offset + left + width + right + width/2] = '+';
+
+    } else if (depth && !is_left) {
+
+        for (int i = 0; i < left + width; i++) {
+            s[2 * depth - 1][offset - width/2 + i] = '-';
+        }
+
+        s[2 * depth - 1][offset + left + width/2] = '+';
+        s[2 * depth - 1][offset - width/2 - 1] = '+';
+    }
+#endif
+
+    return left + width + right;
+}
+
+
+void imc_avl_dump(imc_avl_node_t* tree,
+                void (*print)(imc_key_t*)) {
+
+    char s[20][255];
+    for (int i = 0; i < 20; i++) {
+        sprintf(s[i], "%80s", " ");
+    }
+
+    _print_t(tree, 0, 0, 0, s, print);
+
+    for (int i = 0; i < 20; i++) {
+        printf("%s\n", s[i]);
+    }
+
+}
+
 
 //----------------------------------------------------------------------------//
 //-------------------------Memory Management----------------------------------//

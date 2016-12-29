@@ -54,5 +54,6 @@ imc_avl_node_t* imc_avl_merge(  imc_avl_node_t* tree_front,
 
 int imc_avl_unref(imc_avl_node_t* tree);
 
-void imc_avl_dump(imc_avl_node_t* tree);
+void imc_avl_dump(imc_avl_node_t* tree,
+                  void (*print)(imc_key_t*));
 #endif
