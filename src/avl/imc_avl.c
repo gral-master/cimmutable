@@ -136,6 +136,7 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
                                 // Data replaced during the insertion
                                 imc_data_t** prev_data) {
 
+    printf("%d\n", *key);
     imc_avl_node_t* new_node = malloc(sizeof(imc_avl_node_t));
     // we add a new node as a leaf
     if (tree == NULL) {
@@ -148,7 +149,12 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
         return new_node;
     }
     // we go through an internal node
+
+    
+
     int diff = comparator(key, tree->key);
+
+
 
     if(diff == 0){ // The current node have the same key than the parameter.
         // We duplicate the node and replace the data.
@@ -165,10 +171,13 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
         return new_node;
 
     }
+
+    
     // we recreate the current node
     new_node->data = tree->data;
     new_node->key = tree->key;
     new_node->ref_counter = 1;
+
 
     if (diff > 0) { // We insert in the right branch.
         new_node->right = imc_avl_insert(tree->right, data, key,
@@ -181,6 +190,8 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
         new_node->right = tree->right;
         if(tree->right != NULL) tree->right->ref_counter++;
     }
+
+
 
     // Now we rebalance the tree.
     if(*prev_data != NULL){ // The structure of the tree wasn't modify.
@@ -229,6 +240,7 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
             }
         }
     }
+
 
     return new_node;
 }
@@ -434,7 +446,7 @@ int _print_t( imc_avl_node_t *tree,
               int offset, 
               int depth, 
               char s[20][255],
-              void (*print)(imc_key_t*)) {
+              void (*print)(imc_key_t*, char* b)) {
 
     char b[20];
     int width = 5;
@@ -444,7 +456,7 @@ int _print_t( imc_avl_node_t *tree,
     }
 
     // use the print function from parameter
-    print(tree->key);
+    print(tree->key, b);
     //sprintf(b, "(%03d)", tree->key);
 
     int left  = _print_t(tree->left,  1, offset,                depth + 1, s, print);
@@ -500,10 +512,13 @@ int _print_t( imc_avl_node_t *tree,
 
 
 void imc_avl_dump(imc_avl_node_t* tree,
-                void (*print)(imc_key_t*)) {
+                void (*print)(imc_key_t*, char* b)) {
 
     char s[20][255];
-    for (int i = 0; i < 20; i++) {
+
+    printf("*************************************\n");
+
+        for (int i = 0; i < 20; i++) {
         sprintf(s[i], "%80s", " ");
     }
 
@@ -512,6 +527,8 @@ void imc_avl_dump(imc_avl_node_t* tree,
     for (int i = 0; i < 20; i++) {
         printf("%s\n", s[i]);
     }
+
+    printf("*************************************\n");
 
 }
 
@@ -539,7 +556,7 @@ int is_sup(imc_key_t* x, imc_key_t* y)
     return *x > *y;
 }
 
-int main(){
+/*int main(){
     int i = 0;
     return 0;
-}
+}*/
