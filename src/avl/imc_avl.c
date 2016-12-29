@@ -116,18 +116,18 @@ imc_avl_node_t *mutable_right_rotation(imc_avl_node_t* tree){
     imc_avl_node_t* temp = tree->left;
     tree->left = temp->right;
     temp->right = tree;
-    return tree;
+    return temp;
 }
 
 // Mutable left rotation
 imc_avl_node_t *mutable_left_rotation(imc_avl_node_t* tree){
-    if(tree->left == NULL){
+    if(tree->right == NULL){
         return tree;
     }
     imc_avl_node_t* temp = tree->right;
     tree->right = temp->left;
     temp->left = tree;
-    return tree;
+    return temp;
 }
 
 imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
@@ -136,7 +136,6 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
                                 // Data replaced during the insertion
                                 imc_data_t** prev_data) {
 
-    printf("%d\n", *key);
     imc_avl_node_t* new_node = malloc(sizeof(imc_avl_node_t));
     // we add a new node as a leaf
     if (tree == NULL) {
@@ -150,7 +149,7 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
     }
     // we go through an internal node
 
-    
+
 
     int diff = comparator(key, tree->key);
 
@@ -172,7 +171,7 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
 
     }
 
-    
+
     // we recreate the current node
     new_node->data = tree->data;
     new_node->key = tree->key;
@@ -192,7 +191,6 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
     }
 
 
-
     // Now we rebalance the tree.
     if(*prev_data != NULL){ // The structure of the tree wasn't modify.
         new_node->balance = tree->balance;
@@ -201,16 +199,18 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
     // The structure of the tree was modify.
     if(diff > 0){ // Case where the right branch was modify.
         // The size of the right branch was unchanged.
-        if(tree->right->balance == new_node->right->balance
-          || new_node->right->balance == 0){
+        if(  tree->right != NULL && (new_node->right->balance == 0  ||
+            tree->right->balance == new_node->right->balance)){
             new_node->balance = tree->balance;
-        } else { // The size of the right branch have increase
+        } else {
+            // The size of the right branch have increase
             if(tree->balance == 1){ // Rotation is needed
                 new_node->balance = 0;
-                new_node->right->balance = 0;
                 if(new_node->right->balance == 1){
+                new_node->right->balance = 0;
                     new_node = mutable_left_rotation(new_node);
                 } else {
+                    new_node->right->balance = 0;
                     new_node->right->left->balance = 0;
                     new_node->right = mutable_right_rotation(new_node->right);
                     new_node = mutable_left_rotation(new_node);
@@ -221,16 +221,17 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
         }
     } else { // diff < 0 => Case where the left branch was modify.
         // The size of the left branch was unchanged.
-        if(tree->left->balance == new_node->left->balance
-          || new_node->left->balance == 0){
+        if(tree->left != NULL && (new_node->left->balance == 0 ||
+            tree->left->balance == new_node->left->balance)){
             new_node->balance = tree->balance;
         } else { // The size of the left branch have increase
             if(tree->balance == -1){ // Rotation is needed
                 new_node->balance = 0;
-                new_node->left->balance = 0;
                 if(new_node->left->balance == -1){
+                new_node->left->balance = 0;
                     new_node = mutable_right_rotation(new_node);
                 } else {
+                    new_node->left->balance = 0;
                     new_node->left->right->balance = 0;
                     new_node->left = mutable_left_rotation(new_node->left);
                     new_node = mutable_right_rotation(new_node);
@@ -240,7 +241,6 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
             }
         }
     }
-
 
     return new_node;
 }
@@ -442,9 +442,9 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
 
 
 int _print_t( imc_avl_node_t *tree,
-              int is_left, 
-              int offset, 
-              int depth, 
+              int is_left,
+              int offset,
+              int depth,
               char s[20][255],
               void (*print)(imc_key_t*, char* b)) {
 
@@ -463,13 +463,14 @@ int _print_t( imc_avl_node_t *tree,
     int right = _print_t(tree->right, 0, offset + left + width, depth + 1, s, print);
 
 #ifdef COMPACT
-    for (int i = 0; i < width; i++) {
+    int i;
+    for (i = 0; i < width; i++) {
         s[depth][offset + left + i] = b[i];
     }
 
     if (depth && is_left) {
 
-        for (int i = 0; i < width + right; i++) {
+        for (i = 0; i < width + right; i++) {
             s[depth - 1][offset + left + width/2 + i] = '-';
         }
 
@@ -477,20 +478,21 @@ int _print_t( imc_avl_node_t *tree,
 
     } else if (depth && !is_left) {
 
-        for (int i = 0; i < left + width; i++) {
+        for (i = 0; i < left + width; i++) {
             s[depth - 1][offset - width/2 + i] = '-';
         }
 
         s[depth - 1][offset + left + width/2] = '.';
     }
 #else
-    for (int i = 0; i < width; i++) {
+    int i;
+    for ( i = 0; i < width; i++) {
         s[2 * depth][offset + left + i] = b[i];
     }
 
     if (depth && is_left) {
 
-        for (int i = 0; i < width + right; i++)
+        for ( i = 0; i < width + right; i++)
             s[2 * depth - 1][offset + left + width/2 + i] = '-';
 
         s[2 * depth - 1][offset + left + width/2] = '+';
@@ -498,7 +500,7 @@ int _print_t( imc_avl_node_t *tree,
 
     } else if (depth && !is_left) {
 
-        for (int i = 0; i < left + width; i++) {
+        for (i = 0; i < left + width; i++) {
             s[2 * depth - 1][offset - width/2 + i] = '-';
         }
 
@@ -513,18 +515,18 @@ int _print_t( imc_avl_node_t *tree,
 
 void imc_avl_dump(imc_avl_node_t* tree,
                 void (*print)(imc_key_t*, char* b)) {
-
+    int i;
     char s[20][255];
 
     printf("*************************************\n");
 
-        for (int i = 0; i < 20; i++) {
+        for (i = 0; i < 20; i++) {
         sprintf(s[i], "%80s", " ");
     }
 
     _print_t(tree, 0, 0, 0, s, print);
 
-    for (int i = 0; i < 20; i++) {
+    for (i = 0; i < 20; i++) {
         printf("%s\n", s[i]);
     }
 

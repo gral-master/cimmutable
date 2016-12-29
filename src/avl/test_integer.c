@@ -24,9 +24,10 @@ int main ()
 	imc_key_t key[6] = {10, 4, 6, 12, 14, 8};
 
 	imc_avl_node_t* tree = NULL;
-
-	for (int i = 0 ; i < 6 ; i++)
+    int i;
+	for (i = 0 ; i < 6 ; i++)
 	{
+        replace = NULL;
 		tree = imc_avl_insert(tree, &data[i], &key[i], &compare, &replace);
 		imc_avl_dump(tree, print);
 	}
