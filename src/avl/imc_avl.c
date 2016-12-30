@@ -410,13 +410,18 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
         return NULL;
     }
 
-printf("Test1\n");
     int diff = comparator(key, tree->key);
     imc_avl_node_t* new_node = malloc(sizeof(imc_avl_node_t));
     new_node->ref_counter = 1;
     // The case where the current node is the node
     if(diff == 0){
-        imc_avl_node_t* replacement;
+        *removed_data = tree->data;
+        if(tree->right == NULL){
+            if(tree->left != NULL) tree->left->ref_counter++;
+            free(new_node);
+            return tree->left;
+        }
+        imc_avl_node_t* replacement=NULL;
         imc_avl_node_t* new_right =remove_lowest_node(tree->right,&replacement);
         new_node->data = replacement->data;
         new_node->key = replacement->key;
@@ -438,20 +443,19 @@ printf("Test1\n");
         } else {
             imc_avl_node_t* new_left = imc_avl_remove(tree->left,key,
                                                       comparator,removed_data);
-            new_node->right = new_left;
+            new_node->left = new_left;
             new_node->right = tree->right;
             if(tree->right != NULL) tree->right->ref_counter++;
         }
         //printf("Test12\n");
     }
 
-    printf("Test2\n");
-
     // The gestion of the balance.
     if(diff < 0){ // the case where we have modify the left branch.
         // if the son's size didn't change then the current node
         // have the same balance than before.
-        if(new_node->left->balance != 0 || tree->left->balance == 0){
+        if(new_node->left != NULL &&
+            (new_node->left->balance != 0 || tree->left->balance == 0)){
             new_node->balance = tree->balance;
         } else { // The size of the left branch have changed.
             if(tree->balance != 1){
@@ -487,9 +491,13 @@ printf("Test1\n");
     } else { // the case where we have modify the right branch.
         // if the son's size didn't change then the current node
         // have the same balance than before.
-        if(new_node->right->balance != 0 || tree->right->balance == 0){
+        printf("Je suis ici\n");
+        if(new_node->right != NULL &&
+            (new_node->right->balance != 0 || tree->right->balance == 0)){
+                printf("tree->right->balance = %d\n",*tree->right->key );
             new_node->balance = tree->balance;
         } else { // The size of the right branch have changed.
+            printf("Sinon\n" );
             if(tree->balance != -1){
                 new_node->balance = tree->balance - 1;
             } else { // A right rotation is needed.
