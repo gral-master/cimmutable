@@ -60,7 +60,6 @@ struct view_t{
 };
 
 
-
 ft* create_empty();
 ft* create_single(node* n);
 ft* create_deep();
@@ -84,4 +83,8 @@ ft* concat_w_middle(ft* ft1, list* l,ft* ft2);
 list* nodes(list*l);
 list* affix_to_list(ft*fg,int preorsuf);
 void invers_recursif(node*elem);
+void add_elems_node(node* new_node,affix* old_affix,int preorsuf );
+void update_affix(affix* new_affix,affix* old_affix,int preofsuf,node* data_node);
+void shift_elements(affix* newaffix,int index,int preorsuf);
+void remove_from_affix(affix* new_affix,affix* old_affix,int index,int preorsuf);
 #endif

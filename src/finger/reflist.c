@@ -55,7 +55,7 @@ void inter_verify(reflist* rl_fgt, reflist* rl_res) {
                 // TODO
                 // It should be == instead of <=
                 // But ft_delete does not yet work when it is ==
-                assert(tmp1->ref + 1 <= tmp2->ref);
+	      assert(tmp1->ref + 1 <= tmp2->ref);
                 break;
             }
         }

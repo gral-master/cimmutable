@@ -4,6 +4,8 @@
 #include "fingertree.h"
 
 void checkSizeNode(node* n) {
+
+
     if (n->type == DATA_TYPE) {
         assert(n->size==1);
     } else {
@@ -23,16 +25,14 @@ void checkSizeNode(node* n) {
 
 void checkSizeAffix(affix* a) {
     int predictedSize = 0;
-    
     for (int i = 0; i < 4; i++) {
         if (a->nodes[i] != NULL) {
             checkSizeNode(a->nodes[i]);
             predictedSize += a->nodes[i]->size;
         }
-        else
-            break;
+       
+	
     }
-    
     assert(predictedSize == a->size);
 }
 

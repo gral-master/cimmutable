@@ -6,7 +6,7 @@
 
 #include "fingertree.h"
 
-#define MAX_ADD 100
+#define MAX_ADD 50
 #define MAX_DELETE 5
 
 int main(int argc, char **argv)
@@ -21,22 +21,24 @@ int main(int argc, char **argv)
     
     fingerTreeArray[0] = create_empty();
     for (int i = 1; i < MAX_ADD+1; i++) {
-        fingerTreeArray[i] = ft_add((void*)&data[i-1],fingerTreeArray[i-1],0);
+         fingerTreeArray[i] = ft_add((void*)&data[i-1],fingerTreeArray[i-1],1);
+	 ft_display(fingerTreeArray[i]);
+	 puts("\n****************************");
     }
-    ft_display(fingerTreeArray[MAX_ADD]);
-    puts("\n****************************");
+   
     
      view tmp;
      ft* fingerTreeArray1[MAX_ADD+1];
      fingerTreeArray1[0]= fingerTreeArray[MAX_ADD];
      ft_display(fingerTreeArray[MAX_ADD]);
      for(int i = 1; i< MAX_ADD+1;i++){
-      tmp= ft_delete(fingerTreeArray1[i-1],1);
+      tmp= ft_delete(fingerTreeArray1[i-1],0);
       fingerTreeArray1[i] = tmp.fg;
-      puts("");
+      printf("\nelem: ");
       node_display(tmp.elem);
-      puts("");
+      printf("\ntree: ");
       ft_display(fingerTreeArray1[i]);
+      printf("\n");
      }
     
     /* ft_display(fingerTreeArray[MAX_ADD]); */
