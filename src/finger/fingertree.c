@@ -271,7 +271,7 @@ void shift_elements(affix* new_affix,int index,int preorsuf){
 void update_affix(affix* new_affix,affix* old_affix,int preorsuf,node* data_node){
   if(preorsuf){
     new_affix->nodes[3]=data_node;
-    new_affix->nodes[2]=old_affix->nodes[0];
+    new_affix->nodes[2]=old_affix->nodes[3];
     new_affix->nodes[1]=NULL;
     new_affix->nodes[0]=NULL;
     new_affix->size=data_node->size + old_affix->nodes[3]->size;
@@ -290,8 +290,8 @@ void add_elems_node(node* new_node,affix* old_affix,int preorsuf ){
   int i;
   if(preorsuf){
     for(i=2;i>=0;i--){
-      new_node->true_node->internal_node[i] = old_affix->nodes[i+1];
-      new_node->size += old_affix->nodes[i+1]->size;
+      new_node->true_node->internal_node[i] = old_affix->nodes[i];
+      new_node->size += old_affix->nodes[i]->size;
     }
   }
   else{

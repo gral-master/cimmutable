@@ -6,18 +6,19 @@
 
 #include "fingertree.h"
 
-#define MAX_ADD 100
+#define MAX_ADD 10
 #define MAX_DELETE 5
 
 int main(int argc, char **argv)
 {
     // ft_add
-    int data[MAX_ADD];
-    for (int i = 0; i < MAX_ADD; i++) {
+    int data[2*MAX_ADD];
+    for (int i = 0; i < 2*MAX_ADD; i++) {
         data[i] = i * 5;
     }
 
     ft* fingerTreeArray[MAX_ADD+1];
+    ft* fingerTreeArray2[MAX_ADD+1];
     
     fingerTreeArray[0] = create_empty();
     for (int i = 1; i < MAX_ADD+1; i++) {
@@ -25,9 +26,19 @@ int main(int argc, char **argv)
 	 ft_display(fingerTreeArray[i]);
 	 puts("\n****************************");
     }
-   
+
+    /* fingerTreeArray2[0] = create_empty(); */
+    /* for (int i = 1; i < MAX_ADD+1; i++) { */
+    /*   fingerTreeArray2[i] = ft_add((void*)&data[MAX_ADD+i],fingerTreeArray2[i-1],1); */
+    /* 	 ft_display(fingerTreeArray2[i]); */
+    /* 	 puts("\n****************************"); */
+    /* } */
+
+    /* puts("concat"); */
+    /* ft* res = ft_concat(fingerTreeArray[MAX_ADD],fingerTreeArray2[MAX_ADD]); */
+    /*   ft_display(res); */
     
-     view tmp;
+    view tmp;
      ft* fingerTreeArray1[MAX_ADD+1];
      fingerTreeArray1[0]= fingerTreeArray[MAX_ADD];
      ft_display(fingerTreeArray[MAX_ADD]);
