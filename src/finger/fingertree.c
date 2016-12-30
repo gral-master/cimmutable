@@ -581,12 +581,13 @@ view ft_delete(ft* fgt,int preorsuf){
 		      if(preorsuf) index--;
 		      else  index++;
                     }
+		    
                     res=create_deep();
                     new_affix=get_right_affix(res,preorsuf,0);
                     old_affix=get_right_affix(fgt,preorsuf,1);
 		    if(preorsuf)new_affix->nodes[3]=old_affix->nodes[index];
 		    else new_affix->nodes[0]=old_affix->nodes[index];
-		    old_affix->nodes[index]->ref_count++;
+		    /*old_affix->nodes[index]->ref_count++;*/
 		    
 		    /* if(old_affix->nodes[index]->type==DATA_TYPE)*/
 		    /*   { */
@@ -614,6 +615,8 @@ view ft_delete(ft* fgt,int preorsuf){
                     new_affix->size -= new_affix->nodes[index]->size;
                     new_affix->nodes[index]=NULL;
                     res->size = res->true_ft->d->prefix->size + res->true_ft->d->suffix->size + res->true_ft->d->deeper->size;
+		    
+
                 }
 		else{
                     // There is only 1 element on the other side
