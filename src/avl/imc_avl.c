@@ -325,6 +325,7 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
         return NULL;
     }
 
+printf("Test1\n");
     int diff = comparator(key, tree->key);
     imc_avl_node_t* new_node = malloc(sizeof(imc_avl_node_t));
     new_node->ref_counter = 1;
@@ -356,6 +357,8 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
             if(tree->right != NULL) tree->right->ref_counter++;
         }
     }
+
+    printf("Test2\n");
 
     // The gestion of the balance.
     if(diff < 0){ // the case where we have modify the left branch.

@@ -32,6 +32,9 @@ int main ()
 		imc_avl_dump(tree, print);
 	}
 
+	replace = NULL;
+	tree = imc_avl_remove(tree, &key[4], &compare, &replace);
+
 
 	imc_avl_dump(tree, print);
 	//printf("%d\n", (int) *result);
