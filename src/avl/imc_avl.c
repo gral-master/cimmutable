@@ -2,6 +2,63 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
+//----------------------------------------------------------------------------//
+//-------------------------Verify Structure (AVL)-----------------------------//
+//----------------------------------------------------------------------------//
+
+int size_tree(imc_avl_node_t* tree)
+{
+    if (tree != NULL) {
+        return 1 + size_tree(tree->left) + size_tree(tree->right);
+    }
+    else {
+        return 0;
+    }
+}
+
+void infixe_course(imc_avl_node_t* tree, imc_key_t* tab, int* indice)
+{
+    if (tree != NULL) {
+        infixe_course(tree->left, tab, indice);
+        tab[*indice] = *tree->key;
+        *indice++;
+        infixe_course(tree->right, tab, indice);
+    }
+}
+
+void check_balance(imc_avl_node_t* tree)
+{
+    
+}
+
+int verify_avl( imc_avl_node_t* tree,
+                int (*comparator)(imc_key_t*, imc_key_t*))
+{
+    int i;
+
+    int size = size_tree(tree);
+    imc_key_t* tab = malloc(sizeof(imc_key_t) * size);
+    int indice = 0;
+
+    infixe_course(tree, tab, &indice);
+    // we browe the list and verify that the order is valid
+    for (i = 1 ; i < size ; i++) {
+        if (comparator(&tab[i], &tab[i-1]) < 0) {
+            return -1;
+        }
+    }
+
+
+    return 0;
+    free(tab);
+}
+
+
+//----------------------------------------------------------------------------//
+//-------------------------IMMUTABLE ROTATION---------------------------------//
+//----------------------------------------------------------------------------//
+
 imc_avl_node_t* immutable_right_rotation(imc_avl_node_t* tree){
     if(tree == NULL || tree->left == NULL){
         return NULL;
@@ -130,7 +187,7 @@ imc_avl_node_t *mutable_left_rotation(imc_avl_node_t* tree){
     return temp;
 }
 
-imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
+imc_avl_node_t* imc_avl_insert_rec( imc_avl_node_t* tree,
                                 imc_data_t* data, imc_key_t* key,
                                 int (*comparator)(imc_key_t*, imc_key_t*),
                                 // Data replaced during the insertion
@@ -179,12 +236,12 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
 
 
     if (diff > 0) { // We insert in the right branch.
-        new_node->right = imc_avl_insert(tree->right, data, key,
+        new_node->right = imc_avl_insert_rec(tree->right, data, key,
                                          comparator, prev_data);
         new_node->left = tree->left;
         if(tree->left != NULL) tree->left->ref_counter++;
     } else { // diff < 0 => We insert in the left branch.
-        new_node->left = imc_avl_insert(tree->left, data, key,
+        new_node->left = imc_avl_insert_rec(tree->left, data, key,
                                         comparator, prev_data);
         new_node->right = tree->right;
         if(tree->right != NULL) tree->right->ref_counter++;
@@ -244,6 +301,34 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
 
     return new_node;
 }
+
+imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
+                                imc_data_t* data, imc_key_t* key,
+                                int (*comparator)(imc_key_t*, imc_key_t*),
+                                // Data replaced during the insertion
+                                imc_data_t** prev_data) {
+
+    imc_avl_node_t* result;
+    int k;
+
+    /*k = verify_avl(tree, comparator);
+    if (k == -1)
+        printf("ERROR_AV\n");
+    else
+        printf("OK_AV\n");*/
+
+    result = imc_avl_insert_rec(tree, data, key, comparator, prev_data);
+
+    
+    /*if (k == -1)
+        printf("ERROR-AP\n");
+    else
+        printf("OK-AP\n");*/
+   
+
+    return result;
+}
+
 
 //----------------------------------------------------------------------------//
 //-------------------------Remove Functions-----------------------------------//
@@ -341,6 +426,7 @@ printf("Test1\n");
         if(tree->left != NULL) tree->left->ref_counter++;
     // Recursives calls
     } else {
+        printf("Test11\n");
         new_node->data = tree->data;
         new_node->key = tree->key;
         if(diff>0){
@@ -356,6 +442,7 @@ printf("Test1\n");
             new_node->right = tree->right;
             if(tree->right != NULL) tree->right->ref_counter++;
         }
+        //printf("Test12\n");
     }
 
     printf("Test2\n");
@@ -536,6 +623,9 @@ void imc_avl_dump(imc_avl_node_t* tree,
     printf("*************************************\n");
 
 }
+
+
+
 
 
 //----------------------------------------------------------------------------//
