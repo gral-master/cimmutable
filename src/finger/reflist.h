@@ -15,6 +15,7 @@ typedef struct refdeep_t {
 } refdeep;
 
 reflist* rl_of_ft(ft* fgt);
+void free_reflist(reflist* rl);
 void inter_verify(reflist* rl_fgt, reflist* rl_res);
 
 #endif

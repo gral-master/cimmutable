@@ -59,6 +59,18 @@ struct view_t{
   ft* fg;
 };
 
+typedef struct {
+    ft* ft1;
+    node* node;
+    ft* ft2;
+} split;
+
+typedef struct {
+    affix* left;
+    node* node;
+    affix* right;
+} splitnode;
+
 
 ft* create_empty();
 ft* create_single(node* n);
@@ -76,6 +88,7 @@ void node_display(node* node);
 ft* add_elem_deep_recur(ft* fgt,int preorsuff,node*data);
 int check_available_space(ft* fgt,int preorsuf);
 view ft_delete(ft* fgt,int preorsuf);
+split ft_split(ft* fgt, int index);
 void copy_pref(ft*to,ft* from);
 void copy_suff(ft*to,ft* from);
 affix* get_right_affix(ft*res,int preorsuf, int inv);

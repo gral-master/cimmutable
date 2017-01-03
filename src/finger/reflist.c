@@ -46,15 +46,24 @@ reflist* rl_of_ft(ft* fgt) {
     }
 }
 
+void free_reflist(reflist* rl) {
+    if (rl == NULL)
+        return;
+    
+    reflist* next_temp = rl->next;
+    
+    free(rl);
+    
+    if (next_temp != NULL)
+        free_reflist(next_temp);
+}
+
 void inter_verify(reflist* rl_fgt, reflist* rl_res) {
     reflist *tmp1, *tmp2;
     
     for (tmp1 = rl_fgt; tmp1 != NULL; tmp1 = tmp1->next) {
         for (tmp2 = rl_res; tmp2 != NULL; tmp2 = tmp2->next) {
             if (tmp1->elem == tmp2->elem) {
-                // TODO
-                // It should be == instead of <=
-                // But ft_delete does not yet work when it is ==
 	      /* puts(""); */
 	      /* printf("tmp1 : %d, tmp2 : %d\n",tmp1->ref,tmp2->ref); */
 	      assert(tmp1->ref + 1 == tmp2->ref);

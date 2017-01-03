@@ -20,7 +20,7 @@ ft* create_single(node* n) {
     fgt->true_ft = malloc(sizeof(true_ft_t));
     fgt->true_ft->single = n;
     fgt->ref_count = 1;
-    fgt->size = 1;
+    fgt->size = n->size;
     return fgt;
 }
 
@@ -44,6 +44,28 @@ ft* create_deep() {
     fgt->ref_count = 1;
     fgt->size = 0; // The caller of this function should put the right size.
 
+    return fgt;
+}
+
+ft* create_deep_withoutdeeper() {
+    ft* fgt = malloc(sizeof(ft));
+    int i;
+    fgt->type = DEEP_TYPE;
+    fgt->true_ft = malloc(sizeof(true_ft_t));
+    fgt->true_ft->d = malloc(sizeof(deep));
+    fgt->true_ft->d->prefix = malloc(sizeof(affix));
+    fgt->true_ft->d->suffix = malloc(sizeof(affix));
+    
+    for(i=0;i<4;i++){
+        fgt->true_ft->d->prefix->nodes[i] = NULL;
+        fgt->true_ft->d->suffix->nodes[i] = NULL;
+    }
+    fgt->true_ft->d->prefix->size = 0;
+    fgt->true_ft->d->suffix->size = 0;
+    
+    fgt->ref_count = 1;
+    fgt->size = 0; // The caller of this function should put the right size.
+    
     return fgt;
 }
 
@@ -176,7 +198,6 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data_node){
     
     if(fgt->type==EMPTY_TYPE){
         res = create_single(data_node);
-        res->size = data_node->size;
     }
     else if(fgt->type == SINGLE_TYPE) {
       res = create_deep();
@@ -196,10 +217,9 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data_node){
       new_affix->size = fgt->true_ft->single->size;
       old_affix->size = data_node->size;
       res->size = new_affix->size + old_affix->size;
-      res->true_ft->d->deeper=create_empty();
     }
     else{
-        res = create_deep();
+        res = create_deep_withoutdeeper();
         int index=check_available_space(fgt,preorsuf);
         /* copy the pref and suff*/
         copy_pref(res,fgt);
@@ -247,6 +267,8 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data_node){
             }
         }
     }
+    free_reflist(rl_fgt);
+    free_reflist(rl_res);
 
     return res;
 }
@@ -342,7 +364,7 @@ int check_available_space(ft* fgt,int preorsuf){
 
       for (i = 3; i >= 0; i--) {
         if (j == 0)
-	  break;
+            break;
         j -= old_affix->nodes[i]->size;
       }
 
@@ -380,6 +402,9 @@ void* node_lookup(node* n, int index) {
         node** children = n->true_node->internal_node;
         
         for (int i = 0; i < 3; i++) {
+            if (children[i] == NULL)
+                continue;
+            
             if (index < children[i]->size) {
                 return node_lookup(children[i], index);
             }
@@ -391,6 +416,9 @@ void* node_lookup(node* n, int index) {
 
 void* affix_lookup(affix* a, int index) {
     for (int i = 0; i < 4; i++) {
+        if (a->nodes[i] == NULL)
+            continue;
+        
         if (index < a->nodes[i]->size) {
             return node_lookup(a->nodes[i], index);
         }
@@ -434,7 +462,7 @@ void* ft_lookup(ft* ft, int index) {
         }
         return NULL;
     }
-
+    
     // Postconditions & Invariants
     
     return NULL;
@@ -453,9 +481,9 @@ void node_unref(node* n) {
             free(n);
         }
         else {
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 3; i++) {
                 if (n->true_node->internal_node[i] == NULL)
-                    break;
+                    continue;
                 
                 node_unref(n->true_node->internal_node[i]);
             }
@@ -477,12 +505,14 @@ void ft_unref(ft* ft) {
         }
         else if (ft->type == SINGLE_TYPE) {
             node_unref(ft->true_ft->single);
+            free(ft->true_ft);
+            free(ft);
         }
         else {
             // Prefix
             for (int i = 0; i < 4; i++) {
                 if(ft->true_ft->d->prefix->nodes[i] == NULL)
-                    break;
+                    continue;
                 
                 node_unref(ft->true_ft->d->prefix->nodes[i]);
             }
@@ -494,12 +524,12 @@ void ft_unref(ft* ft) {
             // Suffix
             for (int i = 0; i < 4; i++) {
                 if(ft->true_ft->d->suffix->nodes[i] == NULL)
-                    break;
+                    continue;
                 
                 node_unref(ft->true_ft->d->suffix->nodes[i]);
             }
             free(ft->true_ft->d->suffix);
-            
+            free(ft->true_ft->d);
             free(ft->true_ft);
             free(ft);
         }
@@ -626,13 +656,11 @@ view ft_delete(ft* fgt,int preorsuf){
 		     
                     res=create_single(old_affix->nodes[3]);
                     old_affix->nodes[3]->ref_count++;
-                    res->size = old_affix->nodes[3]->size;
 
 		  }
 		  else{
                     res=create_single(old_affix->nodes[0]);
                     old_affix->nodes[0]->ref_count++;
-                    res->size = old_affix->nodes[0]->size;
 		  }
                 }
             }
@@ -756,6 +784,472 @@ void remove_from_affix(affix* new_affix,affix* old_affix,int index,int preorsuf)
 
 }
 
+// Split and its helper functions
+// Size and ref_count are not yet managed
+ft* create_deep_withoutaffix() {
+    ft* fgt = malloc(sizeof(ft));
+    fgt->type = DEEP_TYPE;
+    fgt->true_ft = malloc(sizeof(true_ft_t));
+    fgt->true_ft->d = malloc(sizeof(deep));
+    
+    fgt->true_ft->d->deeper = create_empty();
+    fgt->ref_count = 1;
+    fgt->size = 0; // The caller of this function should put the right size.
+    
+    return fgt;
+}
+
+ft* nodearray_to_ft(node* arr[], int size) {
+    // Precondition: 1 <= size <= 4
+    ft* res;
+    
+    switch (size) {
+        case 1:
+            res = create_single(arr[0]);
+            arr[0]->ref_count++;
+            break;
+        case 2:
+            res = create_deep();
+            res->true_ft->d->prefix->nodes[0] = arr[0];
+            res->true_ft->d->prefix->size = 1;
+            res->true_ft->d->suffix->nodes[3] = arr[1];
+            res->true_ft->d->suffix->size = 1;
+            res->size = 2;
+            arr[0]->ref_count++;
+            arr[1]->ref_count++;
+            break;
+        case 3: // case 3
+            res = create_deep();
+            res->true_ft->d->prefix->nodes[0] = arr[0];
+            res->true_ft->d->prefix->size = 1;
+            res->true_ft->d->suffix->nodes[2] = arr[1];
+            res->true_ft->d->suffix->nodes[3] = arr[2];
+            res->true_ft->d->suffix->size = 2;
+            res->size = 3;
+            arr[0]->ref_count++;
+            arr[1]->ref_count++;
+            arr[2]->ref_count++;
+            break;
+        default: // case 4
+            res = create_deep();
+            res->true_ft->d->prefix->nodes[0] = arr[0];
+            res->true_ft->d->prefix->size = 1;
+            res->true_ft->d->suffix->nodes[1] = arr[1];
+            res->true_ft->d->suffix->nodes[2] = arr[2];
+            res->true_ft->d->suffix->nodes[3] = arr[3];
+            res->true_ft->d->suffix->size = 3;
+            res->size = 4;
+            arr[0]->ref_count++;
+            arr[1]->ref_count++;
+            arr[2]->ref_count++;
+            arr[3]->ref_count++;
+            break;
+    }
+    
+    return res;
+}
+
+void affix_to_nodearray(affix* a, node** nodes) {
+    for (int i = 0, j = 0; i < 4; i++) {
+        if (a->nodes[i] != NULL) {
+            nodes[j] = a->nodes[i];
+            j++;
+        }
+    }
+}
+
+affix* node_to_affix(node* n, int preorsuf) {
+    // The node has 2 or 3 children
+    // Returns an affix of 2 or 3 elements
+    affix* res = malloc(sizeof(affix));
+    node** nodes = n->true_node->internal_node;
+    int i, j;
+    
+    if (preorsuf == 0) {
+        for (i = 0, j = 0; i < 3; i++) {
+            if (n->true_node->internal_node[i] != NULL) {
+                res->nodes[j++] = nodes[i];
+                res->size += nodes[i]->size;
+            }
+        }
+        while (j <= 3) {
+            res->nodes[j++] = NULL;
+        }
+    }
+    else {
+        for (i = 2, j = 3; i >= 0; i--) {
+            if (n->true_node->internal_node[i] != NULL) {
+                res->nodes[j--] = nodes[i];
+                res->size += nodes[i]->size;
+            }
+        }
+        while (j >= 0) {
+            res->nodes[j--] = NULL;
+        }
+    }
+    
+    return res;
+}
+
+ft* borrowL(ft* deeper, affix* su) {
+    ft* res;
+    node* nodes[4];
+    int node_count = 0;
+    
+    for (int i = 0; i < 4; i++) {
+        if (su->nodes[i] != NULL)
+            node_count++;
+    }
+    
+    affix_to_nodearray(su, nodes);
+    
+    if (deeper->type == EMPTY_TYPE) {
+        res = nodearray_to_ft(nodes, node_count);
+    }
+    else {
+        view v = ft_delete(deeper, 0);
+        res = create_deep_withoutaffix();
+        res->true_ft->d->prefix = node_to_affix(v.elem, 0);
+        res->true_ft->d->deeper = v.fg;
+        res->true_ft->d->suffix = su;
+        deep* d = res->true_ft->d;
+        res->size = d->prefix->size + d->deeper->size + d->suffix->size;
+    }
+    
+    return res;
+}
+
+ft* create_deepL(affix* left, ft* deeper, affix* right) {
+    // Creates a deep with the given elements. left can be NULL.
+    if (left == NULL)
+        return borrowL(deeper, right);
+    
+    ft* res = create_deep();
+    
+    res->true_ft->d->prefix = left;
+    res->true_ft->d->deeper = deeper;
+    res->true_ft->d->suffix = right;
+    deep* d = res->true_ft->d;
+    res->size = d->prefix->size + d->deeper->size + d->suffix->size;
+    
+    return res;
+}
+
+ft* borrowR(affix* pr, ft* deeper) {
+    ft* res;
+    node* nodes[4];
+    int node_count = 0;
+    for (int i = 0; i < 4; i++) {
+        if (pr->nodes[i] != NULL)
+            node_count++;
+    }
+    affix_to_nodearray(pr, nodes);
+    
+    if (deeper->type == EMPTY_TYPE) {
+        res = nodearray_to_ft(nodes, node_count);
+    }
+    else {
+        view v = ft_delete(deeper, 1);
+        res = create_deep_withoutaffix();
+        res->true_ft->d->prefix = pr;
+        res->true_ft->d->deeper = v.fg;
+        res->true_ft->d->suffix = node_to_affix(v.elem, 1);
+        deep* d = res->true_ft->d;
+        res->size = d->prefix->size + d->deeper->size + d->suffix->size;
+    }
+    
+    return res;
+}
+
+ft* create_deepR(affix* left, ft* deeper, affix* right) {
+    // Creates a deep with the given elements. right can be NULL.
+    if (right == NULL)
+        return borrowR(left, deeper);
+    
+    ft* res = create_deep();
+    
+    res->true_ft->d->prefix = left;
+    res->true_ft->d->deeper = deeper;
+    res->true_ft->d->suffix = right;
+    deep* d = res->true_ft->d;
+    res->size = d->prefix->size + d->deeper->size + d->suffix->size;
+    
+    return res;
+}
+
+affix* ft_to_affix(ft* fgt, int preorsuf) {
+    // fgt is either
+    // - an Empty
+    // - a Single
+    // - a Deep([Node], Empty, [Node])
+    // - a Deep([Node], Empty, [Node,Node])
+    if (fgt->type == EMPTY_TYPE)
+        return NULL;
+    
+    affix* res = malloc(sizeof(affix));
+    
+    if (preorsuf == 0) {
+        // We make a prefix
+        if (fgt->type == SINGLE_TYPE) {
+            res->nodes[0] = fgt->true_ft->single;
+            for (int i = 1; i < 4; i++) {
+                res->nodes[i] = NULL;
+            }
+            res->size = fgt->true_ft->single->size;
+        }
+        else {
+            if (fgt->true_ft->d->suffix->nodes[2] == NULL) {
+                // 1 Node in the suffix
+                res->nodes[0] = fgt->true_ft->d->prefix->nodes[0];
+                res->size += fgt->true_ft->d->prefix->nodes[0]->size;
+                res->nodes[1] = fgt->true_ft->d->suffix->nodes[3];
+                res->size += fgt->true_ft->d->suffix->nodes[3]->size;
+                for (int i = 2; i < 4; i++) {
+                    res->nodes[i] = NULL;
+                }
+            }
+            else {
+                // 2 Node in the suffix
+                res->nodes[0] = fgt->true_ft->d->prefix->nodes[0];
+                res->size += fgt->true_ft->d->prefix->nodes[0]->size;
+                res->nodes[1] = fgt->true_ft->d->suffix->nodes[2];
+                res->size += fgt->true_ft->d->suffix->nodes[2]->size;
+                res->nodes[2] = fgt->true_ft->d->suffix->nodes[3];
+                res->size += fgt->true_ft->d->suffix->nodes[3]->size;
+                res->nodes[3] = NULL;
+            }
+        }
+    }
+    else {
+        // We make a suffix
+        if (fgt->type == SINGLE_TYPE) {
+            res->nodes[3] = fgt->true_ft->single;
+            res->size = fgt->true_ft->single->size;
+            for (int i = 0; i < 3; i++) {
+                res->nodes[i] = NULL;
+            }
+        }
+        else {
+            if (fgt->true_ft->d->suffix->nodes[2] == NULL) {
+                // 1 Node in the suffix
+                res->nodes[2] = fgt->true_ft->d->prefix->nodes[0];
+                res->size += fgt->true_ft->d->prefix->nodes[0]->size;
+                res->nodes[3] = fgt->true_ft->d->suffix->nodes[3];
+                res->size += fgt->true_ft->d->suffix->nodes[3]->size;
+                for (int i = 0; i < 2; i++) {
+                    res->nodes[i] = NULL;
+                }
+            }
+            else {
+                // 2 Node in the suffix
+                res->nodes[1] = fgt->true_ft->d->prefix->nodes[0];
+                res->size += fgt->true_ft->d->prefix->nodes[0]->size;
+                res->nodes[2] = fgt->true_ft->d->suffix->nodes[2];
+                res->size += fgt->true_ft->d->suffix->nodes[2]->size;
+                res->nodes[3] = fgt->true_ft->d->suffix->nodes[3];
+                res->size += fgt->true_ft->d->suffix->nodes[3]->size;
+                res->nodes[0] = NULL;
+            }
+        }
+    }
+    
+    return res;
+}
+
+
+split affix_split(affix* a, int index) {
+    split s;
+    int node_count = 0;
+    for (int i = 0; i < 4; i++) {
+        if (a->nodes[i] != NULL)
+            node_count++;
+    }
+    
+    // The "nodes" array is filled starting from 0 in order,
+    // whereas a->nodes might not.
+    node* nodes[4];
+    affix_to_nodearray(a, nodes);
+    
+    switch (node_count) {
+        case 1:
+            s.ft1 = create_empty();
+            s.node = nodes[0];
+            s.ft2 = create_empty();
+            break;
+            
+        case 2:
+            if (index < nodes[0]->size) {
+                s.ft1 = create_empty();
+                s.node = nodes[0];
+                s.ft2 = create_single(nodes[1]);
+            }
+            else {
+                s.ft1 = create_single(nodes[0]);
+                s.node = nodes[1];
+                s.ft2 = create_empty();
+            }
+            break;
+        case 3:
+            if (index < nodes[0]->size) {
+                s.ft1 = create_empty();
+                s.node = nodes[0];
+                s.ft2 = nodearray_to_ft(nodes+1, 2);
+            }
+            else if (index < nodes[0]->size+nodes[1]->size) {
+                s.ft1 = create_single(nodes[0]);
+                s.node = nodes[1];
+                s.ft2 = create_single(nodes[2]);
+            }
+            else {
+                s.ft1 = nodearray_to_ft(nodes, 2);
+                s.node = nodes[2];
+                s.ft2 = create_empty();
+            }
+            break;
+        default: // case 4
+            if (index < nodes[0]->size) {
+                s.ft1 = create_empty();
+                s.node = nodes[0];
+                s.ft2 = nodearray_to_ft(nodes+1, 3);
+            }
+            else if (index < nodes[0]->size+nodes[1]->size) {
+                s.ft1 = create_single(nodes[0]);
+                s.node = nodes[1];
+                s.ft2 = nodearray_to_ft(nodes+2, 2);
+            }
+            else if (index < nodes[0]->size+nodes[1]->size+nodes[2]->size) {
+                s.ft1 = nodearray_to_ft(nodes, 2);
+                s.node = nodes[2];
+                s.ft2 = create_single(nodes[3]);
+            }
+            else {
+                s.ft1 = nodearray_to_ft(nodes, 3);
+                s.node = nodes[3];
+                s.ft2 = create_empty();
+            }
+            break;
+    }
+    
+    return s;
+}
+
+splitnode node_split(node* n, int index) {
+    splitnode sn;
+    
+    node* nodes[3];
+    for (int i = 0, j = 0; i < 3; i++) {
+        if (n->true_node->internal_node[i] != NULL) {
+            nodes[j] = n->true_node->internal_node[i];
+            j++;
+        }
+    }
+    
+    int node_count = 0;
+    for (int i = 0; i < 3; i++) {
+        if (nodes[i] != NULL)
+            node_count++;
+    }
+    
+    // node_count is either 2 or 3
+    
+    if (index < nodes[0]->size) {
+        sn.left = NULL;
+        sn.node = nodes[0];
+        sn.right = malloc(sizeof(affix));
+        sn.right->nodes[0] = NULL;
+        sn.right->nodes[1] = NULL;
+        if (node_count == 2) {
+            sn.right->nodes[2] = NULL;
+            sn.right->nodes[3] = nodes[1];
+            sn.right->size = nodes[1]->size;
+        }
+        else {
+            sn.right->nodes[2] = nodes[1];
+            sn.right->nodes[3] = nodes[2];
+            sn.right->size = nodes[1]->size+nodes[2]->size;
+        }
+    }
+    else if (index < nodes[0]->size+nodes[1]->size) {
+        sn.left = malloc(sizeof(affix));
+        sn.left->nodes[0] = nodes[0];
+        sn.left->nodes[1] = NULL;
+        sn.left->nodes[2] = NULL;
+        sn.left->nodes[3] = NULL;
+        sn.left->size = nodes[0]->size;
+        sn.node = nodes[1];
+        if (node_count == 2) {
+            sn.right = NULL;
+        }
+        else {
+            sn.right = malloc(sizeof(affix));
+            sn.right->nodes[0] = NULL;
+            sn.right->nodes[1] = NULL;
+            sn.right->nodes[2] = NULL;
+            sn.right->nodes[3] = nodes[2];
+            sn.right->size = nodes[2]->size;
+        }
+    }
+    else {
+        sn.left = malloc(sizeof(affix));
+        sn.left->nodes[0] = nodes[0];
+        sn.left->nodes[1] = nodes[1];
+        sn.left->nodes[2] = NULL;
+        sn.left->nodes[3] = NULL;
+        sn.left->size = nodes[0]->size+nodes[1]->size;
+        sn.node = nodes[2];
+        sn.right = NULL;
+    }
+    
+    return sn;
+}
+
+split ft_split(ft* fgt, int index) {
+    // Preconditions & Invariants
+    checkInvariants(fgt);
+    assert(fgt->type != EMPTY_TYPE);
+    
+    split s;
+    
+    if (fgt->type == SINGLE_TYPE) {
+        s.ft1 = create_empty();
+        s.ft2 = create_empty();
+        s.node = fgt->true_ft->single;
+    }
+    else {
+        deep *d = fgt->true_ft->d;
+        split recs;
+        if (index <= d->prefix->size) {
+            // The node is in the prefix
+            recs = affix_split(d->prefix, index);
+            
+            s.ft1 = recs.ft1;
+            s.node = recs.node;
+            s.ft2 = create_deepL(ft_to_affix(recs.ft2, 0), d->deeper, d->suffix);
+        }
+        else if (index > d->prefix->size + d->deeper->size) {
+            // The node is in the suffix
+            recs = affix_split(d->suffix, index-(d->prefix->size+d->deeper->size));
+            
+            s.ft1 = create_deepR(d->prefix, d->deeper, ft_to_affix(recs.ft1, 1));
+            s.node = recs.node;
+            s.ft2 = recs.ft2;
+        }
+        else {
+            // The node is in the deeper
+            recs = ft_split(d->deeper, index - d->prefix->size);
+            splitnode recsn = node_split(recs.node, index - d->prefix->size - recs.ft1->size);
+            
+            s.ft1 = create_deepR(d->prefix, recs.ft1, recsn.left);
+            s.node = recsn.node;
+            s.ft2 = create_deepL(recsn.right, recs.ft2, d->suffix);
+        }
+    }
+    
+    checkInvariants(s.ft1);
+    checkInvariants(s.ft2);
+    
+    return s;
+}
 
 
 void copy_pref(ft*res,ft* fgt){
