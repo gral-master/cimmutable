@@ -262,12 +262,21 @@ imc_avl_node_t* imc_avl_insert_rec( imc_avl_node_t* tree,
         } else {
             // The size of the right branch have increase
             if(tree->balance == 1){ // Rotation is needed
-                new_node->balance = 0;
                 if(new_node->right->balance == 1){
-                new_node->right->balance = 0;
+                    new_node->balance = 0;
+                    new_node->right->balance = 0;
                     new_node = mutable_left_rotation(new_node);
                 } else {
-                    new_node->right->balance = 0;
+                    if(new_node->right->left->balance == 0){
+                        new_node->balance = 0;
+                        new_node->right->balance = 0;
+                    } else if(new_node->right->left->balance == +1){
+                        new_node->balance = -1;
+                        new_node->right->balance = 0;
+                    } else {
+                        new_node->balance = 0;
+                        new_node->right->balance = -1;
+                    }
                     new_node->right->left->balance = 0;
                     new_node->right = mutable_right_rotation(new_node->right);
                     new_node = mutable_left_rotation(new_node);
@@ -283,12 +292,21 @@ imc_avl_node_t* imc_avl_insert_rec( imc_avl_node_t* tree,
             new_node->balance = tree->balance;
         } else { // The size of the left branch have increase
             if(tree->balance == -1){ // Rotation is needed
-                new_node->balance = 0;
                 if(new_node->left->balance == -1){
-                new_node->left->balance = 0;
+                    new_node->balance = 0;
+                    new_node->left->balance = 0;
                     new_node = mutable_right_rotation(new_node);
                 } else {
-                    new_node->left->balance = 0;
+                    if(new_node->left->right->balance == 0){
+                        new_node->balance = 0;
+                        new_node->left->balance = 0;
+                    } else if(new_node->left->right->balance == -1){
+                        new_node->balance = +1;
+                        new_node->left->balance = 0;
+                    } else {
+                        new_node->balance = 0;
+                        new_node->left->balance = +1;
+                    }
                     new_node->left->right->balance = 0;
                     new_node->left = mutable_left_rotation(new_node->left);
                     new_node = mutable_right_rotation(new_node);
@@ -481,23 +499,35 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
                     new_node = new_right;
                 // A double left-right rotation is needed.
                 } else {
-                    new_node->balance = 0;
+                    int new_current_balance = 0;
+                    int new_son_balance = 0;
+                    if(new_node->left->right->balance != 0){
+                        if(new_node->left->right->balance == 1){
+                            new_current_balance = 0;
+                            new_son_balance = -1;
+                        } else {
+                            new_current_balance = 1;
+                            new_son_balance = 0;
+
+                        }
+                    }
                     new_node->right = immutable_right_rotation(new_node->right);
                     new_node->right->ref_counter++;
                     new_node = mutable_left_rotation(new_node);
+                    new_node->balance = 0;
+                    new_node->right->balance = new_current_balance;
+                    new_node->left = new_son_balance;
                 }
             }
         }
     } else { // the case where we have modify the right branch.
         // if the son's size didn't change then the current node
         // have the same balance than before.
-        printf("Je suis ici\n");
         if(new_node->right != NULL &&
             (new_node->right->balance != 0 || tree->right->balance == 0)){
                 printf("tree->right->balance = %d\n",*tree->right->key );
             new_node->balance = tree->balance;
         } else { // The size of the right branch have changed.
-            printf("Sinon\n" );
             if(tree->balance != -1){
                 new_node->balance = tree->balance - 1;
             } else { // A right rotation is needed.
@@ -521,10 +551,24 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
                     new_node = new_left;
                 // A double right-left rotation is needed.
                 } else {
-                    new_node->balance = 0;
+                    int new_current_balance = 0;
+                    int new_son_balance = 0;
+                    if(new_node->right->left->balance != 0){
+                        if(new_node->right->left->balance == 1){
+                            new_current_balance = -1;
+                            new_son_balance = 0;
+                        } else {
+                            new_current_balance = 0;
+                            new_son_balance = 1;
+
+                        }
+                    }
                     new_node->left = immutable_left_rotation(new_node->left);
                     new_node->left->ref_counter++;
                     new_node = mutable_right_rotation(new_node);
+                    new_node->balance = 0;
+                    new_node->left->balance = new_current_balance;
+                    new_node->right->balance = new_son_balance;
                 }
             }
         }
