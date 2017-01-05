@@ -32,6 +32,18 @@ rrb_vector_t *rrb_create() {
     return create(false);
 }
 
+void free_rrb(rrb_vector_t *rrb) {
+    if (rrb->meta != NULL) {
+        free(rrb->meta);
+    }
+    if (rrb->leafs) {
+        free(rrb->children.data);
+    } else {
+        free(rrb->children.arr);
+    }
+    free(rrb);
+}
+
 /** Increases references to the tree. */
 void inc_ref(rrb_vector_t *rrb) {
     rrb->ref += 1;
@@ -40,6 +52,20 @@ void inc_ref(rrb_vector_t *rrb) {
 /** Decreases references to the tree. */
 void dec_ref(rrb_vector_t *rrb) {
     rrb->ref -= 1;
+    if (rrb->ref == 0) {
+        if (rrb->leafs == false) {
+            for (int i = 0; i < 32; i++) {
+                if (rrb->children.arr[i] != NULL) {
+                    dec_ref(rrb->children.arr[i]);
+                }
+            }
+        }
+        free_rrb(rrb);
+    }
+}
+
+bool is_full(const rrb_vector_t *rrb) {
+    return rrb->full == true;
 }
 
 /** Finds the max level of the tree. */
@@ -66,6 +92,8 @@ void clone_meta(rrb_vector_t *clone, const rrb_vector_t *src) {
         for (int i = 0; i < 32; i++) {
             clone->meta[i] = src->meta[i];
         }
+    } else {
+        clone->meta = NULL;
     }
 }
 
@@ -80,18 +108,26 @@ void clone_children(rrb_vector_t *clone, const rrb_vector_t *src) {
         clone->children.arr = malloc(sizeof *clone->children.arr * 32);
         for (int i = 0; i < 32; i++) {
             clone->children.arr[i] = src->children.arr[i];
-            inc_ref(clone->children.arr[i]);
+            if (clone->children.arr[i] != NULL) {
+                inc_ref(clone->children.arr[i]);
+            }
         }
     }
 }
 
 /** Copies the node as is. */
 rrb_vector_t *copy_node(const rrb_vector_t *src) {
+    #ifdef DEBUG
+    printf("copy_node, beginning\n");
+    #endif
     rrb_vector_t *clone = malloc(sizeof *clone);
     clone->ref = 1;
     clone_info(clone, src);
     clone_meta(clone, src);
     clone_children(clone, src);
+    #ifdef DEBUG
+    printf("copy_node, end\n");
+    #endif
     return clone;
 }
 
@@ -130,7 +166,8 @@ rrb_vector_t *create_level(int level, imc_data_t *data) {
     return create_parents(level - 1, rrb);
 }
 
-/** Adds a node, parent of the tree, and insert the data at the correct level. */
+/** Adds a node, parent of the tree, and insert
+  * the data at the correct level. */
 rrb_vector_t *add_as_parent_to(const rrb_vector_t *child, imc_data_t *data) {
     rrb_vector_t *parent = create(true);
     parent->children.arr[0] = copy_and_increase(child);
@@ -149,6 +186,9 @@ int place_to_insert(const rrb_vector_t *rrb) {
 
 /** Copies if the node exists, else creates it at the correct level. */
 rrb_vector_t *clone_and_null(const rrb_vector_t *src, int level, int root) {
+    #ifdef DEBUG
+    printf("clone_and_null, beginning\n");
+    #endif
     rrb_vector_t *clone;
     if (src == NULL) {
         if (level == root) {
@@ -159,18 +199,28 @@ rrb_vector_t *clone_and_null(const rrb_vector_t *src, int level, int root) {
         clone->level = level;
     } else {
         clone = copy_node(src);
-        clone->elements += 1;
     }
+    #ifdef DEBUG
+    printf("clone_and_null, end\n");
+    #endif
     return clone;
 }
 
 /** Adds a node to a non fully tree. */
 rrb_vector_t *add(const rrb_vector_t *src, imc_data_t *data, int level, int root) {
+    #ifdef DEBUG
+    printf("add, beginning\n");
+    #endif
     rrb_vector_t *clone = clone_and_null(src, level, root);
-
     if (clone->leafs == true) {
+        #ifdef DEBUG
+        printf("add, leafs\n");
+        #endif
         return add_leaf(clone, data, place_to_insert(clone));
     } else {
+        #ifdef DEBUG
+        printf("add, node\n");
+        #endif
         return add_node(clone, data, place_to_insert(clone), level, root);
     }
 }
@@ -181,6 +231,7 @@ rrb_vector_t *add_leaf(rrb_vector_t *rrb, imc_data_t *data, int where) {
     if (where == 31) {
         rrb->full = true;
     }
+    rrb->elements += 1;
     return rrb;
 }
 
@@ -193,14 +244,21 @@ rrb_vector_t *add_node(rrb_vector_t *rrb, imc_data_t *data, int where, int level
     if (where == 31) {
         rrb->full = true;
     }
+    rrb->elements += 1;
     return rrb;
 }
 
 /** Adds a data to the tree, and returns a new version of the tree. */
 rrb_vector_t *rrb_add(const rrb_vector_t *rrb, imc_data_t *data) {
-    if (rrb->full) {
+    if (is_full(rrb)) {
+        #ifdef DEBUG
+        printf("rrb_add, full\n");
+        #endif
         return add_as_parent_to(rrb, data);
     } else {
+        #ifdef DEBUG
+        printf("rrb_add, not full\n");
+        #endif
         return add(rrb, data, 1, find_max_level(rrb));
     }
 }

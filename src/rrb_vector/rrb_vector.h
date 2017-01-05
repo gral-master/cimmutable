@@ -1,9 +1,12 @@
 #pragma once
 
-#include <vector.h>
+// #include <vector.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
+#include <stdio.h>
+
+typedef int imc_data_t;
 
 typedef struct _rrb {
   int level; // Depth of Node.
