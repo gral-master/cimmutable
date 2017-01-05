@@ -181,13 +181,27 @@ rrb_vector_t *add_node(rrb_vector_t *rrb, imc_data_t *data, int where, int level
 
 /** Finds the correct place to insert the new data. */
 int place_to_insert(const rrb_vector_t *rrb) {
-    return rrb->elements / pow(32, find_max_level(rrb) - rrb->level);
+    if (rrb->meta == NULL) {
+        return rrb->elements / pow(32, find_max_level(rrb) - rrb->level);
+    } else {
+        for (int i = 0; i < 32; i++) {
+            if (rrb->leafs == true) {
+                if (!is_full(rrb->children.arr[i])) {
+                    return i;
+                }
+            } else {
+                if (rrb->children.data[i] == NULL) {
+                    return i;
+                }
+            }
+        }
+    }
 }
 
 /** Copies if the node exists, else creates it at the correct level. */
-rrb_vector_t *clone_and_null(const rrb_vector_t *src, int level, int root) {
+rrb_vector_t *clone_or_create(const rrb_vector_t *src, int level, int root) {
     #ifdef DEBUG
-    printf("clone_and_null, beginning\n");
+    printf("clone_or_create, beginning\n");
     #endif
     rrb_vector_t *clone;
     if (src == NULL) {
@@ -201,7 +215,7 @@ rrb_vector_t *clone_and_null(const rrb_vector_t *src, int level, int root) {
         clone = copy_node(src);
     }
     #ifdef DEBUG
-    printf("clone_and_null, end\n");
+    printf("clone_or_create, end\n");
     #endif
     return clone;
 }
@@ -211,7 +225,7 @@ rrb_vector_t *add(const rrb_vector_t *src, imc_data_t *data, int level, int root
     #ifdef DEBUG
     printf("add, beginning\n");
     #endif
-    rrb_vector_t *clone = clone_and_null(src, level, root);
+    rrb_vector_t *clone = clone_or_create(src, level, root);
     if (clone->leafs == true) {
         #ifdef DEBUG
         printf("add, leafs\n");
