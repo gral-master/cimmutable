@@ -1,15 +1,17 @@
 .PHONY: all clean
 
+HSD=hs_ref
+
 CC=gcc
-CFLAGS=-Wall -Wextra
+CFLAGS=--std=c11 -Wall -Wextra
 
-all: vector
-
-vector: fingers.o
-	$(CC) $(CFLAGS) fingers.o vector.c
+all: fingers.o
 
 %.o: %.c
-	$(CC) $(CFLAGS) $<
+	$(CC) $(CFLAGS) -c $<
+
+hs-example: $(HSD)/haskell_impl.hs
+	ghc -XOverloadedLists -XTypeFamilies  $(HSD)/haskell_impl.hs && $(HSD)/haskell_impl
 
 clean:
-	rm -rf *.o
+	rm -rf *.o a.out
