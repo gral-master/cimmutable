@@ -32,7 +32,7 @@ void infixe_course(imc_avl_node_t* tree, imc_key_t* tab, int* indice){
         *indice = *indice + 1;
         infixe_course(tree->right, tab, indice);
     }
-    
+
 }
 
 int check_balance_rec(imc_avl_node_t* tree, int* valid) {
@@ -374,7 +374,7 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
     k = check_invariant(result, comparator);
     if (k == -1) printf("INSERT_ERROR_AP\n");
     else printf("INSERT_OK_AP\n");
-   
+
 
     return result;
 }
@@ -405,13 +405,8 @@ imc_avl_node_t* remove_lowest_node(imc_avl_node_t* tree,
     new_current->key = tree->key;
 
     //Case where the current node is the parent of the removed one.
-    if (new_left_son == NULL) {
-        if(new_current->right == NULL)
-            new_current->balance = 0;
-        else
-            new_current->balance = 1;
-    //Case where the size of the left branch have changed
-    } else if (tree->left->balance != 0 && new_current->left->balance == 0){
+    //OR : Case where the size of the left branch have changed
+    if (new_current->left == NULL || (tree->left->balance != 0 && new_current->left->balance == 0)){
         // A rotation is needed
         if(tree->balance == 1){
             new_current->right->ref_counter--;
@@ -455,7 +450,6 @@ imc_avl_node_t* imc_avl_remove_rec( imc_avl_node_t* tree,
                                 imc_key_t* key,
                                 int (*comparator)(imc_key_t*, imc_key_t*),
                                 imc_data_t** removed_data){
-    printf("C'est la merde!!!!!! %d\n", *tree->key);
     //Base case
     if(tree == NULL){
         return NULL;
@@ -615,7 +609,7 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
 
     imc_avl_node_t* result;
     int k;
-    
+
     k = check_invariant(tree, comparator);
     if (k == -1) printf("DELETE_ERROR_AV\n");
     else printf("DELETE_OK_AV\n");
