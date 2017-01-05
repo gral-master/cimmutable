@@ -7,8 +7,16 @@
 //-------------------------Verify Structure (AVL)-----------------------------//
 //----------------------------------------------------------------------------//
 
-int size_tree(imc_avl_node_t* tree)
-{
+int val_abs (int nb) {
+    if (nb < 0) {
+        return - nb;
+    }
+    else {
+        return nb;
+    }
+}
+
+int size_tree(imc_avl_node_t* tree) {
     if (tree != NULL) {
         return 1 + size_tree(tree->left) + size_tree(tree->right);
     }
@@ -17,41 +25,69 @@ int size_tree(imc_avl_node_t* tree)
     }
 }
 
-void infixe_course(imc_avl_node_t* tree, imc_key_t* tab, int* indice)
-{
+void infixe_course(imc_avl_node_t* tree, imc_key_t* tab, int* indice){
     if (tree != NULL) {
         infixe_course(tree->left, tab, indice);
         tab[*indice] = *tree->key;
-        *indice++;
+        *indice = *indice + 1;
         infixe_course(tree->right, tab, indice);
     }
-}
-
-void check_balance(imc_avl_node_t* tree)
-{
     
 }
 
-int verify_avl( imc_avl_node_t* tree,
-                int (*comparator)(imc_key_t*, imc_key_t*))
-{
+int check_balance_rec(imc_avl_node_t* tree, int* valid) {
+    int size_left, size_right, current_balance;
+
+    if (tree == NULL) {
+        return 0;
+    } else {
+        size_right = check_balance_rec(tree->right, valid);
+        size_left = check_balance_rec(tree->left, valid);
+
+        current_balance = size_right - size_left;
+
+        if (tree->balance != current_balance || val_abs(current_balance) > 1) {
+            *valid = -1;
+        }
+
+        if (size_right > size_left) {
+            return 1 + size_right;
+        } else {
+            return 1 + size_left;
+        }
+    }
+}
+
+int check_invariant(imc_avl_node_t* tree,
+                int (*comparator)(imc_key_t*, imc_key_t*)) {
     int i;
+    int valid = 0;
 
     int size = size_tree(tree);
+
     imc_key_t* tab = malloc(sizeof(imc_key_t) * size);
     int indice = 0;
 
     infixe_course(tree, tab, &indice);
-    // we browe the list and verify that the order is valid
+
+    // we browse the list and verify that the order is valid
     for (i = 1 ; i < size ; i++) {
         if (comparator(&tab[i], &tab[i-1]) < 0) {
+            free(tab);
             return -1;
         }
     }
 
-
-    return 0;
     free(tab);
+
+
+    check_balance_rec(tree, &valid);
+
+    if (valid != -1) {
+        return 0;
+    } else {
+        return -1;
+    }
 }
 
 
@@ -275,7 +311,7 @@ imc_avl_node_t* imc_avl_insert_rec( imc_avl_node_t* tree,
                         new_node->right->balance = 0;
                     } else {
                         new_node->balance = 0;
-                        new_node->right->balance = -1;
+                        new_node->right->balance = 1;
                     }
                     new_node->right->left->balance = 0;
                     new_node->right = mutable_right_rotation(new_node->right);
@@ -305,7 +341,7 @@ imc_avl_node_t* imc_avl_insert_rec( imc_avl_node_t* tree,
                         new_node->left->balance = 0;
                     } else {
                         new_node->balance = 0;
-                        new_node->left->balance = +1;
+                        new_node->left->balance = -1;
                     }
                     new_node->left->right->balance = 0;
                     new_node->left = mutable_left_rotation(new_node->left);
@@ -329,19 +365,15 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
     imc_avl_node_t* result;
     int k;
 
-    /*k = verify_avl(tree, comparator);
-    if (k == -1)
-        printf("ERROR_AV\n");
-    else
-        printf("OK_AV\n");*/
+    k = check_invariant(tree, comparator);
+    if (k == -1) printf("INSERT_ERROR_AV\n");
+    else printf("INSERT_OK_AV\n");
 
     result = imc_avl_insert_rec(tree, data, key, comparator, prev_data);
 
-    
-    /*if (k == -1)
-        printf("ERROR-AP\n");
-    else
-        printf("OK-AP\n");*/
+    k = check_invariant(result, comparator);
+    if (k == -1) printf("INSERT_ERROR_AP\n");
+    else printf("INSERT_OK_AP\n");
    
 
     return result;
@@ -419,10 +451,11 @@ imc_avl_node_t* remove_lowest_node(imc_avl_node_t* tree,
     return new_current;
 }
 
-imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
+imc_avl_node_t* imc_avl_remove_rec( imc_avl_node_t* tree,
                                 imc_key_t* key,
                                 int (*comparator)(imc_key_t*, imc_key_t*),
                                 imc_data_t** removed_data){
+    printf("C'est la merde!!!!!! %d\n", *tree->key);
     //Base case
     if(tree == NULL){
         return NULL;
@@ -449,17 +482,16 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
         if(tree->left != NULL) tree->left->ref_counter++;
     // Recursives calls
     } else {
-        printf("Test11\n");
         new_node->data = tree->data;
         new_node->key = tree->key;
         if(diff>0){
-            imc_avl_node_t* new_right = imc_avl_remove(tree->right,key,
+            imc_avl_node_t* new_right = imc_avl_remove_rec(tree->right,key,
                                                        comparator,removed_data);
             new_node->right = new_right;
             new_node->left = tree->left;
             if(tree->left != NULL) tree->left->ref_counter++;
         } else {
-            imc_avl_node_t* new_left = imc_avl_remove(tree->left,key,
+            imc_avl_node_t* new_left = imc_avl_remove_rec(tree->left,key,
                                                       comparator,removed_data);
             new_node->left = new_left;
             new_node->right = tree->right;
@@ -516,7 +548,7 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
                     new_node = mutable_left_rotation(new_node);
                     new_node->balance = 0;
                     new_node->right->balance = new_current_balance;
-                    new_node->left = new_son_balance;
+                    new_node->left->balance = new_son_balance;
                 }
             }
         }
@@ -525,7 +557,6 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
         // have the same balance than before.
         if(new_node->right != NULL &&
             (new_node->right->balance != 0 || tree->right->balance == 0)){
-                printf("tree->right->balance = %d\n",*tree->right->key );
             new_node->balance = tree->balance;
         } else { // The size of the right branch have changed.
             if(tree->balance != -1){
@@ -575,6 +606,30 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
     }
     return new_node;
 }
+
+
+imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
+                                imc_key_t* key,
+                                int (*comparator)(imc_key_t*, imc_key_t*),
+                                imc_data_t** removed_data){
+
+    imc_avl_node_t* result;
+    int k;
+    
+    k = check_invariant(tree, comparator);
+    if (k == -1) printf("DELETE_ERROR_AV\n");
+    else printf("DELETE_OK_AV\n");
+
+    result = imc_avl_remove_rec(tree, key, comparator, removed_data);
+
+    k = check_invariant(result, comparator);
+    if (k == -1) printf("DELETE_ERROR_AP\n");
+    else printf("DELETE_OK_AP\n");
+
+    return result;
+
+}
+
 
 //----------------------------------------------------------------------------//
 //-------------------------Dump Function--------------------------------------//
