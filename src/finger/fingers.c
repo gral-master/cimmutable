@@ -17,43 +17,38 @@
 #endif
 
 /**
- * Build a tree node, which is an internal node in a side finger.
- * Children are assumed unsafe and are binary-copied from input.
- * The reference to the node is assumed kept from this call (ref_counter is 1)
+ * Build a tree node from original tree nodes and new node
+ * Guaranteed to be called with legit params.
+ * ASSERT: depth of new_node is equal to depth of each node in nodes
  */
-fingernode_t* make_tree_node(int child_count, fingernode_t* children) {
-  /*
+fingernode_t* make_treenode_and_cpy(int node_count, fingernode_t* new_node, fingernode_t** old_nodes) {
   fingernode_t* res = malloc(sizeof(fingernode_t));
   res->node_type = TREE_NODE;
-  tree_node_t* tn = res->content.tree_node;
-  tn->ref_counter = 1;
-  tn->tag = 0;
-  tn->nb_children = 0;
-  tn->children = malloc(child_count * sizeof(tree_node_t*));
-  memcpy(tn->children, children, child_count * sizeof(fingernode_t*));
+  res->ref_counter = 1;
+  res->arity = node_count + 1;
+  res->content.children[0] = new_node;
+  if (old_nodes) {
+    memcpy(res->content.children[1], old_nodes, node_count * sizeof(fingernode_t*));
+    for (int i=1; i<node_count+1; i++) {       // new refs on the old nodes
+      res->content.children[i]->ref_counter++;
+    }
+  }
   return res;
-*/
-  return NULL;
 }
 
 /**
- * Build a data node, which is a leaf node in a side finger.
- * Data are assumed unsafe and are binary-copied from input.
- * The reference to the node is assumed kept from this call (ref_counter is 1)
+ * TODO: carefully work out wtf to do with finger_data_t (prolly **, actually)
  */
-fingernode_t* make_data_node(int data_count, finger_data_t* data) {
-/*
-  fingernode_t* res = malloc(sizeof(data_node_t));
+fingernode_t* make_datanode_and_cpy(int data_count, finger_data_t* new_data, finger_data_t* old_data) {
+  fingernode_t* res = malloc(sizeof(fingernode_t));
   res->node_type = DATA_NODE;
-  data_node_t* dn = res->content.data_node;
-  dn->ref_counter = 1;
-  dn->tag = 0;
-  dn->nb_data = data_count;
-  dn->data = malloc(data_count * sizeof(finger_data_t));
-  memcpy(dn->data, data, (data_count * sizeof(finger_data_t)));
+  res->ref_counter = 1;
+  res->arity = data_count + 1;
+  res->content.children[0] = new_data;
+  if (old_data) {
+    memcpy(res->content.children[1], old_data, data_count * sizeof(fingernode_t*));
+  }
   return res;
-*/
-  return NULL;
 }
 
 /**
@@ -176,22 +171,42 @@ void dump_deep(deep_t* deep, void (*display)(finger_data_t)) {
   }
 }
 
-deep_t* prepend(deep_t* tree, finger_data_t* value) {
-  switch (tree->deep_type) {
-  case EMPTY_NODE:
-    return make_single(1, value);
-  case SINGLE_NODE:
-    return make_deep_node(NULL, NULL, NULL);
-  case DEEP_NODE:
-    return make_deep_node(NULL, NULL, NULL);
-    break;
-  default:
-    return NULL;
+/**
+ * Type match guaranteed by construction
+ * Called only if the deep's type is DEEP_NODE
+ * We never prepend on SINGLE_NODE
+ * We never even touch an EMPTY_NODE
+ */
+void prepend_node(deep_t* deep, fingernode_t* node) {
+  // Whatever happens, if we're here we're modifying deep->left
+  deep->content.deeper->ref_counter++;
+  deep->right->ref_counter++;
+
+  fingernode_t* left = deep->left;
+  if (left->arity == 4) {
+    // Do the changes at the root node
+    // Recur on deeper
+  }
+  else {
+    return make_treenode_and_cpy(left->arity, node, left->content.children);
   }
 }
 
-void prepend_node(deep_t* tree, fingernode_t* node) {
-  return;
+/**
+ * WiP
+ */
+deep_t* prepend(deep_t* tree, finger_data_t* value) {
+  switch (tree->deep_type) {
+  case EMPTY_NODE:
+    return make_single_from_data(value);
+  case SINGLE_NODE:
+    return make_deep(NULL, NULL, NULL);
+  case DEEP_NODE:
+    return make_deep(NULL, NULL, NULL);
+  default:
+    break;
+  }
+  return NULL;
 }
 
 deep_t* append(deep_t* tree, finger_data_t* value) {
