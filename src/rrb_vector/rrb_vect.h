@@ -41,6 +41,7 @@
 #define _IMC_RRB_VECT_H
 
 #include "../../include/vector.h" //-I -L à la compile pour faire #include <vector.h>
+#include <stdio.h>
 
 /* ARRAY_SIZE should be a power of 2 */
 #define ARRAY_SIZE 32
@@ -63,11 +64,21 @@ imc_rrb_t* imc_vector_concrete_create();
 
 int imc_vector_concrete_size(imc_rrb_t* vec);
 
+imc_rrb_t* imc_vector_concrete_update(imc_rrb_t* vec, int index, imc_data_t* data);
+
 imc_data_t* imc_vector_concrete_lookup(imc_rrb_t* vec, int index);
 
 imc_rrb_t* imc_vector_concrete_push(imc_rrb_t* vec, imc_data_t* data);
 
-void imc_vector_concrete_emit(imc_rrb_t* vec);
+imc_rrb_t* imc_vector_concrete_push_full(imc_rrb_t* vec, imc_data_t* data);
+
+imc_rrb_t* imc_vector_concrete_push_not_full(imc_rrb_t* vec, imc_data_t* data);
+
+void imc_vector_concrete_emit(imc_rrb_t* vec, const char* path, char* (*print)(imc_data_t*));
+
+void emit_node(imc_rrb_t* vec, char* from, char* prefix, FILE* f, char* (*print)(imc_data_t*));
+
+char* concatc(char* str, char c);
 
 int imc_vector_concrete_full(imc_rrb_t* vec);
 
@@ -82,5 +93,7 @@ imc_rrb_t* imc_vector_concrete_copy_leaf(imc_rrb_t* vec);
 imc_rrb_t* imc_vector_concrete_copy(imc_rrb_t* vec);
 
 imc_rrb_t* imc_vector_concrete_create_leaf();
+
+imc_rrb_t* imc_vector_concrete_pop(imc_rrb_t* vec, imc_data_t** data);
 
 #endif
