@@ -179,6 +179,10 @@ rrb_vector_t *add_as_parent_to(const rrb_vector_t *child, imc_data_t *data) {
 rrb_vector_t *add_leaf(rrb_vector_t *rrb, imc_data_t *data, int where);
 rrb_vector_t *add_node(rrb_vector_t *rrb, imc_data_t *data, int where, int level, int root);
 
+int calc_position(int index, int level) {
+    return index >> ((5 * level) & 31);
+}
+
 /** Finds the correct place to insert the new data. */
 int place_to_insert(const rrb_vector_t *rrb) {
     if (rrb->meta == NULL) {
@@ -275,4 +279,12 @@ rrb_vector_t *rrb_add(const rrb_vector_t *rrb, imc_data_t *data) {
         #endif
         return add(rrb, data, 1, find_max_level(rrb));
     }
+}
+
+size_t rrb_size(const rrb_vector_t *rrb) {
+    return rrb->elements;
+}
+
+imc_data_t *rrb_lookup(rrb_vector_t *rrb, int index) {
+    return NULL;
 }

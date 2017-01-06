@@ -1,19 +1,30 @@
 .PHONY: all clean launch
 
-CC=gcc
-CFLAGS=-Wall -Wextra -std=gnu11 -g
+SRC = rrb_vector.c rrb_dumper.c main.c
+OBJ = $(SRC:%.c=%.o)
 
-all: launch
+CC = clang
+CFLAGS = -Wall -Wextra -std=gnu11 -g
 
-launch: rrb rrb_vector.o rrb_dumper.o main.o
-	@./rrb
-	@dot -Tps rrb-tree.dot -o rrb-tree.svg
+all: preparation launch
 
-rrb: rrb_vector.o rrb_dumper.o main.o
-	$(CC) $(CFLAGS) rrb_vector.o rrb_dumper.o main.o -o rrb
+preparation:
+	mkdir -p bin/
+	mkdir -p exec/
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $<
+launch: exec/rrb $(OBJ)
+	@./exec/rrb
+	# @dot -Tps rrb-tree.dot -o rrb-tree.svg
+
+exec/rrb: $(addprefix bin/, $(OBJ))
+	$(CC) $(CFLAGS) $^ -o $@
+
+bin/%.o: src/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf *.o
+	rm -rf bin/
+
+mrproper:
+	rm -rf exec/
+	rm -rf bin/
