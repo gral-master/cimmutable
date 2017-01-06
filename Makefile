@@ -13,7 +13,7 @@ RRBDIR = ./src/rrb_vector
 
 SHELL = /bin/sh
 CC = gcc
-CFLAGS = -Wall -Wextra -Wimplicit -std=c11 -g -fPIC
+CFLAGS = -Wall -Wextra -Wimplicit -std=gnu11 -g -fPIC
 LFLAGS = -shared
 
 RM = rm -f
