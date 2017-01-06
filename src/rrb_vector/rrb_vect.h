@@ -52,48 +52,48 @@
 typedef struct imc_rrb {
     int level;
     int refs;
-    int element_count;
+    int length;
     int* meta;
     union {
-      struct imc_rrb** subtrees;
+      struct imc_rrb** next; //children
       imc_data_t** data;
-    } children;
+    } node; //to
 } imc_rrb_t;
 
-imc_rrb_t* imc_vector_concrete_create();
+imc_rrb_t* imc_rrb_create();
 
-int imc_vector_concrete_size(imc_rrb_t* vec);
+int imc_rrb_size(imc_rrb_t* vec);
 
-imc_rrb_t* imc_vector_concrete_update(imc_rrb_t* vec, int index, imc_data_t* data);
+imc_rrb_t* imc_rrb_update(imc_rrb_t* vec, int index, imc_data_t* data);
 
-imc_data_t* imc_vector_concrete_lookup(imc_rrb_t* vec, int index);
+imc_data_t* imc_rrb_lookup(imc_rrb_t* vec, int index);
 
-imc_rrb_t* imc_vector_concrete_push(imc_rrb_t* vec, imc_data_t* data);
+imc_rrb_t* imc_rrb_push(imc_rrb_t* vec, imc_data_t* data);
 
-imc_rrb_t* imc_vector_concrete_push_full(imc_rrb_t* vec, imc_data_t* data);
+imc_rrb_t* imc_rrb_push_full(imc_rrb_t* vec, imc_data_t* data);
 
-imc_rrb_t* imc_vector_concrete_push_not_full(imc_rrb_t* vec, imc_data_t* data);
+imc_rrb_t* imc_rrb_push_not_full(imc_rrb_t* vec, imc_data_t* data);
 
-void imc_vector_concrete_emit(imc_rrb_t* vec, const char* path, char* (*print)(imc_data_t*));
+void imc_rrb_emit(imc_rrb_t* vec, const char* path, char* (*print)(imc_data_t*));
 
 void emit_node(imc_rrb_t* vec, char* from, char* prefix, FILE* f, char* (*print)(imc_data_t*));
 
 char* concatc(char* str, char c);
 
-int imc_vector_concrete_full(imc_rrb_t* vec);
+int imc_rrb_full(imc_rrb_t* vec);
 
-imc_rrb_t* imc_vector_concrete_new_root(imc_rrb_t* vec);
+imc_rrb_t* imc_rrb_new_root(imc_rrb_t* vec);
 
-int imc_vector_concrete_balanced(imc_rrb_t* vec);
+int imc_rrb_balanced(imc_rrb_t* vec);
 
-int imc_vector_concrete_subindex(imc_rrb_t* vec, int index);
+int imc_rrb_subindex(imc_rrb_t* vec, int index);
 
-imc_rrb_t* imc_vector_concrete_copy_leaf(imc_rrb_t* vec);
+imc_rrb_t* imc_rrb_copy_leaf(imc_rrb_t* vec);
 
-imc_rrb_t* imc_vector_concrete_copy(imc_rrb_t* vec);
+imc_rrb_t* imc_rrb_copy(imc_rrb_t* vec);
 
-imc_rrb_t* imc_vector_concrete_create_leaf();
+imc_rrb_t* imc_rrb_create_leaf();
 
-imc_rrb_t* imc_vector_concrete_pop(imc_rrb_t* vec, imc_data_t** data);
+imc_rrb_t* imc_rrb_pop(imc_rrb_t* vec, imc_data_t** data);
 
 #endif
