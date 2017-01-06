@@ -6,7 +6,7 @@ OBJ = $(SRC:%.c=%.o)
 CC = clang
 CFLAGS = -Wall -Wextra -std=gnu11 -g
 
-all: preparation test
+all: preparation launch #test
 
 preparation:
 	@mkdir -p bin/
@@ -20,8 +20,8 @@ exec/test: bin/test.o $(addprefix bin/, $(OBJ))
 
 launch: exec/rrb
 	@./exec/rrb
-	# @dot -Tps rrb-tree.dot -o rrb-tree.svg
 
+#@dot -Tps rrb-tree.dot -o rrb-tree.svg
 exec/rrb: $(addprefix bin/, $(OBJ)) bin/main.o
 	$(CC) $(CFLAGS) $^ -o $@
 

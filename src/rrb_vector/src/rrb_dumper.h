@@ -11,3 +11,6 @@ void rrb_pp(const rrb_vector_t *rrb);
 
 /** RRB-Tree Pretty Print with Pointers. */
 void rrb_ppp(const rrb_vector_t *rrb);
+
+/** RRB-Tree Pretty Print with Pointers and Leafs. */
+void rrb_ppp_leafs(const rrb_vector_t *rrb);

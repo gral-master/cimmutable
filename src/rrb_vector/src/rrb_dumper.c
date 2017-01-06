@@ -89,14 +89,16 @@ void rrb_pp(const rrb_vector_t *rrb) {
     pp(rrb, 0);
 }
 
-void ppp(const rrb_vector_t *rrb, int tab) {
+void ppp(const rrb_vector_t *rrb, int tab, bool leafs) {
     if (rrb != NULL) {
         if (rrb->leafs == true) {
             tabulation(tab, stdout);
             printf("Node %p {", rrb);
             tabulation(tab, stdout);
             printf("}\n");
-            return;
+            if (leafs == false) {
+                return;
+            }
             for (int i = 0; i < 32; i++) {
                 if (rrb->children.data[i] != NULL) {
                     tabulation(tab + 2, stdout);
@@ -110,7 +112,7 @@ void ppp(const rrb_vector_t *rrb, int tab) {
             printf("Node %p {\n", rrb);
             for (int i = 0; i < 32; i++) {
                 if (rrb->children.arr[i] != NULL) {
-                    ppp(rrb->children.arr[i], tab + 2);
+                    ppp(rrb->children.arr[i], tab + 2, leafs);
                 }
             }
             tabulation(tab, stdout);
@@ -120,5 +122,9 @@ void ppp(const rrb_vector_t *rrb, int tab) {
 }
 
 void rrb_ppp(const rrb_vector_t *rrb) {
-    ppp(rrb, 0);
+    ppp(rrb, 0, false);
+}
+
+void rrb_ppp_leafs(const rrb_vector_t *rrb) {
+    ppp(rrb, 0, true);
 }

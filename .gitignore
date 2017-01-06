@@ -35,3 +35,8 @@
 # Debug files
 *.dSYM/
 *.su
+
+*.txt
+*.dot
+*.svg
+rrb
