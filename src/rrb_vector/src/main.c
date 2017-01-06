@@ -10,7 +10,7 @@ int main() {
 
     rrb_vector_t *rrb1 = rrb_create();
 
-    for (int i = 0; i < 1024; i++) {
+    for (int i = 0; i < 1025; i++) {
         if (i % 3 == 0) {
             rrb1 = rrb_add(rrb1, &x);
         } else if (i % 3 == 1) {
@@ -18,6 +18,7 @@ int main() {
         } else {
             rrb1 = rrb_add(rrb1, &z);
         }
+        // rrb_ppp_leafs(rrb1);
     }
     rrb_ppp(rrb1);
 

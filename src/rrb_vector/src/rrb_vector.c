@@ -56,10 +56,11 @@ void free_rrb(rrb_vector_t *rrb) {
 }
 
 /** Increases references to the tree. */
-void inc_ref(rrb_vector_t *rrb) {
+rrb_vector_t *inc_ref(rrb_vector_t *rrb) {
     debug_print("inc_ref, beginning\n");
     rrb->ref += 1;
     debug_print("inc_ref, end\n");
+    return rrb;
 }
 
 /** Decreases references to the tree. */
@@ -152,66 +153,45 @@ rrb_vector_t *copy_node(const rrb_vector_t *src) {
     return clone;
 }
 
-/** Copies the tree and increases every level. */
-rrb_vector_t *copy_and_increase(const rrb_vector_t *src) {
-    debug_print("copy_and_increase, beginning\n");
-    rrb_vector_t *clone = copy_node(src);
-    clone->level += 1;
-    if (clone->leafs == false) {
-        for (int i = 0; i < 32; i++) {
-            dec_ref(clone->children.arr[i]);
-            clone->children.arr[i] = copy_and_increase(clone->children.arr[i]);
-        }
-    }
-    debug_print("copy_and_increase, end\n");
-    return clone;
-}
-
-/** Creates the parents of a leafs node. */
-rrb_vector_t *create_parents(int level, rrb_vector_t *child) {
-    debug_print("create_parents, beginning\n");
+/** Inserts the data at the desired level. */
+rrb_vector_t *create_child(int level, imc_data_t *data) {
+    debug_print("create_level, beginning\n");
     if (level == 1) {
-        debug_print("create_parents, child\n");
-        return child;
-    } else {
-        rrb_vector_t *rrb = create(true);
-        rrb->children.arr[0] = child;
+        rrb_vector_t *rrb = create(false);
+        rrb->children.data[0] = data;
         rrb->elements = 1;
         rrb->level = level;
-        debug_print("create_parents, parents\n");
-        return create_parents(level - 1, rrb);
+        debug_print("create_level, end\n");
+        return rrb;
+    } else {
+        rrb_vector_t *rrb = create(true);
+        rrb->children.arr[0] = create_child(level - 1, data);
+        rrb->elements = 1;
+        rrb->level = level;
+        debug_print("create_level, end\n");
+        return rrb;
     }
-}
-
-/** Inserts the data at the desired level. */
-rrb_vector_t *create_level(int level, imc_data_t *data) {
-    debug_print("create_level, beginning\n");
-    rrb_vector_t *rrb = create(false);
-    rrb->children.data[0] = data;
-    rrb->elements = 1;
-    rrb->level = level;
-    debug_print("create_level, end\n");
-    return create_parents(level - 1, rrb);
 }
 
 /** Adds a node, parent of the tree, and insert
   * the data at the correct level. */
-rrb_vector_t *add_as_parent_to(const rrb_vector_t *child, imc_data_t *data) {
+rrb_vector_t *add_as_parent_to(rrb_vector_t *child, imc_data_t *data) {
     debug_print("add_as_parent_to, beginning\n");
     rrb_vector_t *parent = create(true);
-    parent->children.arr[0] = copy_and_increase(child);
-    parent->children.arr[1] = create_level(find_max_level(parent), data);
+    parent->level = child->level + 1;
+    parent->children.arr[0] = inc_ref(child);
+    parent->children.arr[1] = create_child(child->level, data);
     parent->elements = parent->children.arr[0]->elements + 1;
     debug_print("add_as_parent_to, end\n");
     return parent;
 }
 
 rrb_vector_t *add_leaf(rrb_vector_t *rrb, imc_data_t *data, int where);
-rrb_vector_t *add_node(rrb_vector_t *rrb, imc_data_t *data, int where, int level, int root);
+rrb_vector_t *add_node(rrb_vector_t *rrb, imc_data_t *data, int where);
 
 int calc_position(int index, int level) {
     debug_print("calc_position\n");
-    return index >> ((5 * level) & 31);
+    return (index >> (5 * (level - 1))) & 31;
 }
 
 /** Finds the correct place to insert the new data. */
@@ -219,11 +199,11 @@ int place_to_insert(const rrb_vector_t *rrb) {
     debug_print("place_to_insert, beginning\n");
     if (rrb->meta == NULL) {
         debug_print("place_to_insert, meta null\n");
-        return rrb->elements / pow(32, find_max_level(rrb) - rrb->level);
+        return calc_position(rrb->elements, rrb->level);
     } else {
         for (int i = 0; i < 32; i++) {
-            if (rrb->leafs == true) {
-                if (!is_full(rrb->children.arr[i])) {
+            if (rrb->leafs == false) {
+                if (rrb->children.arr[i] == NULL || !is_full(rrb->children.arr[i])) {
                     debug_print("place_to_insert, leafs\n");
                     return i;
                 }
@@ -235,14 +215,15 @@ int place_to_insert(const rrb_vector_t *rrb) {
             }
         }
     }
+    return -1;
 }
 
 /** Copies if the node exists, else creates it at the correct level. */
-rrb_vector_t *clone_or_create(const rrb_vector_t *src, int level, int root) {
+rrb_vector_t *clone_or_create(const rrb_vector_t *src, int level) {
     debug_print("clone_or_create, beginning\n");
     rrb_vector_t *clone;
     if (src == NULL) {
-        if (level == root) {
+        if (level == 1) {
             clone = create(false);
         } else {
             clone = create(true);
@@ -256,15 +237,15 @@ rrb_vector_t *clone_or_create(const rrb_vector_t *src, int level, int root) {
 }
 
 /** Adds a node to a non fully tree. */
-rrb_vector_t *add(const rrb_vector_t *src, imc_data_t *data, int level, int root) {
+rrb_vector_t *add(const rrb_vector_t *src, imc_data_t *data, int level) {
     debug_print("add, beginning\n");
-    rrb_vector_t *clone = clone_or_create(src, level, root);
+    rrb_vector_t *clone = clone_or_create(src, level);
     if (clone->leafs == true) {
         debug_print("add, leafs\n");
         return add_leaf(clone, data, place_to_insert(clone));
     } else {
         debug_print("add, node\n");
-        return add_node(clone, data, place_to_insert(clone), level, root);
+        return add_node(clone, data, place_to_insert(clone));
     }
 }
 
@@ -281,13 +262,13 @@ rrb_vector_t *add_leaf(rrb_vector_t *rrb, imc_data_t *data, int where) {
 }
 
 /** Easily adds a data to a tree node. */
-rrb_vector_t *add_node(rrb_vector_t *rrb, imc_data_t *data, int where, int level, int root) {
+rrb_vector_t *add_node(rrb_vector_t *rrb, imc_data_t *data, int where) {
     debug_print("add_node, beginning\n");
     if (rrb->children.arr[where] != NULL) {
         dec_ref(rrb->children.arr[where]);
     }
-    rrb->children.arr[where] = add(rrb->children.arr[where], data, level + 1, root);
-    if (where == 31) {
+    rrb->children.arr[where] = add(rrb->children.arr[where], data, rrb->level - 1);
+    if (where == 31 && is_full(rrb->children.arr[where])) {
         rrb->full = true;
     }
     rrb->elements += 1;
@@ -296,14 +277,14 @@ rrb_vector_t *add_node(rrb_vector_t *rrb, imc_data_t *data, int where, int level
 }
 
 /** Adds a data to the tree, and returns a new version of the tree. */
-rrb_vector_t *rrb_add(const rrb_vector_t *rrb, imc_data_t *data) {
+rrb_vector_t *rrb_add(rrb_vector_t *rrb, imc_data_t *data) {
     debug_print("rrb_add, beginning\n");
     if (is_full(rrb)) {
         debug_print("rrb_add, full\n");
         return add_as_parent_to(rrb, data);
     } else {
         debug_print("rrb_add, not full\n");
-        return add(rrb, data, 1, find_max_level(rrb));
+        return add(rrb, data, rrb->level);
     }
 }
 

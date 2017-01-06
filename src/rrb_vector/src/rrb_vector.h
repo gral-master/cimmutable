@@ -3,7 +3,6 @@
 // #include <vector.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <math.h>
 #include <stdio.h>
 
 typedef int imc_data_t;
@@ -35,4 +34,4 @@ typedef struct _rrb {
     } while (0)
 
 rrb_vector_t *rrb_create();
-rrb_vector_t *rrb_add(const rrb_vector_t *rrb, imc_data_t *data);
+rrb_vector_t *rrb_add(rrb_vector_t *rrb, imc_data_t *data);
