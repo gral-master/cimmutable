@@ -19,7 +19,7 @@ void print (int* nb, char* b)
 void parcour_infix(imc_avl_node_t* tree){
     if(tree == NULL) return;
     parcour_infix(tree->left);
-    printf("tree->key = %d, tree->balance = %d\n", *tree->key,tree->balance);
+    printf("tree->key = %d, tree->balance = %d, tree->ref = %d\n", *tree->key,tree->balance, tree->ref_counter);
     parcour_infix(tree->right);
 }
 
@@ -37,7 +37,7 @@ int main ()
         replace = NULL;
 		tree = imc_avl_insert(tree, &data[i], &key[i], &compare, &replace);
 		imc_avl_dump(tree, print);
-        parcour_infix(tree);
+        //parcour_infix(tree);
 	}
 
 	
@@ -52,6 +52,7 @@ int main ()
     printf("tree->balance = %d\n", tree->balance);
     imc_avl_dump(tree, print);
     parcour_infix(tree);
+
 
 	//printf("%d\n", (int) *result);
 	

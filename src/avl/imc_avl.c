@@ -80,7 +80,6 @@ int check_invariant(imc_avl_node_t* tree,
 
     free(tab);
 
-
     check_balance_rec(tree, &valid);
 
     if (valid != -1) {
@@ -653,29 +652,7 @@ int _print_t( imc_avl_node_t *tree,
     int left  = _print_t(tree->left,  1, offset,                depth + 1, s, print);
     int right = _print_t(tree->right, 0, offset + left + width, depth + 1, s, print);
 
-#ifdef COMPACT
-    int i;
-    for (i = 0; i < width; i++) {
-        s[depth][offset + left + i] = b[i];
-    }
 
-    if (depth && is_left) {
-
-        for (i = 0; i < width + right; i++) {
-            s[depth - 1][offset + left + width/2 + i] = '-';
-        }
-
-        s[depth - 1][offset + left + width/2] = '.';
-
-    } else if (depth && !is_left) {
-
-        for (i = 0; i < left + width; i++) {
-            s[depth - 1][offset - width/2 + i] = '-';
-        }
-
-        s[depth - 1][offset + left + width/2] = '.';
-    }
-#else
     int i;
     for ( i = 0; i < width; i++) {
         s[2 * depth][offset + left + i] = b[i];
@@ -698,7 +675,6 @@ int _print_t( imc_avl_node_t *tree,
         s[2 * depth - 1][offset + left + width/2] = '+';
         s[2 * depth - 1][offset - width/2 - 1] = '+';
     }
-#endif
 
     return left + width + right;
 }
@@ -734,16 +710,21 @@ void imc_avl_dump(imc_avl_node_t* tree,
 //----------------------------------------------------------------------------//
 
 int imc_avl_unref(imc_avl_node_t* tree){
-	tree->ref_counter--;
-//TODO not thread safe
-    if(tree->ref_counter <= 0){
-        imc_avl_unref(tree->left);
-        imc_avl_unref(tree->right);
-        free(tree);
-        return 0;
+
+    if (tree != NULL) {
+    	tree->ref_counter--;
+    
+        if(tree->ref_counter <= 0){
+            imc_avl_unref(tree->left);
+            imc_avl_unref(tree->right);
+            free(tree);
+            return 0;
+        }
+
+        return tree->ref_counter;
     }
 
-    return tree->ref_counter;
+    return -1;
 }
 
 //***********************Test part FUNCTION***********************************//
