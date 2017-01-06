@@ -6,13 +6,16 @@ OBJ = $(SRC:%.c=%.o)
 CC = clang
 CFLAGS = -Wall -Wextra -std=gnu11 -g
 
-all: preparation launch
+all: preparation test
 
 preparation:
-	mkdir -p bin/
-	mkdir -p exec/
+	@mkdir -p bin/
+	@mkdir -p exec/
 
-launch: exec/rrb $(OBJ)
+test: exec/test
+	@./exec/test
+
+launch: exec/rrb
 	@./exec/rrb
 	# @dot -Tps rrb-tree.dot -o rrb-tree.svg
 

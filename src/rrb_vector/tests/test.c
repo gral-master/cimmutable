@@ -1,6 +1,6 @@
 #include <check.h>
-#include <vector.h>
 #include <stdlib.h>
+#include "../src/rrb_vector.h"
 
 START_TEST(rrb_create)
 {
