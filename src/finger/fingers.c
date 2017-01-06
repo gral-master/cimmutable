@@ -8,52 +8,56 @@
 #define CHILDREN_MAX_SIZE 3
 #define DATA_MAX_SIZE 4
 
+#define FINGER_DEBUG
+
+#ifdef FINGER_DEBUG
+#define finger_debug(str) fprintf("%s\n", str);
+#else
+#define finger_debug(str) ;
+#endif
+
 /**
- * Build a tree node, which is an internal node in a side finger.
- * Children are assumed unsafe and are binary-copied from input.
- * The reference to the node is assumed kept from this call (ref_counter is 1)
+ * Build a tree node from original tree nodes and new node
+ * Guaranteed to be called with legit params.
+ * ASSERT: depth of new_node is equal to depth of each node in nodes
  */
-fingernode_t* make_tree_node(int child_count, fingernode_t* children) {
+fingernode_t* make_treenode_and_cpy(int node_count, fingernode_t* new_node, fingernode_t** old_nodes) {
   fingernode_t* res = malloc(sizeof(fingernode_t));
   res->node_type = TREE_NODE;
-  tree_node_t* tn = res->content.tree_node;
-  tn->ref_counter = 1;
-  tn->tag = 0;
-  tn->nb_children = 0;
-  tn->children = malloc(child_count * sizeof(tree_node_t*));
-  memcpy(tn->children, children, child_count * sizeof(fingernode_t*));
-  return res;
-}
-
-/**
- * Build a data node, which is a leaf node in a side finger.
- * Data are assumed unsafe and are binary-copied from input.
- * The reference to the node is assumed kept from this call (ref_counter is 1)
- */
-fingernode_t* make_data_node(int data_count, finger_data_t* data) {
-  fingernode_t* res = malloc(sizeof(data_node_t));
-  res->node_type = DATA_NODE;
-  data_node_t* dn = res->content.data_node;
-  dn->ref_counter = 1;
-  dn->tag = 0;
-  dn->nb_data = data_count;
-  dn->data = malloc(data_count * sizeof(finger_data_t));
-  memcpy(dn->data, data, (data_count * sizeof(finger_data_t)));
-  return res;
-}
-
-/**
- * Build a deep node, which is a dorsal node of the finger tree
- */
-deep_t* make_deep_node() {
-  deep_t* res = malloc(sizeof(deep_t));
   res->ref_counter = 1;
-  res->tag = 0;
-  res->deeper = NULL;
-  deep_node_t* deep_node = malloc(sizeof(deep_node_t));
-  deep_node->left = NULL;
-  deep_node->right = NULL;
-  res->content.deep_node = deep_node;
+  res->arity = node_count + 1;
+  res->content.children[0] = new_node;
+  if (old_nodes) {
+    memcpy(res->content.children[1], old_nodes, node_count * sizeof(fingernode_t*));
+    for (int i=1; i<node_count+1; i++) {       // new refs on the old nodes
+      res->content.children[i]->ref_counter++;
+    }
+  }
+  return res;
+}
+
+/**
+ * TODO: carefully work out wtf to do with finger_data_t (prolly **, actually)
+ */
+fingernode_t* make_datanode_and_cpy(int data_count, finger_data_t* new_data, finger_data_t* old_data) {
+  fingernode_t* res = malloc(sizeof(fingernode_t));
+  res->node_type = DATA_NODE;
+  res->ref_counter = 1;
+  res->arity = data_count + 1;
+  res->content.children[0] = new_data;
+  if (old_data) {
+    memcpy(res->content.children[1], old_data, data_count * sizeof(fingernode_t*));
+  }
+  return res;
+}
+
+/**
+ * Build an empty node. This can be simplified to a global, indelible empty node variable
+ * since we can reference the same one multiple times without impacting the tree's semantics.
+ */
+deep_t* make_empty_node() {
+  deep_t* res = malloc(sizeof(deep_t));
+  res->deep_type = EMPTY_NODE;
   return res;
 }
 
@@ -61,77 +65,58 @@ deep_t* make_deep_node() {
  * Build a single node, which is (sometimes) the last dorsal node of
  * a finger tree
  */
-deep_t* make_single_node(int data_count, finger_data_t* data) {
+deep_t* make_single_node(int data_count, fingernode_t* single) {
   deep_t* res = malloc(sizeof(deep_t));
+  res->deep_type = SINGLE_NODE;
   res->ref_counter = 1;
   res->tag = 0;
-  res->deeper = NULL;
-  single_node_t* single = malloc(sizeof(single_node_t));
-  single->data = make_data_node(data_count, data)->content.data_node;
   res->content.single = single;
   return res;
 }
 
-void destroy_tree_node(tree_node_t* node) {
-  free(node->children);
-  free(node);
+/**
+ * Build a deep node, which is a dorsal node of the finger tree
+ */
+deep_t* make_deep_node(fingernode_t* left, deep_t* deeper, fingernode_t* right) {
+  deep_t* res = malloc(sizeof(deep_t));
+  res->deep_type = DEEP_NODE;
+  res->ref_counter = 1;
+  res->tag = 0; 
+  res->left = left;
+  res->content.deeper = deeper;
+  res->right = right;
+  return res;
 }
 
-void destroy_data_node(data_node_t* node) {
-  free(node->data);
-  free(node);
-}
-
-void destroy_deep_node(deep_t* deep) {
-  switch (deep->deep_type) {
-  case DEEP_NODE:
-    free(deep->content.deep_node);
+void destroy_fingernode(fingernode_t* node) {
+  switch (node->node_type) {
+  case TREE_NODE:
+    free(node->content.children);
     break;
-  case SINGLE_NODE:
-    free(deep->content.single);
+  case DATA_NODE:
+    free(node->content.data);
     break;
   default:
     break;
   }
+  free(node);
+}
+
+void destroy_deep(deep_t* deep) {
   free(deep);
 }
 
-int unref_data_node(data_node_t* node) {
-  node->ref_counter--;
-  if (node->ref_counter) {
-    return 1;
-  }
-  destroy_data_node(node);
-  return 1;
-}
-
-int unref_tree_node(tree_node_t* node) {
-  node->ref_counter--;
-  if (node->ref_counter) {
-    return 1;
-  }
-  for (int i=0; i<node->nb_children; i++) {
-    unref_fingernode(node->children[i]);
-  }
-  destroy_tree_node(node);
-  return 1;
-}
-
 int unref_fingernode(fingernode_t* node) {
-  if (!node) {
+  node->ref_counter--;
+  if (node->ref_counter) { // i.e. ref_count != 0
     return 1;
   }
-  switch(node->node_type) {
-  case TREE_NODE:
-    return unref_tree_node(node->content.tree_node);
-    break;
-  case DATA_NODE:
-    return unref_data_node(node->content.data_node);
-    break;
-  default: /* This should not happen (famous last words ??) */
-    fprintf(stderr, "UNKNOWN NODE TYPE");
-    return 0;
+  fingernode_t** children = node->content.children;
+  for (int i=0; i<node->arity; i++) {
+    unref_fingernode(children[i]);
   }
+  destroy_fingernode(node);
+  return 1;
 }
 
 int unref_deep(deep_t* deep) {
@@ -139,75 +124,92 @@ int unref_deep(deep_t* deep) {
   if (deep->ref_counter) {
     return 0;
   }
-  deep_node_t* deep_node;
-  data_node_t* data_node;
   switch (deep->deep_type) {
   case DEEP_NODE:
-    deep_node = deep->content.deep_node;
-    unref_fingernode(deep_node->left);
-    unref_fingernode(deep_node->right);
-    unref_deep(deep->deeper);
-    destroy_deep_node(deep);
-    break;
+    unref_fingernode(deep->left);
+    unref_deep(deep->content.deeper);
+    unref_fingernode(deep->right);
   case SINGLE_NODE:
-    data_node = deep->content.single->data;
-    unref_data_node(data_node);
-    free(deep);
+    unref_fingernode(deep->content.single);
+    break;
+  case EMPTY_NODE:
+  default:
     break;
   }
-  return 1;
+  destroy_deep(deep);
 }
 
-void dump_data(data_node_t* node) {
-  for (int i=0; i<node->nb_data; i++) {
-    fprintf(stdout, "%d, ", node->data[i]);
-  }
-}
-
-void dump_finger(fingernode_t* node) {
-  if (!node) {
-    return;
-  }
+void dump_finger(fingernode_t* node, void (*display)(finger_data_t)) {
   switch (node->node_type) {
   case TREE_NODE:
-    for (int i=0; i<node->content.tree_node->nb_children; i++) {
-      dump_finger(node->content.tree_node->children[i]);
+    for (int i=0; i<node->arity; i++) {
+      dump_finger(node->content.children[i], display);
     }
     break;
   case DATA_NODE:
-    dump_data(node->content.data_node);
-    break;
+    for (int i=0; i<node->arity; i++) {
+      display(node->content.data[i]);
+    }
   default:
     break;
   }
 }
 
-void dump_deep(deep_t* deep) {
-  deep_node_t* deep_node;
-  data_node_t* data_node;
-  while (deep) {
-    switch (deep->deep_type) {
-    case SINGLE_NODE:
-      data_node = deep->content.single->data;
-      dump_data(data_node);
-      break;
-    case DEEP_NODE:
-      deep_node = deep->content.deep_node;
-      dump_finger(deep_node->left);
-      dump_finger(deep_node->right);
-      break;
-    default:
-      break;
-    }
-    deep = deep->deeper;
+void dump_deep(deep_t* deep, void (*display)(finger_data_t)) {
+  switch (deep->deep_type) {
+  case DEEP_NODE:
+    dump_finger(deep->left, display);
+    dump_deep(deep->content.deeper, display);
+    dump_finger(deep->right, display);
+    break;
+  case SINGLE_NODE:
+    dump_finger(deep->content.single, display);
+    break;
+  case EMPTY_NODE:
+  default:
+    break;
   }
 }
 
-deep_t* append(deep_t* tree, finger_data_t* value) {
+/**
+ * Type match guaranteed by construction
+ * Called only if the deep's type is DEEP_NODE
+ * We never prepend on SINGLE_NODE
+ * We never even touch an EMPTY_NODE
+ */
+void prepend_node(deep_t* deep, fingernode_t* node) {
+  // Whatever happens, if we're here we're modifying deep->left
+  deep->content.deeper->ref_counter++;
+  deep->right->ref_counter++;
+
+  fingernode_t* left = deep->left;
+  if (left->arity == 4) {
+    // Do the changes at the root node
+    // Recur on deeper
+  }
+  else {
+    return make_treenode_and_cpy(left->arity, node, left->content.children);
+  }
+}
+
+/**
+ * WiP
+ */
+deep_t* prepend(deep_t* tree, finger_data_t* value) {
+  switch (tree->deep_type) {
+  case EMPTY_NODE:
+    return make_single_from_data(value);
+  case SINGLE_NODE:
+    return make_deep(NULL, NULL, NULL);
+  case DEEP_NODE:
+    return make_deep(NULL, NULL, NULL);
+  default:
+    break;
+  }
   return NULL;
 }
 
-deep_t* prepend(deep_t* tree, finger_data_t* value) {
+deep_t* append(deep_t* tree, finger_data_t* value) {
   return NULL;
 }
 fingernode_t* node_push(fingernode_t* node, fingernode_t* value) {
