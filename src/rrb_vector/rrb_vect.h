@@ -40,7 +40,8 @@
 #ifndef _IMC_RRB_VECT_H
 #define _IMC_RRB_VECT_H
 
-#include "./vector.h" //-I -L à la compile pour faire #include <vector.h>
+#include "../../include/vector.h"
+//-I -L à la compile pour faire #include <vector.h>
 #include <stdio.h>
 
 /* ARRAY_SIZE should be a power of 2 */

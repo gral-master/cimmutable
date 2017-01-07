@@ -1,4 +1,4 @@
-#include "./vector.h"
+#include "../../include/vector.h"
 #include "./rrb_vect.h"
 
 //TODO check invariant and/or pre/post conditions
