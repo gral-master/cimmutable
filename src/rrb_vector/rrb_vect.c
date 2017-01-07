@@ -5,15 +5,13 @@
 #include <math.h>
 #include "../debug.h"
 #include "./rrb_vect.h"
+#include "./rrb_checker.h"
 
 int imc_rrb_size(imc_rrb_t* vec) { 
-  if(imc_rrb_balanced(vec) == 1){ 
+  if(vec == NULL) return 0;
+  if(vec->floor > 0){ 
     return vec->length; 
-  } 
-  if(vec->floor != 0){ 
-    int* meta = vec->meta; 
-    return meta[ARRAY_SIZE-1]; 
-  } 
+  }
   int i, count = 0; 
   imc_data_t** data = vec->node.data; 
   for(i = 0; i < ARRAY_SIZE; i++){ 
@@ -35,8 +33,10 @@ imc_rrb_t* imc_rrb_update(imc_rrb_t* vec, int index, imc_data_t* data) {
   while(vec->floor != 1) {
      sub_index = imc_rrb_subindex(vec, index);
      if(vec->node.next[sub_index] != NULL) {
-       vec->node.next[sub_index]->refs -= 1; //has been up by previous copy, we need to do -1 because we don't reference it in our new copy
-       vec->node.next[sub_index] = imc_rrb_copy(vec->node.next[sub_index]); // This function updates refs to node
+       vec->node.next[sub_index]->refs -= 1;
+       //has been up by previous copy, we need to do -1 because we don't reference it in our new copy
+       vec->node.next[sub_index] = imc_rrb_copy(vec->node.next[sub_index]);
+       // This function updates refs to node
      } else {
        //Should not happen
        //TODO : Free previous
@@ -52,7 +52,8 @@ imc_rrb_t* imc_rrb_update(imc_rrb_t* vec, int index, imc_data_t* data) {
   printf("Update to the vector of %d elems of floor %d at index %d, taken path : %d\n", vec->length, vec->floor, index, sub_index);
 
   if(vec->node.next[sub_index]!=NULL) {
-    vec->node.next[sub_index] = imc_rrb_copy_leaf(vec->node.next[sub_index]); //This should also copy the data
+    vec->node.next[sub_index] = imc_rrb_copy_leaf(vec->node.next[sub_index]);
+    //This should also copy the data
   } else {
     //Should not happen
     //TODO : Free previous
@@ -62,7 +63,8 @@ imc_rrb_t* imc_rrb_update(imc_rrb_t* vec, int index, imc_data_t* data) {
   vec = vec->node.next[sub_index];
   printf("Update to the vector of %d elems of floor %d at index %d, taken path : %d\n", vec->length, vec->floor, index, sub_index);
   //Here, vec is a fresh leaf with data inside
-  //sub_index = imc_rrb_subindex(vec, new_root->length); // On veut ajouter à l'indice nb_element
+  //sub_index = imc_rrb_subindex(vec, new_root->length);
+  // On veut ajouter à l'indice nb_element
   sub_index = imc_rrb_subindex(vec, index);
   vec->node.data[sub_index] = data;
   printf("Updated to the data at index %d, taken path : %d\n", index, sub_index);
@@ -134,8 +136,11 @@ imc_rrb_t* imc_rrb_push_not_full(imc_rrb_t* vec, imc_data_t* data) {
     while(vec->floor != 1) {
        sub_index = imc_rrb_subindex(vec, insert_index);
        if(vec->node.next[sub_index] != NULL) {
-         vec->node.next[sub_index]->refs -= 1; //has been up by previous copy, we need to do -1 because we don't reference it in our new copy
-         vec->node.next[sub_index] = imc_rrb_copy(vec->node.next[sub_index]); // This function updates refs to node
+         vec->node.next[sub_index]->refs -= 1;
+         // has been up by previous copy, we need to do -1
+         // because we don't reference it in our new copy
+         vec->node.next[sub_index] = imc_rrb_copy(vec->node.next[sub_index]);
+         // This function updates refs to node
        } else {
          vec->node.next[sub_index] = imc_rrb_create();
        }
@@ -149,7 +154,8 @@ imc_rrb_t* imc_rrb_push_not_full(imc_rrb_t* vec, imc_data_t* data) {
     printf("Insertion to the vector of %d elems of floor %d at index %d, taken path : %d\n", vec->length, vec->floor, insert_index, sub_index);
 
     if(vec->node.next[sub_index]!=NULL) {
-      vec->node.next[sub_index] = imc_rrb_copy_leaf(vec->node.next[sub_index]); //This should also copy the data
+      vec->node.next[sub_index] = imc_rrb_copy_leaf(vec->node.next[sub_index]);
+      //This should also copy the data
     } else {
       vec->node.next[sub_index] = imc_rrb_create_leaf();
     }
@@ -161,7 +167,8 @@ imc_rrb_t* imc_rrb_push_not_full(imc_rrb_t* vec, imc_data_t* data) {
     sub_index = imc_rrb_subindex(vec, insert_index);
     vec->node.data[sub_index] = data;
     imc_rrb_increase_length(vec, insert_index);
-    printf("Inserted to the data at index %d, taken path : %d\n", insert_index, sub_index);
+    printf("Inserted to the data at index %d, taken path : %d\n", insert_index,
+           sub_index);
 
     return new_root;
 }
@@ -203,19 +210,23 @@ imc_rrb_t* imc_rrb_pop(imc_rrb_t* vec, imc_data_t** data) {
   while(vec->floor!=1) {
     sub_index = imc_rrb_subindex(vec, last_index); // We want the last elem
     vec->node.next[sub_index] = imc_rrb_copy(vec->node.next[sub_index]); // This function updates refs to node
-    printf("Pop in a vector of size %d at floor %d, taken : %d \n", vec->length, vec->floor, sub_index);
+    printf("Pop in a vector of size %d at floor %d, taken : %d \n", vec->length,
+           vec->floor, sub_index);
     vec->length -= 1;
     vec = vec->node.next[sub_index];
   }
   //floor 1 : vec's child is a leaf.
   sub_index = imc_rrb_subindex(vec, last_index);
-  vec->node.next[sub_index] = imc_rrb_copy_leaf(vec->node.next[sub_index]); // This should also copy the data
-  printf("Pop in a vector of size %d at floor %d, taken : %d \n", vec->length, vec->floor, sub_index);
+  vec->node.next[sub_index] = imc_rrb_copy_leaf(vec->node.next[sub_index]);
+  // This should also copy the data
+  printf("Pop in a vector of size %d at floor %d, taken : %d \n", vec->length,
+         vec->floor, sub_index);
   vec->length -= 1;
   vec = vec->node.next[sub_index];
   //floor 0 : vec is a leaf
   sub_index = imc_rrb_subindex(vec, last_index);
-  printf("Extracted data in a vector of size %d at floor %d, taken : %d \n", vec->length, vec->floor, sub_index);
+  printf("Extracted data in a vector of size %d at floor %d, taken : %d \n",
+         vec->length, vec->floor, sub_index);
   *data = vec->node.data[sub_index];
   vec->node.data[sub_index] = NULL;
   vec->length -= 1;
@@ -225,7 +236,103 @@ imc_rrb_t* imc_rrb_pop(imc_rrb_t* vec, imc_data_t** data) {
 
 int imc_rrb_split(imc_rrb_t* vec_in, int index, imc_rrb_t** vec_out1,
                   imc_rrb_t** vec_out2) {
-  return -1;
+  imc_rrb_build_left(vec_in, *vec_out1, index);
+  imc_rrb_build_right(vec_in, *vec_out2, index);
+  return 0;
+}
+
+void imc_rrb_build_left(imc_rrb_t* vec_in, imc_rrb_t* left,
+                        int index){
+  int i, split_index = imc_rrb_subindex(vec_in, index);
+
+  left->floor = vec_in->floor;
+  if(vec_in->floor == 0){
+    for(i = 0; i <= split_index; i++){
+      left->node.data[i] = vec_in->node.data[i];
+    }
+    left->length = split_index+1;
+    return;
+  }
+  int is_balanced = imc_rrb_balanced(vec_in);
+  if(is_balanced == 0) left->meta = malloc(sizeof(int) * ARRAY_SIZE);
+  
+  for(i = 0; i < split_index; i++){
+    left->node.next[i] = vec_in->node.next[i];
+    left->node.next[i]->refs++;
+    if(is_balanced == 0) left->meta[i] = vec_in->meta[i];
+  }
+  if(vec_in->floor > 1) left->node.next[split_index] = imc_rrb_create();
+  else left->node.next[split_index] = imc_rrb_create_leaf();
+ 
+  imc_rrb_build_left(vec_in->node.next[split_index],
+                     left->node.next[split_index], index);
+  if(is_balanced == 0){
+    if(split_index == 0){
+      left->meta[split_index] = imc_rrb_size(left->node.next[split_index]);
+    }
+    else{
+      left->meta[split_index] =
+        imc_rrb_size(left->node.next[split_index]) + left->meta[split_index-1];
+    }
+    left->length = left->meta[split_index];
+  }
+  else{
+    left->length = vec_in->length
+      - (imc_rrb_size(vec_in->node.next[split_index])
+         - imc_rrb_size(left->node.next[split_index]));
+  }
+}
+
+void imc_rrb_build_right(imc_rrb_t* vec_in, imc_rrb_t* right,
+                        int index){
+  int i, j, split_index = imc_rrb_subindex(vec_in, index);
+  right->floor = vec_in->floor;
+  if(vec_in->floor == 0){
+    if(split_index == ARRAY_SIZE-1){
+      right->length = -1;
+      return;
+    }
+    for(j = 0, i = split_index+1; i > ARRAY_SIZE; i++, j++){
+      right->node.data[j] = vec_in->node.data[i];
+    }
+    right->length = j+1;
+    return;
+  }
+  right->meta = malloc(sizeof(int) * ARRAY_SIZE);
+  
+  for(i = split_index+1; i < ARRAY_SIZE; i++){
+    right->node.next[i] = vec_in->node.next[i];
+    right->node.next[i]->refs++;
+  }
+  if(vec_in->floor > 1) right->node.next[split_index] = imc_rrb_create();
+  else right->node.next[split_index] = imc_rrb_create_leaf();
+
+  imc_rrb_build_right(vec_in->node.next[split_index],
+                      right->node.next[split_index], index);
+
+  if(right->node.next[split_index]->length == -1){
+    imc_rrb_unref(right->node.next[split_index]);
+    right->node.next[split_index] = NULL;
+    int all_null = right->node.next[0] == NULL;
+    for(i = 1; i < ARRAY_SIZE; i++){
+      all_null = all_null && right->node.next[i] == NULL;
+      if(!all_null) break;
+    }
+    if(all_null){
+      right->length = -1;
+      return;
+    }
+  }
+  for(i = 0; i < ARRAY_SIZE; i++){
+    if(i < split_index) right->meta[i] = 0;
+    if(i == split_index){
+      right->meta[i] = imc_rrb_size(right->node.next[split_index]);
+    }
+    if(i > split_index){
+      right->meta[i] = right->meta[i-1] + imc_rrb_size(right->node.next[i]); 
+    }
+  }
+  right->length = right->meta[ARRAY_SIZE-1]; 
 }
 
 imc_rrb_t* imc_rrb_merge(imc_rrb_t* vec_front, imc_rrb_t* vec_tail) {
@@ -439,7 +546,6 @@ imc_rrb_t* imc_rrb_copy(imc_rrb_t* vec) {
       }
     }
   }
-
   return vec_copy;
 }
 
