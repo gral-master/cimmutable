@@ -24,9 +24,15 @@ int main() {
     }
     rrb_ppp(rrb1);
 
-    printf("Get number %d: %d\n", get, *rrb_lookup(rrb1, get));
+    printf("\nGet number %d: %d\n", get, *rrb_lookup(rrb1, get));
 
-    printf("Get size of rrb1: %zu\n", rrb_size(rrb1));
+    printf("Get size of rrb1: %zu\n\n", rrb_size(rrb1));
+
+    temp = malloc(sizeof *temp);
+    *temp = counter++;
+    rrb1 = rrb_update(rrb1, 23, temp);
+
+    rrb_ppp(rrb1);
 
     return 0;
 }

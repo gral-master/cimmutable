@@ -36,7 +36,10 @@ typedef struct _rrb {
 
 rrb_vector_t *rrb_create();
 rrb_vector_t *rrb_add(rrb_vector_t *rrb, imc_data_t *data);
+rrb_vector_t *rrb_update(const rrb_vector_t *rrb, int index, imc_data_t *data);
 
 imc_data_t *rrb_lookup(const rrb_vector_t *rrb, int index);
 
 size_t rrb_size(const rrb_vector_t *rrb);
+
+void rrb_unref(rrb_vector_t *rrb);

@@ -1,6 +1,6 @@
 #include "rrb_vector.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 /** Creates an empty array of nodes into rrb. */
 void make_children(rrb_vector_t *rrb) {
@@ -363,5 +363,65 @@ imc_data_t *rrb_lookup(const rrb_vector_t *rrb, int index) {
     } else {
         debug_print("rrb_lookup, lookup\n");
         return lookup(rrb, index);
+    }
+}
+
+void rrb_unref(rrb_vector_t *rrb) {
+    debug_print("rrb_unref, beginning\n");
+    dec_ref(rrb);
+    debug_print("rrb_unref, end\n");
+}
+
+rrb_vector_t *update_leaf(rrb_vector_t *rrb, int where, imc_data_t *data);
+rrb_vector_t *update_node(rrb_vector_t *rrb, int index, imc_data_t *data);
+
+/** Updates the tree by changing the data at index by data. */
+rrb_vector_t *update(const rrb_vector_t *rrb, int index, imc_data_t *data) {
+    debug_print("update, beginning\n");
+    rrb_vector_t *clone = clone_or_create(rrb, rrb->level);
+    if (contains_leafs(clone)) {
+        debug_print("update, leafs\n");
+        return update_leaf(clone, place_to_look(clone, index), data);
+    } else {
+        debug_print("update, node\n");
+        return update_node(clone, index, data);
+    }
+}
+
+/** Easily updates a data in a tree leaf. */
+rrb_vector_t *update_leaf(rrb_vector_t *rrb, int where, imc_data_t *data) {
+    debug_print("update_leaf, beginnning\n");
+    rrb->children.data[where] = data;
+    if (where == 31) {
+        rrb->full = true;
+    }
+    rrb->elements += 1;
+    debug_print("add_leaf, end\n");
+    return rrb;
+}
+
+/** Easily updates a data in a tree node. */
+rrb_vector_t *update_node(rrb_vector_t *rrb, int index, imc_data_t *data) {
+    debug_print("update_node, beginning\n");
+    int where = place_to_look(rrb, index);
+    dec_ref(rrb->children.arr[where]);
+    rrb->children.arr[where] = update(rrb->children.arr[where], index, data);
+    if (where == 31 && is_full(rrb->children.arr[where])) {
+        rrb->full = true;
+    }
+    rrb->elements += 1;
+    debug_print("update_node, end\n");
+    return rrb;
+}
+
+/** Checks if index is inside the tree, and update the data at index by data. */
+rrb_vector_t *rrb_update(const rrb_vector_t *rrb, int index, imc_data_t *data) {
+    debug_print("rrb_update, beginning\n");
+    if (index >= rrb->elements) {
+        debug_print("rrb_lookup, no index\n");
+        return NULL;
+    } else {
+        debug_print("rrb_update, update\n");
+        return update(rrb, index, data);
     }
 }
