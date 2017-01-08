@@ -191,6 +191,7 @@ rrb_vector_t *create_child(int level, imc_data_t *data) {
 
 /** Adds a node, parent of the tree, and insert
   * the data at the correct level. */
+// TODO Add meta support if child is relaxed.
 rrb_vector_t *add_as_parent_to(rrb_vector_t *child, imc_data_t *data) {
     debug_print("add_as_parent_to, beginning\n");
     rrb_vector_t *parent = create_w_children();
@@ -212,6 +213,7 @@ int calc_position(int index, int level) {
 }
 
 /** Finds the correct place to insert the new data. */
+// TODO Better performance with meta calculus.
 int place_to_insert(const rrb_vector_t *rrb) {
     debug_print("place_to_insert, beginning\n");
     if (rrb->meta == NULL) {
@@ -284,6 +286,7 @@ rrb_vector_t *clone_or_create(const rrb_vector_t *src, int level) {
 }
 
 /** Adds a node to a non fully tree. */
+// TODO What about meta ?
 rrb_vector_t *add(const rrb_vector_t *src, imc_data_t *data, int level) {
     debug_print("add, beginning\n");
     rrb_vector_t *clone = clone_or_create(src, level);
@@ -297,6 +300,7 @@ rrb_vector_t *add(const rrb_vector_t *src, imc_data_t *data, int level) {
 }
 
 /** Easily add a data to a tree leafs. */
+// TODO What about meta ?
 rrb_vector_t *add_leaf(rrb_vector_t *rrb, imc_data_t *data, int where) {
     debug_print("add_leaf, beginnning\n");
     rrb->children.data[where] = data;
@@ -309,6 +313,7 @@ rrb_vector_t *add_leaf(rrb_vector_t *rrb, imc_data_t *data, int where) {
 }
 
 /** Easily adds a data to a tree node. */
+// TODO What about meta ?
 rrb_vector_t *add_node(rrb_vector_t *rrb, imc_data_t *data, int where) {
     debug_print("add_node, beginning\n");
     if (rrb->children.arr[where] != NULL) {
