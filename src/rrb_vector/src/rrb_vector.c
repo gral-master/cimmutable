@@ -1,6 +1,6 @@
 #include "rrb_vector.h"
 
-#define DEBUG 0
+#define DEBUG 1
 
 /** Creates an empty array of nodes into rrb. */
 void make_children(rrb_vector_t *rrb) {
@@ -232,10 +232,12 @@ int place_to_insert(const rrb_vector_t *rrb) {
             }
         }
     }
+    debug_print("place_to_insert, default case\n");
     return -1;
 }
 
 int check_meta_index(const rrb_vector_t *rrb, int index, int position) {
+    debug_print("check_meta_index, beginning\n");
     if (position > 0) {
         while(rrb->meta[position - 1] > index) {
             position -= 1;
@@ -246,6 +248,7 @@ int check_meta_index(const rrb_vector_t *rrb, int index, int position) {
             position += 1;
         }
     }
+    debug_args("check_meta_index, position: %d\n", position);
     return position;
 }
 
@@ -255,6 +258,7 @@ int place_to_look(const rrb_vector_t *rrb, int index) {
         debug_print("place_to_look, meta null\n");
         return calc_position(index, rrb->level);
     } else {
+        debug_print("place_to_look, check_meta_index\n");
         return check_meta_index(rrb, index, calc_position(index, rrb->level));
     }
 }
@@ -335,15 +339,29 @@ size_t rrb_size(const rrb_vector_t *rrb) {
     return rrb->elements;
 }
 
-imc_data_t *rrb_lookup(rrb_vector_t *rrb, int index) {
+/** Loosks for a data into the tree. */
+imc_data_t *lookup(const rrb_vector_t* rrb, int index) {
+    debug_print("lookup, beginning\n");
+    int position = place_to_look(rrb, index);
+    debug_args("lookup, position: %d\n", position);
+    if (contains_nodes(rrb)) {
+        debug_print("lookup, nodes\n");
+        return lookup(rrb->children.arr[position], index);
+    } else {
+        debug_print("lookup, leafs\n");
+        return rrb->children.data[position];
+    }
+
+}
+
+/** Checks if the index is correct then looks for a data into the tree. */
+imc_data_t *rrb_lookup(const rrb_vector_t *rrb, int index) {
+    debug_print("rrb_lookup, beginning\n");
     if (index >= rrb->elements) {
+        debug_print("rrb_lookup, no index\n");
         return NULL;
     } else {
-        int position = place_to_look(rrb, index);
-        if (contains_nodes(rrb)) {
-            return rrb_lookup(rrb->children.arr[position], index);
-        } else {
-            return rrb->children.data[position];
-        }
+        debug_print("rrb_lookup, lookup\n");
+        return lookup(rrb, index);
     }
 }
