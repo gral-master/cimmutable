@@ -236,6 +236,7 @@ int place_to_insert(const rrb_vector_t *rrb) {
     return -1;
 }
 
+/** Adjusts the index in case of existing meta. */
 int check_meta_index(const rrb_vector_t *rrb, int index, int position) {
     debug_print("check_meta_index, beginning\n");
     if (position > 0) {
@@ -252,6 +253,7 @@ int check_meta_index(const rrb_vector_t *rrb, int index, int position) {
     return position;
 }
 
+/** Gets the index needed to look at the right level. */
 int place_to_look(const rrb_vector_t *rrb, int index) {
     debug_print("place_to_look, beginning\n");
     if (rrb->meta == NULL) {
@@ -335,11 +337,17 @@ rrb_vector_t *rrb_add(rrb_vector_t *rrb, imc_data_t *data) {
 
 /** Gets the size of rrb. */
 size_t rrb_size(const rrb_vector_t *rrb) {
-    debug_print("rrb_size\n");
-    return rrb->elements;
+    debug_print("rrb_size, beginning\n");
+    if (rrb == NULL) {
+        debug_print("rrb_size, null\n");
+        return -1;
+    } else {
+        debug_print("rrb_size, not null\n");
+        return rrb->elements;
+    }
 }
 
-/** Loosks for a data into the tree. */
+/** Looks for a data into the tree. */
 imc_data_t *lookup(const rrb_vector_t* rrb, int index) {
     debug_print("lookup, beginning\n");
     int position = place_to_look(rrb, index);
@@ -366,6 +374,7 @@ imc_data_t *rrb_lookup(const rrb_vector_t *rrb, int index) {
     }
 }
 
+/** Unref rrb and free it automatically if needed. */
 void rrb_unref(rrb_vector_t *rrb) {
     debug_print("rrb_unref, beginning\n");
     dec_ref(rrb);
