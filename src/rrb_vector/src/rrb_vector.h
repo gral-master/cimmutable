@@ -58,7 +58,7 @@ rrb_vector_t *rrb_create();
  * @param  data The data to insert into the RRB.
  * @return      A new RRB-Tree containing the data.
  */
-rrb_vector_t *rrb_add(rrb_vector_t *rrb, imc_data_t *data);
+rrb_vector_t *rrb_push(rrb_vector_t *rrb, imc_data_t *data);
 
 /**
  * Takes an RRB-Tree, updates the data contained at the corresponding index,

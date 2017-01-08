@@ -324,13 +324,13 @@ rrb_vector_t *add_node(rrb_vector_t *rrb, imc_data_t *data, int where) {
 }
 
 /** Adds a data to the tree, and returns a new version of the tree. */
-rrb_vector_t *rrb_add(rrb_vector_t *rrb, imc_data_t *data) {
-    debug_print("rrb_add, beginning\n");
+rrb_vector_t *rrb_push(rrb_vector_t *rrb, imc_data_t *data) {
+    debug_print("rrb_push, beginning\n");
     if (is_full(rrb)) {
-        debug_print("rrb_add, full\n");
+        debug_print("rrb_push, full\n");
         return add_as_parent_to(rrb, data);
     } else {
-        debug_print("rrb_add, not full\n");
+        debug_print("rrb_push, not full\n");
         return add(rrb, data, rrb->level);
     }
 }

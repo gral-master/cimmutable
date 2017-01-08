@@ -15,11 +15,11 @@ int main() {
         temp = malloc(sizeof *temp);
         *temp = counter++;
         if (i % 3 == 0) {
-            rrb1 = rrb_add(rrb1, temp);
+            rrb1 = rrb_push(rrb1, temp);
         } else if (i % 3 == 1) {
-            rrb1 = rrb_add(rrb1, temp);
+            rrb1 = rrb_push(rrb1, temp);
         } else {
-            rrb1 = rrb_add(rrb1, temp);
+            rrb1 = rrb_push(rrb1, temp);
         }
     }
     rrb_ppp(rrb1);
