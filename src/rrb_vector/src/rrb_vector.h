@@ -20,17 +20,18 @@ typedef struct _rrb {
   } children;
 } rrb_vector_t;
 
-#define debug_print(fmt) \
-    do { \
-        if (DEBUG) { \
-            fprintf(stderr, fmt); \
-        } \
+#define debug_print(fmt)                       \
+    do {                                       \
+        if (DEBUG) {                           \
+            fprintf(stderr, fmt);              \
+        }                                      \
     } while (0)
-#define debug_args(fmt, ...) \
-    do { \
-        if (DEBUG) { \
+
+#define debug_args(fmt, ...)                   \
+    do {                                       \
+        if (DEBUG) {                           \
             fprintf(stderr, fmt, __VA_ARGS__); \
-        } \
+        }                                      \
     } while (0)
 
 rrb_vector_t *rrb_create();

@@ -2,6 +2,7 @@
 
 #define DEBUG 0
 
+/** Creates an empty array of nodes into rrb. */
 void make_children(rrb_vector_t *rrb) {
     debug_print("make_children, beginning\n");
     rrb->leafs = false;
@@ -9,6 +10,7 @@ void make_children(rrb_vector_t *rrb) {
     debug_print("make_children, end\n");
 }
 
+/** Creates an empty array of leafs into rrb. */
 void make_datas(rrb_vector_t *rrb) {
     debug_print("make_datas, beginning\n");
     rrb->leafs = true;
@@ -35,18 +37,43 @@ rrb_vector_t *create(bool top) {
     return rrb;
 }
 
-/** Creates an empty RRB-Vector. */
-rrb_vector_t *rrb_create() {
-    debug_print("rrb_create\n");
+/** Creates a RRB-Tree with datas. */
+rrb_vector_t *create_w_leafs() {
+    debug_print("create_w_leafs\n");
     return create(false);
 }
 
+/** Creates a RRB-Tree with children. */
+rrb_vector_t *create_w_children() {
+    debug_print("create_w_children\n");
+    return create(true);
+}
+
+/** Checks if rrb contains data. */
+bool contains_leafs(const rrb_vector_t *rrb) {
+    debug_print("contains_leafs\n");
+    return rrb->leafs == true;
+}
+
+/** Checks if rrb contains nodes. */
+bool contains_nodes(const rrb_vector_t *rrb) {
+    debug_print("contains_nodes\n");
+    return rrb->leafs == false;
+}
+
+/** Creates an empty RRB-Vector. */
+rrb_vector_t *rrb_create() {
+    debug_print("rrb_create\n");
+    return create_w_leafs();
+}
+
+/** Frees a RRB-Tree. */
 void free_rrb(rrb_vector_t *rrb) {
     debug_print("free_rrb, beginning\n");
     if (rrb->meta != NULL) {
         free(rrb->meta);
     }
-    if (rrb->leafs) {
+    if (contains_leafs(rrb)) {
         free(rrb->children.data);
     } else {
         free(rrb->children.arr);
@@ -68,7 +95,7 @@ void dec_ref(rrb_vector_t *rrb) {
     debug_print("dec_ref, beginning\n");
     rrb->ref -= 1;
     if (rrb->ref == 0) {
-        if (rrb->leafs == false) {
+        if (contains_nodes(rrb)) {
             for (int i = 0; i < 32; i++) {
                 if (rrb->children.arr[i] != NULL) {
                     dec_ref(rrb->children.arr[i]);
@@ -80,21 +107,10 @@ void dec_ref(rrb_vector_t *rrb) {
     debug_print("dec_ref, end\n");
 }
 
+/** Checks if a RRB-Tree is full. */
 bool is_full(const rrb_vector_t *rrb) {
     debug_print("is_full\n");
     return rrb->full == true;
-}
-
-/** Finds the max level of the tree. */
-int find_max_level(const rrb_vector_t *rrb) {
-    debug_print("find_max_level, beginning\n");
-    if (rrb->leafs == true) {
-        debug_print("find_max_level, leaf\n");
-        return rrb->level;
-    } else {
-        debug_print("find_max_level, else\n");
-        return find_max_level(rrb->children.arr[0]);
-    }
 }
 
 /** Easily clone the informations. */
@@ -124,7 +140,7 @@ void clone_meta(rrb_vector_t *clone, const rrb_vector_t *src) {
 /** Easily clone the children section. */
 void clone_children(rrb_vector_t *clone, const rrb_vector_t *src) {
     debug_print("clone_children, beginning\n");
-    if (src->leafs == true) {
+    if (contains_leafs(src)) {
         clone->children.data = malloc(sizeof *clone->children.data * 32);
         for (int i = 0; i < 32; i++) {
             clone->children.data[i] = src->children.data[i];
@@ -157,14 +173,14 @@ rrb_vector_t *copy_node(const rrb_vector_t *src) {
 rrb_vector_t *create_child(int level, imc_data_t *data) {
     debug_print("create_level, beginning\n");
     if (level == 1) {
-        rrb_vector_t *rrb = create(false);
+        rrb_vector_t *rrb = create_w_leafs();
         rrb->children.data[0] = data;
         rrb->elements = 1;
         rrb->level = level;
         debug_print("create_level, end\n");
         return rrb;
     } else {
-        rrb_vector_t *rrb = create(true);
+        rrb_vector_t *rrb = create_w_children();
         rrb->children.arr[0] = create_child(level - 1, data);
         rrb->elements = 1;
         rrb->level = level;
@@ -177,7 +193,7 @@ rrb_vector_t *create_child(int level, imc_data_t *data) {
   * the data at the correct level. */
 rrb_vector_t *add_as_parent_to(rrb_vector_t *child, imc_data_t *data) {
     debug_print("add_as_parent_to, beginning\n");
-    rrb_vector_t *parent = create(true);
+    rrb_vector_t *parent = create_w_children();
     parent->level = child->level + 1;
     parent->children.arr[0] = inc_ref(child);
     parent->children.arr[1] = create_child(child->level, data);
@@ -189,6 +205,7 @@ rrb_vector_t *add_as_parent_to(rrb_vector_t *child, imc_data_t *data) {
 rrb_vector_t *add_leaf(rrb_vector_t *rrb, imc_data_t *data, int where);
 rrb_vector_t *add_node(rrb_vector_t *rrb, imc_data_t *data, int where);
 
+/** Calc the position according to the formula of research paper. */
 int calc_position(int index, int level) {
     debug_print("calc_position\n");
     return (index >> (5 * (level - 1))) & 31;
@@ -202,7 +219,7 @@ int place_to_insert(const rrb_vector_t *rrb) {
         return calc_position(rrb->elements, rrb->level);
     } else {
         for (int i = 0; i < 32; i++) {
-            if (rrb->leafs == false) {
+            if (contains_nodes(rrb)) {
                 if (rrb->children.arr[i] == NULL || !is_full(rrb->children.arr[i])) {
                     debug_print("place_to_insert, leafs\n");
                     return i;
@@ -218,15 +235,39 @@ int place_to_insert(const rrb_vector_t *rrb) {
     return -1;
 }
 
+int check_meta_index(const rrb_vector_t *rrb, int index, int position) {
+    if (position > 0) {
+        while(rrb->meta[position - 1] > index) {
+            position -= 1;
+        }
+    }
+    if (position < 32) {
+        while (rrb->meta[position] < index) {
+            position += 1;
+        }
+    }
+    return position;
+}
+
+int place_to_look(const rrb_vector_t *rrb, int index) {
+    debug_print("place_to_look, beginning\n");
+    if (rrb->meta == NULL) {
+        debug_print("place_to_look, meta null\n");
+        return calc_position(index, rrb->level);
+    } else {
+        return check_meta_index(rrb, index, calc_position(index, rrb->level));
+    }
+}
+
 /** Copies if the node exists, else creates it at the correct level. */
 rrb_vector_t *clone_or_create(const rrb_vector_t *src, int level) {
     debug_print("clone_or_create, beginning\n");
     rrb_vector_t *clone;
     if (src == NULL) {
         if (level == 1) {
-            clone = create(false);
+            clone = create_w_leafs();
         } else {
-            clone = create(true);
+            clone = create_w_children();
         }
         clone->level = level;
     } else {
@@ -240,7 +281,7 @@ rrb_vector_t *clone_or_create(const rrb_vector_t *src, int level) {
 rrb_vector_t *add(const rrb_vector_t *src, imc_data_t *data, int level) {
     debug_print("add, beginning\n");
     rrb_vector_t *clone = clone_or_create(src, level);
-    if (clone->leafs == true) {
+    if (contains_leafs(clone)) {
         debug_print("add, leafs\n");
         return add_leaf(clone, data, place_to_insert(clone));
     } else {
@@ -288,11 +329,21 @@ rrb_vector_t *rrb_add(rrb_vector_t *rrb, imc_data_t *data) {
     }
 }
 
+/** Gets the size of rrb. */
 size_t rrb_size(const rrb_vector_t *rrb) {
     debug_print("rrb_size\n");
     return rrb->elements;
 }
 
 imc_data_t *rrb_lookup(rrb_vector_t *rrb, int index) {
-    return NULL;
+    if (index >= rrb->elements) {
+        return NULL;
+    } else {
+        int position = place_to_look(rrb, index);
+        if (contains_nodes(rrb)) {
+            return rrb_lookup(rrb->children.arr[position], index);
+        } else {
+            return rrb->children.data[position];
+        }
+    }
 }
