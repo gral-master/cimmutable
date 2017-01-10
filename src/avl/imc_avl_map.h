@@ -3,28 +3,27 @@
 
 #include "imc_avl.h"
 
-typedef imc_data_t;
-typedef imc_key_t;
 
 //----------------------------------------------------------------------------//
 //----------------------------Data Structure----------------------------------//
 //----------------------------------------------------------------------------//
 typedef struct imc_avl_map_t{
     imc_avl_node_t* tree;
-    //TODO may need a comparator function
+    int (*comparator)(imc_key_t*, imc_key_t*);
 } imc_avl_map_t;
 
 
 //----------------------------------------------------------------------------//
 //----------------------------Map functions-----------------------------------//
 //----------------------------------------------------------------------------//
-imc_avl_map_t* imc_avl_map_create();
+imc_avl_map_t* imc_avl_map_create(int (*comparator)(imc_key_t*, imc_key_t*));
 
 int imc_avl_map_size(imc_avl_map_t* map);
 
 imc_avl_map_t* imc_avl_map_update(imc_avl_map_t* map,
             imc_key_t* key,
-            imc_data_t* data);
+            imc_data_t* data,
+            imc_data_t** prev_data);
 
 imc_data_t* imc_avl_map_lookup(imc_avl_map_t* map,
             imc_key_t* key);
@@ -33,7 +32,7 @@ imc_avl_map_t* imc_avl_map_remove(imc_avl_map_t* map,
             imc_key_t* key,
             imc_data_t** data);
 
-imc_key_t*[] imc_avl_map_keys(imc_avl_map_t* map);
+imc_key_t** imc_avl_map_keys(imc_avl_map_t* map);
 
 // iterator ?
 typedef imc_avl_map_iterator_t;
