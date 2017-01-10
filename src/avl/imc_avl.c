@@ -749,14 +749,3 @@ int imc_avl_unref(imc_avl_node_t* tree){
 
     return tree->ref_counter;
 }
-
-//***********************Test part FUNCTION***********************************//
-int is_sup(imc_key_t* x, imc_key_t* y)
-{
-    return *x > *y;
-}
-
-/*int main(){
-    int i = 0;
-    return 0;
-}*/
