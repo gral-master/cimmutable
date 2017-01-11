@@ -802,6 +802,7 @@ ft* create_deep_withoutaffix() {
 ft* nodearray_to_ft(node* arr[], int size) {
     // Precondition: 1 <= size <= 4
     ft* res;
+    deep *d;
     
     switch (size) {
         case 1:
@@ -810,35 +811,38 @@ ft* nodearray_to_ft(node* arr[], int size) {
             break;
         case 2:
             res = create_deep();
-            res->true_ft->d->prefix->nodes[0] = arr[0];
-            res->true_ft->d->prefix->size = 1;
-            res->true_ft->d->suffix->nodes[3] = arr[1];
-            res->true_ft->d->suffix->size = 1;
-            res->size = 2;
+            d = res->true_ft->d;
+            d->prefix->nodes[0] = arr[0];
+            d->prefix->size = arr[0]->size;
+            d->suffix->nodes[3] = arr[1];
+            d->suffix->size = arr[1]->size;
+            res->size = d->prefix->size + d->suffix->size;
             arr[0]->ref_count++;
             arr[1]->ref_count++;
             break;
         case 3: // case 3
             res = create_deep();
-            res->true_ft->d->prefix->nodes[0] = arr[0];
-            res->true_ft->d->prefix->size = 1;
-            res->true_ft->d->suffix->nodes[2] = arr[1];
-            res->true_ft->d->suffix->nodes[3] = arr[2];
-            res->true_ft->d->suffix->size = 2;
-            res->size = 3;
+            d = res->true_ft->d;
+            d->prefix->nodes[0] = arr[0];
+            d->prefix->size = arr[0]->size;
+            d->suffix->nodes[2] = arr[1];
+            d->suffix->nodes[3] = arr[2];
+            d->suffix->size = arr[1]->size + arr[2]->size;
+            res->size = d->prefix->size + d->suffix->size;
             arr[0]->ref_count++;
             arr[1]->ref_count++;
             arr[2]->ref_count++;
             break;
         default: // case 4
             res = create_deep();
-            res->true_ft->d->prefix->nodes[0] = arr[0];
-            res->true_ft->d->prefix->size = 1;
-            res->true_ft->d->suffix->nodes[1] = arr[1];
-            res->true_ft->d->suffix->nodes[2] = arr[2];
-            res->true_ft->d->suffix->nodes[3] = arr[3];
-            res->true_ft->d->suffix->size = 3;
-            res->size = 4;
+            d = res->true_ft->d;
+            d->prefix->nodes[0] = arr[0];
+            d->prefix->size = arr[0]->size;
+            d->suffix->nodes[1] = arr[1];
+            d->suffix->nodes[2] = arr[2];
+            d->suffix->nodes[3] = arr[3];
+            d->suffix->size = arr[1]->size + arr[2]->size + arr[3]->size;
+            res->size = d->prefix->size + d->suffix->size;;
             arr[0]->ref_count++;
             arr[1]->ref_count++;
             arr[2]->ref_count++;
@@ -1134,6 +1138,9 @@ split affix_split(affix* a, int index) {
 }
 
 splitnode node_split(node* n, int index) {
+    // Caution:
+    // sn.left is to be used as a suffix, so it is filled from the right
+    // sn.right is to be used as a prefix, so it is filled from the left
     splitnode sn;
     
     node* nodes[3];
@@ -1156,25 +1163,25 @@ splitnode node_split(node* n, int index) {
         sn.left = NULL;
         sn.node = nodes[0];
         sn.right = malloc(sizeof(affix));
-        sn.right->nodes[0] = NULL;
-        sn.right->nodes[1] = NULL;
         if (node_count == 2) {
-            sn.right->nodes[2] = NULL;
-            sn.right->nodes[3] = nodes[1];
+            sn.right->nodes[0] = nodes[1];
+            sn.right->nodes[1] = NULL;
             sn.right->size = nodes[1]->size;
         }
         else {
-            sn.right->nodes[2] = nodes[1];
-            sn.right->nodes[3] = nodes[2];
+            sn.right->nodes[0] = nodes[1];
+            sn.right->nodes[1] = nodes[2];
             sn.right->size = nodes[1]->size+nodes[2]->size;
         }
+        sn.right->nodes[2] = NULL;
+        sn.right->nodes[3] = NULL;
     }
     else if (index < nodes[0]->size+nodes[1]->size) {
         sn.left = malloc(sizeof(affix));
-        sn.left->nodes[0] = nodes[0];
+        sn.left->nodes[0] = NULL;
         sn.left->nodes[1] = NULL;
         sn.left->nodes[2] = NULL;
-        sn.left->nodes[3] = NULL;
+        sn.left->nodes[3] = nodes[0];
         sn.left->size = nodes[0]->size;
         sn.node = nodes[1];
         if (node_count == 2) {
@@ -1182,19 +1189,19 @@ splitnode node_split(node* n, int index) {
         }
         else {
             sn.right = malloc(sizeof(affix));
-            sn.right->nodes[0] = NULL;
+            sn.right->nodes[0] = nodes[2];
             sn.right->nodes[1] = NULL;
             sn.right->nodes[2] = NULL;
-            sn.right->nodes[3] = nodes[2];
+            sn.right->nodes[3] = NULL;
             sn.right->size = nodes[2]->size;
         }
     }
     else {
         sn.left = malloc(sizeof(affix));
-        sn.left->nodes[0] = nodes[0];
-        sn.left->nodes[1] = nodes[1];
-        sn.left->nodes[2] = NULL;
-        sn.left->nodes[3] = NULL;
+        sn.left->nodes[0] = NULL;
+        sn.left->nodes[1] = NULL;
+        sn.left->nodes[2] = nodes[0];
+        sn.left->nodes[3] = nodes[1];
         sn.left->size = nodes[0]->size+nodes[1]->size;
         sn.node = nodes[2];
         sn.right = NULL;

@@ -6,7 +6,7 @@
 
 #include "fingertree.h"
 
-#define MAX_ADD 20
+#define MAX_ADD 50
 #define MAX_DELETE 5
 
 int main(int argc, char **argv)
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
     printf("\n");
     
     // ft_split
-    int sindex = MAX_ADD*1/2;
+    int sindex = MAX_ADD*1/3;
     split sres = ft_split(fingerTreeArray[MAX_ADD], sindex);
     
     printf("Split: content of node at index %d: %d\n", sindex, *((int*)sres.node->true_node->data));
