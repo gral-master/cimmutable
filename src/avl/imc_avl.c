@@ -16,25 +16,6 @@ int val_abs (int nb) {
     }
 }
 
-int size_tree(imc_avl_node_t* tree) {
-    if (tree != NULL) {
-        return 1 + size_tree(tree->left) + size_tree(tree->right);
-    }
-    else {
-        return 0;
-    }
-}
-
-void infixe_course(imc_avl_node_t* tree, imc_key_t* tab, int* indice){
-    if (tree != NULL) {
-        infixe_course(tree->left, tab, indice);
-        tab[*indice] = *tree->key;
-        *indice = *indice + 1;
-        infixe_course(tree->right, tab, indice);
-    }
-
-}
-
 int check_balance_rec(imc_avl_node_t* tree, int* valid) {
     int size_left, size_right, current_balance;
 
@@ -63,16 +44,16 @@ int check_invariant(imc_avl_node_t* tree,
     int i;
     int valid = 0;
 
-    int size = size_tree(tree);
+    int size = imc_avl_size(tree);
 
-    imc_key_t* tab = malloc(sizeof(imc_key_t) * size);
+    imc_key_t** tab = malloc(sizeof(imc_key_t*) * size);
     int indice = 0;
 
-    infixe_course(tree, tab, &indice);
+    imc_avl_keys(tree, tab, &indice);
 
     // we browse the list and verify that the order is valid
     for (i = 1 ; i < size ; i++) {
-        if (comparator(&tab[i], &tab[i-1]) < 0) {
+        if (comparator(tab[i], tab[i-1]) < 0) {
             free(tab);
             return -1;
         }
@@ -93,7 +74,6 @@ int check_invariant(imc_avl_node_t* tree,
 //----------------------------------------------------------------------------//
 //-------------------------IMMUTABLE ROTATION---------------------------------//
 //----------------------------------------------------------------------------//
-
 imc_avl_node_t* immutable_right_rotation(imc_avl_node_t* tree){
     if(tree == NULL || tree->left == NULL){
         return NULL;
@@ -161,9 +141,44 @@ imc_avl_node_t* immutable_left_rotation(imc_avl_node_t* tree){
 }
 
 //----------------------------------------------------------------------------//
+//---------------------------MUTABLE ROTATION---------------------------------//
+//----------------------------------------------------------------------------//
+
+// Mutable right rotation
+imc_avl_node_t *mutable_right_rotation(imc_avl_node_t* tree){
+    if(tree->left == NULL){
+        return tree;
+    }
+    imc_avl_node_t* temp = tree->left;
+    tree->left = temp->right;
+    temp->right = tree;
+    return temp;
+}
+
+// Mutable left rotation
+imc_avl_node_t *mutable_left_rotation(imc_avl_node_t* tree){
+    if(tree->right == NULL){
+        return tree;
+    }
+    imc_avl_node_t* temp = tree->right;
+    tree->right = temp->left;
+    temp->left = tree;
+    return temp;
+}
+
+//----------------------------------------------------------------------------//
 //---------------------------Size Functions-----------------------------------//
 //----------------------------------------------------------------------------//
-int imc_avl_size(imc_avl_node_t* tree){
+int imc_avl_size(imc_avl_node_t* tree) {
+    if (tree != NULL) {
+        return 1 + imc_avl_size(tree->left) + imc_avl_size(tree->right);
+    }
+    else {
+        return 0;
+    }
+}
+
+int imc_avl_height(imc_avl_node_t* tree){
     imc_avl_node_t* longest_branch = tree;
     int size=0;
     while(longest_branch != NULL){
@@ -196,32 +211,19 @@ imc_data_t* imc_avl_lookup(imc_avl_node_t* tree, imc_key_t* key,
     }
 }
 
+void imc_avl_keys(imc_avl_node_t* tree, imc_key_t** tab, int* indice){
+    if (tree != NULL) {
+        imc_avl_keys(tree->left, tab, indice);
+        tab[*indice] = tree->key;
+        *indice = *indice + 1;
+        imc_avl_keys(tree->right, tab, indice);
+    }
+
+}
+
 //----------------------------------------------------------------------------//
 //-------------------------Insert Functions-----------------------------------//
 //----------------------------------------------------------------------------//
-
-// Mutable right rotation
-imc_avl_node_t *mutable_right_rotation(imc_avl_node_t* tree){
-    if(tree->left == NULL){
-        return tree;
-    }
-    imc_avl_node_t* temp = tree->left;
-    tree->left = temp->right;
-    temp->right = tree;
-    return temp;
-}
-
-// Mutable left rotation
-imc_avl_node_t *mutable_left_rotation(imc_avl_node_t* tree){
-    if(tree->right == NULL){
-        return tree;
-    }
-    imc_avl_node_t* temp = tree->right;
-    tree->right = temp->left;
-    temp->left = tree;
-    return temp;
-}
-
 imc_avl_node_t* imc_avl_insert_rec( imc_avl_node_t* tree,
                                 imc_data_t* data, imc_key_t* key,
                                 int (*comparator)(imc_key_t*, imc_key_t*),
@@ -649,8 +651,10 @@ int _print_t( imc_avl_node_t *tree,
     print(tree->key, b);
     //sprintf(b, "(%03d)", tree->key);
 
-    int left  = _print_t(tree->left,  1, offset,                depth + 1, s, print);
-    int right = _print_t(tree->right, 0, offset + left + width, depth + 1, s, print);
+    int left  = _print_t(tree->left,  1,
+                         offset,                depth + 1, s, print);
+    int right = _print_t(tree->right, 0,
+                         offset + left + width, depth + 1, s, print);
 
 
     int i;
@@ -726,14 +730,3 @@ int imc_avl_unref(imc_avl_node_t* tree){
 
     return -1;
 }
-
-//***********************Test part FUNCTION***********************************//
-int is_sup(imc_key_t* x, imc_key_t* y)
-{
-    return *x > *y;
-}
-
-/*int main(){
-    int i = 0;
-    return 0;
-}*/

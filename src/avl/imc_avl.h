@@ -25,8 +25,12 @@ typedef struct imc_avl_node_t{
 //----------------------------------------------------------------------------//
 int imc_avl_size(imc_avl_node_t* tree);
 
+int imc_avl_height(imc_avl_node_t* tree);
+
 imc_data_t* imc_avl_lookup(imc_avl_node_t* tree, imc_key_t* key,
                            int (*comparator)(imc_key_t*, imc_key_t*) );
+
+void imc_avl_keys(imc_avl_node_t* tree, imc_key_t** tab, int* indice);
 
 /* stack operations */
 
