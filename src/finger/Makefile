@@ -3,12 +3,15 @@
 HSD=hs_ref
 
 CC=gcc
-CFLAGS=--std=c11 -Wall -Wextra
+CFLAGS=-g --std=c11 -Wall -Wextra
 
-all: fingers.o
+all: fingers
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
+
+fingers: fingers.o
+	$(CC) $(CFLAGS) fingers.o -o fingers
 
 hs-example: $(HSD)/haskell_impl.hs
 	ghc -XOverloadedLists -XTypeFamilies  $(HSD)/haskell_impl.hs && $(HSD)/haskell_impl
