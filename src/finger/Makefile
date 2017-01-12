@@ -10,8 +10,8 @@ all: fingers
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
-fingers: fingers.o
-	$(CC) $(CFLAGS) fingers.o -o fingers
+fingers: fingers.o tools.o
+	$(CC) $(CFLAGS) fingers.o tools.o -o fingers
 
 hs-example: $(HSD)/haskell_impl.hs
 	ghc -XOverloadedLists -XTypeFamilies  $(HSD)/haskell_impl.hs && $(HSD)/haskell_impl
