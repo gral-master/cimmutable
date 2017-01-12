@@ -19,7 +19,8 @@ imc_vector_avl_t* imc_vector_avl_create();
 
 int imc_vector_avl_size(imc_vector_avl_t* vec);
 
-imc_vector_avl_t* imc_vector_avl_update(imc_vector_avl_t* vec, int index, imc_data_t* data);
+imc_vector_avl_t* imc_vector_avl_update(imc_vector_avl_t* vec, int index,
+                                        imc_data_t* data);
 
 imc_data_t* imc_vector_avl_lookup(imc_vector_avl_t* vec, int index);
 
