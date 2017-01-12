@@ -61,7 +61,6 @@ int check_invariant(imc_avl_node_t* tree,
 
     free(tab);
 
-
     check_balance_rec(tree, &valid);
 
     if (valid != -1) {
@@ -627,13 +626,242 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
 }
 
 
+
+//----------------------------------------------------------------------------//
+//-------------------------Mutable Remove and Insert--------------------------//
+//----------------------------------------------------------------------------//
+/*******************
+*     Rotation     *
+*******************/
+imc_avl_node_t* single_rotation(imc_avl_node_t* root, int dir)
+{
+  imc_avl_node_t* save = !dir?root->right:root->left;
+
+  if(dir){
+    root->left = dir?save->right:save->left;;
+    save->right = root;
+  } else{
+    root->right = dir?save->right:save->left;;
+    save->left = root;
+  }
+  return save;
+}
+
+// dir == 0 means right-left and 1 means left-right
+imc_avl_node_t* double_rotation(imc_avl_node_t* root, int dir)
+{
+  if(dir){
+    root->left = single_rotation(!dir?root->right:root->left, !dir);
+  } else{
+    root->right = single_rotation(!dir?root->right:root->left, !dir);
+  }
+
+  return single_rotation(root, dir);
+}
+
+void adjust_balance(imc_avl_node_t* x, int dir, int bal)
+{
+  imc_avl_node_t* y = dir?x->right:x->left;
+  imc_avl_node_t* z = !dir?y->right:y->left;
+
+  // Case: (A ,(x, +2), ((B, (z, 0), C), (y, -1), D))
+  if (z->balance == 0)
+    {
+      x->balance = y->balance = 0;
+    }
+  // Case: (A ,(x, +2), ((B, (z, +1), C), (y, -1), D))
+  else if (z->balance == bal)
+    {
+      x->balance = -bal;
+      y->balance = 0;
+    }
+  // Case: (A ,(x, +2), ((B, (z, -1), C), (y, -1), D))
+  else
+    {
+      x->balance = 0;
+      y->balance = bal;
+    }
+
+  z->balance = 0;
+}
+
+
+/*******************
+*    Insertion     *
+*******************/
+
+imc_avl_node_t* insert_balance(imc_avl_node_t* root, int dir) {
+
+    imc_avl_node_t* n = dir?root->right:root->left;
+    int bal = dir == 0 ? -1 : +1;
+
+    if (n->balance == bal)
+    {
+        root->balance = n->balance = 0;
+        root = single_rotation(root, !dir);
+    }
+    else /* n->balance == -bal */
+    {
+        adjust_balance(root, dir, bal);
+        root = double_rotation(root, !dir);
+    }
+
+    return root;
+}
+
+imc_avl_node_t* insert_node(imc_avl_node_t* root, imc_data_t* data, imc_key_t* key,
+                            int (*comparator)(imc_key_t*, imc_key_t*)) {
+  /* Empty tree case */
+  if(root == NULL){
+    root = malloc(sizeof(imc_avl_node_t));
+    root->data = data;
+    root->key = key;
+    root->ref_counter =1;
+    root->balance = 0;
+    root->right = NULL;
+    root->left = NULL;
+  } else {
+      imc_avl_node_t* head = malloc(sizeof(imc_avl_node_t)); /* False tree root */
+      imc_avl_node_t* s, *t;     /* Place to rebalance and parent */
+      imc_avl_node_t* p, *q;     /* Iterator and save pointer */
+      int dir;
+
+      t = head;
+      t->right = root;
+
+      /* Search down the tree, saving rebalance points */
+      for (s = p = t->right;; p = q)
+        {
+          dir = comparator(p->key,key)==-1;
+
+          if(dir){
+            q = p->right;
+          } else {
+            q = p->left;
+          }
+
+          if (q == NULL)
+            break;
+
+          if (q->balance != 0)
+            {
+              t = p;
+              s = q;
+            }
+        }
+
+      /* Insert the new node */
+      q = malloc(sizeof(imc_avl_node_t));
+      q->data = data;
+      q->key = key;
+      q->ref_counter =1;
+      q->balance = 0;
+      q->right = NULL;
+      q->left = NULL;
+      if(dir)
+        p->right = q;
+      else
+        p->left = q;
+
+      /* Update balance factors */
+      for (p = s; p != q; p = dir?p->right:p->left) {
+          dir = comparator(p->key,key)==-1;
+          p->balance += dir == 0 ? -1 : +1;
+      }
+
+      q = s; /* Save rebalance point for parent fix */
+
+      /* Rebalance if necessary */
+      if (abs(s->balance) > 1)
+        {
+          dir = comparator(s->key,key)==-1;;
+          s = insert_balance(s, dir);
+        }
+
+      /* Fix parent */
+      if (q == head->right)
+        root = s;
+      else if(q == t->right)
+        t->right = s;
+      else
+        t->left = s;
+      free(head);
+    }
+
+  return root;
+}
+
+
+//----------------------------------------------------------------------------//
+//-------------------------Functions for Merge and Split----------------------//
+//----------------------------------------------------------------------------//
+
+
+imc_avl_node_t* imc_avl_copy (imc_avl_node_t* tree) {
+    if (tree != NULL) {
+        imc_avl_node_t* new_tree = malloc(sizeof(imc_avl_node_t));
+        new_tree->ref_counter = 1;
+        new_tree->balance = tree->balance;
+        new_tree->data = tree->data;
+        new_tree->key = tree->key;
+        new_tree->left = imc_avl_copy(tree->left);
+        new_tree->right = imc_avl_copy(tree->right);
+        return new_tree;
+    }
+    else {
+        return NULL;
+    }
+}
+
+
+
+//----------------------------------------------------------------------------//
+//-------------------------Merge----------------------------------------------//
+//----------------------------------------------------------------------------//
+
+
+void imc_avl_add_tree_rec ( imc_avl_node_t* main_tree,
+                            imc_avl_node_t* second_tree,
+                            int (*comparator)(imc_key_t*, imc_key_t*)) {
+    if (second_tree != NULL) {
+        imc_avl_add_tree_rec(main_tree, second_tree->left, comparator);
+        insert_node(main_tree, second_tree->data, second_tree->key, comparator);
+        imc_avl_add_tree_rec(main_tree, second_tree->right, comparator);
+    }
+}
+
+
+imc_avl_node_t* imc_avl_merge(  imc_avl_node_t* tree1,
+                                imc_avl_node_t* tree2,
+                                int (*comparator)(imc_key_t*, imc_key_t*)) {
+    int size_tree1, size_tree2;
+    imc_avl_node_t* main_tree;
+    imc_avl_node_t* second_tree;
+    imc_avl_node_t* new_tree;
+
+
+    size_tree1 = imc_avl_height(tree1);
+    size_tree2 = imc_avl_height(tree2);
+
+    if (size_tree1 >= size_tree2) {
+        main_tree = tree1;
+        second_tree = tree2;
+    } else {
+        main_tree = tree2;
+        second_tree = tree1;
+    }
+
+    new_tree = imc_avl_copy(main_tree);
+    imc_avl_add_tree_rec(new_tree, second_tree, comparator);
+    return new_tree;
+}
+
+
+
+
 //----------------------------------------------------------------------------//
 //-------------------------Dump Function--------------------------------------//
 //----------------------------------------------------------------------------//
-
-
-
-
 int _print_t( imc_avl_node_t *tree,
               int is_left,
               int offset,
@@ -657,29 +885,7 @@ int _print_t( imc_avl_node_t *tree,
     int right = _print_t(tree->right, 0,
                          offset + left + width, depth + 1, s, print);
 
-#ifdef COMPACT
-    int i;
-    for (i = 0; i < width; i++) {
-        s[depth][offset + left + i] = b[i];
-    }
 
-    if (depth && is_left) {
-
-        for (i = 0; i < width + right; i++) {
-            s[depth - 1][offset + left + width/2 + i] = '-';
-        }
-
-        s[depth - 1][offset + left + width/2] = '.';
-
-    } else if (depth && !is_left) {
-
-        for (i = 0; i < left + width; i++) {
-            s[depth - 1][offset - width/2 + i] = '-';
-        }
-
-        s[depth - 1][offset + left + width/2] = '.';
-    }
-#else
     int i;
     for ( i = 0; i < width; i++) {
         s[2 * depth][offset + left + i] = b[i];
@@ -702,7 +908,6 @@ int _print_t( imc_avl_node_t *tree,
         s[2 * depth - 1][offset + left + width/2] = '+';
         s[2 * depth - 1][offset - width/2 - 1] = '+';
     }
-#endif
 
     return left + width + right;
 }
@@ -726,31 +931,25 @@ void imc_avl_dump(imc_avl_node_t* tree,
     }
 
     printf("*************************************\n");
-
 }
 //----------------------------------------------------------------------------//
 //-------------------------Memory Management----------------------------------//
 //----------------------------------------------------------------------------//
 
 int imc_avl_unref(imc_avl_node_t* tree){
-	tree->ref_counter--;
-//TODO not thread safe
-    if(tree->ref_counter <= 0){
-        imc_avl_unref(tree->left);
-        imc_avl_unref(tree->right);
-        free(tree);
-        return 0;
+
+    if (tree != NULL) {
+    	tree->ref_counter--;
+
+        if(tree->ref_counter <= 0){
+            imc_avl_unref(tree->left);
+            imc_avl_unref(tree->right);
+            free(tree);
+            return 0;
+        }
+
+        return tree->ref_counter;
     }
 
-    return tree->ref_counter;
+    return -1;
 }
-
-//----------------------------------------------------------------------------//
-//------------------------Merge functions-------------------------------------//
-//----------------------------------------------------------------------------//
-
-
-
-//----------------------------------------------------------------------------//
-//------------------------Split functions-------------------------------------//
-//----------------------------------------------------------------------------//

@@ -44,6 +44,9 @@ void imc_avl_map_iterate(imc_avl_map_t* map,
 
 int imc_avl_map_unref(imc_avl_map_t* map);
 
-void imc_avl_map_dump(imc_avl_map_t* map);
+void imc_avl_map_dump(imc_avl_map_t* map,
+					  void (*print_key)(imc_key_t*),
+					  void (*print_data)(imc_data_t*));
+
 
 #endif
