@@ -29,7 +29,7 @@ int main() {
   puts("\n\nBEGIN PUSH AND PRINT TESTING\n\n");
   char *str = malloc(sizeof(char) * 100);
   for(int i = 0; i<33; i++) {
-    sprintf(str, "rrb_size_%d", i);
+    sprintf(str, "rrb_size_%d.dot", i);
     imc_rrb_emit(vec, str, print);
     data = malloc(sizeof(imc_data_t));
     data->id = next_rand(0, 10);
@@ -75,6 +75,20 @@ int main() {
     printf("Popped data : %d\n", data->id);
     free(data);
   }
+
+  /* print, split and print again */
+  sprintf(str, "split_before.dot");
+  imc_rrb_emit(vec, str, print);
+
+  imc_rrb_t* vec_left;
+  imc_rrb_t* vec_right;
+  imc_rrb_split(vec, imc_rrb_size(vec)/2, &vec_left, &vec_right);
+
+  sprintf(str, "split_left.dot");
+  imc_rrb_emit(vec_left, str, print);
+
+  sprintf(str, "split_right.dot");
+  imc_rrb_emit(vec_right, str, print);
 
 
 }
