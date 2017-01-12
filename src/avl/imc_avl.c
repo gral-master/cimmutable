@@ -810,6 +810,50 @@ imc_avl_node_t* imc_avl_copy (imc_avl_node_t* tree) {
 
 
 //----------------------------------------------------------------------------//
+//-------------------------Merge----------------------------------------------//
+//----------------------------------------------------------------------------//
+
+
+void imc_avl_add_tree_rec ( imc_avl_node_t* main_tree,
+                            imc_avl_node_t* second_tree,
+                            int (*comparator)(imc_key_t*, imc_key_t*)) {
+    if (second_tree != NULL) {
+        imc_avl_add_tree_rec(main_tree, second_tree->left, comparator);
+        insert_node(main_tree, second_tree->data, second_tree->key, comparator);
+        imc_avl_add_tree_rec(main_tree, second_tree->right, comparator);
+    }
+}
+
+
+imc_avl_node_t* imc_avl_merge(  imc_avl_node_t* tree1,
+                                imc_avl_node_t* tree2,
+                                int (*comparator)(imc_key_t*, imc_key_t*)) {
+    int size_tree1, size_tree2;
+    imc_avl_node_t* main_tree;
+    imc_avl_node_t* second_tree;
+    imc_avl_node_t* new_tree;
+
+
+    size_tree1 = imc_avl_height(tree1);
+    size_tree2 = imc_avl_height(tree2);
+
+    if (size_tree1 >= size_tree2) {
+        main_tree = tree1;
+        second_tree = tree2;
+    } else {
+        main_tree = tree2;
+        second_tree = tree1;
+    }
+
+    new_tree = imc_avl_copy(main_tree);
+    imc_avl_add_tree_rec(new_tree, second_tree, comparator);
+    return new_tree;
+}
+
+
+
+
+//----------------------------------------------------------------------------//
 //-------------------------Dump Function--------------------------------------//
 //----------------------------------------------------------------------------//
 

@@ -1,5 +1,5 @@
 
-/*#include <stdlib.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include "imc_avl.h"
 
@@ -59,9 +59,9 @@ int main ()
 
 	return 0;
 }
-*/
 
 
+/*
 #include <stdlib.h>
 #include <stdio.h>
 #include "imc_avl.h"
@@ -121,3 +121,4 @@ int main ()
 
 	return 0;
 }
+*/

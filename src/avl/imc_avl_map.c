@@ -72,7 +72,6 @@ void imc_avl_map_dump_rec(imc_avl_node_t* tree,
     
 }
 
-
 void imc_avl_map_dump(imc_avl_map_t* map,
                       void (*print_key)(imc_key_t*),
                       void (*print_data)(imc_data_t*)){

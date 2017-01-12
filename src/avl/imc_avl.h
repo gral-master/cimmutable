@@ -51,13 +51,15 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
 int imc_avl_split(  imc_avl_node_t* tree_in,
                     imc_key_t* key,
                     imc_avl_node_t** tree_out1,
-                    imc_avl_node_t** tree_out2);
+                    imc_avl_node_t** tree_out2,
+                    int (*comparator)(imc_key_t*, imc_key_t*));
 
 int check_invariant(imc_avl_node_t* tree,
                 int (*comparator)(imc_key_t*, imc_key_t*));
 
 imc_avl_node_t* imc_avl_merge(  imc_avl_node_t* tree_front,
-                                imc_avl_node_t* tree_tail);
+                                imc_avl_node_t* tree_tail,
+                                int (*comparator)(imc_key_t*, imc_key_t*));
 
 imc_avl_node_t* imc_avl_copy (imc_avl_node_t* tree);
 
