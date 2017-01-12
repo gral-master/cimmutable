@@ -100,6 +100,7 @@ void add_elems_node(node* new_node,affix* old_affix,int preorsuf );
 void update_affix(affix* new_affix,affix* old_affix,int preofsuf,node* data_node);
 void shift_elements(affix* newaffix,int index,int preorsuf);
 void remove_from_affix(affix* new_affix,affix* old_affix,int index,int preorsuf);
-ft* rand_gene(int nbelem,int*elems);
+ft* ft_generator(int nbelem,int*elems);
+void simulation_add(int density_each_point, int shfit, int starting_size, int finishing_point);
 
 #endif

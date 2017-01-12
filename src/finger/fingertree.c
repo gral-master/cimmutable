@@ -97,7 +97,7 @@ node* create_node_node() {
 
 ft* ft_add(void* data, ft* fgt,int preorsuf) {
     // Preconditions & Invariants
-    checkInvariants(fgt);
+    /*checkInvariants(fgt);*/
 
     ft* res;
     node* new_elem = create_data_node(data);
@@ -105,7 +105,7 @@ ft* ft_add(void* data, ft* fgt,int preorsuf) {
     res->size = fgt->size+1;
 
     // Postconditions & Invariants
-    checkInvariants(fgt);
+    //checkInvariants(fgt);
     return res;
 }
 
@@ -186,16 +186,16 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data_node){
     affix*old_affix;
     affix*new_affix;
       // Save the reference counter of nodes and deeper of fgt.
-    reflist* rl_fgt = rl_of_ft(fgt);
-    refdeep rd_fgt, rd_res;
-    if (fgt->type == DEEP_TYPE && fgt->true_ft->d->deeper != NULL) {
-        rd_fgt.elem = fgt->true_ft->d->deeper;
-        rd_fgt.ref = rd_fgt.elem->ref_count;
-    }
-    else {
-        rd_fgt.elem = NULL;
-        rd_fgt.ref = 0;
-    }
+    //    reflist* rl_fgt = rl_of_ft(fgt);
+    //refdeep rd_fgt, rd_res;
+    /* if (fgt->type == DEEP_TYPE && fgt->true_ft->d->deeper != NULL) { */
+    /*     rd_fgt.elem = fgt->true_ft->d->deeper; */
+    /*     rd_fgt.ref = rd_fgt.elem->ref_count; */
+    /* } */
+    /* else { */
+    /*     rd_fgt.elem = NULL; */
+    /*     rd_fgt.ref = 0; */
+    /* } */
     
     if(fgt->type==EMPTY_TYPE){
         res = create_single(data_node);
@@ -255,21 +255,21 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data_node){
     }
     
     // Compare the reference counters of nodes and deeper of fgt (before the function) and res
-    reflist* rl_res = rl_of_ft(res);
-    inter_verify(rl_fgt, rl_res);
-    if (res->type == DEEP_TYPE && res->true_ft->d->deeper != NULL) {
-        rd_res.elem = res->true_ft->d->deeper;
-        rd_res.ref = rd_res.elem->ref_count;
+    /* reflist* rl_res = rl_of_ft(res); */
+    /* inter_verify(rl_fgt, rl_res); */
+    /* if (res->type == DEEP_TYPE && res->true_ft->d->deeper != NULL) { */
+    /*     rd_res.elem = res->true_ft->d->deeper; */
+    /*     rd_res.ref = rd_res.elem->ref_count; */
         
-        // Compare rd_res and rd_fgt
-        if (rd_fgt.elem != NULL) {
-            if (rd_fgt.elem == rd_res.elem) {
-                assert(rd_fgt.ref + 1 == rd_res.ref);
-            }
-        }
-    }
-    free_reflist(rl_fgt);
-    free_reflist(rl_res);
+    /*     // Compare rd_res and rd_fgt */
+    /*     if (rd_fgt.elem != NULL) { */
+    /*         if (rd_fgt.elem == rd_res.elem) { */
+    /*             assert(rd_fgt.ref + 1 == rd_res.ref); */
+    /*         } */
+    /*     } */
+    /* } */
+    /* free_reflist(rl_fgt); */
+    /* free_reflist(rl_res); */
 
     return res;
 }
@@ -1460,7 +1460,7 @@ list* affix_to_list(ft* fg,int preorsuf){
 }
 
 
-ft* rand_gene(int nbelem,int* elems){
+ft* ft_generator(int nbelem,int* elems){
 srand(time(NULL));
  ft* tab[nbelem+1];
  int r,i=1;
@@ -1475,4 +1475,40 @@ srand(time(NULL));
  return tab[nbelem];
   
 
+}
+
+
+
+void simulation_add(int density_each_point, int shift, int starting_size, int finishing_size){
+  double time_spent;
+  double average;
+  /*open the file */
+  char filename[100];
+  FILE* f;
+  sprintf(filename,"add_density:%d_shift:%d_start:%d_fin:%d",density_each_point,shift,starting_size,finishing_size);
+  f = fopen(filename,"w+");
+  /* initializing data*/
+  int data[finishing_size];
+  for(int i=0;i<finishing_size;i++)
+    data[i]=1;
+
+  ft* fin[density_each_point];
+  ft*tmp=NULL;
+  for(int i=starting_size;i<=finishing_size;i=i+shift){
+    average = 0;
+    for(int j=0;j<density_each_point;j++){
+      
+      fin[j]=ft_generator(i,data);
+      clock_t begin = clock();
+      tmp = ft_add(&data[0],fin[j],0);
+       clock_t end = clock();
+     time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+     average = average + time_spent;
+      
+    }
+    average = average/density_each_point;
+    fprintf(f,"%d %g\n",i,average*1000000);
+
+  }
+  fclose(f);
 }

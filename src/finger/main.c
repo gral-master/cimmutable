@@ -18,9 +18,8 @@ int main(int argc, char **argv)
     for (int i = 0; i < 2*MAX_ADD; i++) {
         data[i] = i * 5;
     }
-
-    ft* x =  rand_gene(MAX_ADD,data);
-    ft_display(x);
+    
+    simulation_add(200,5,800,1000);
     
     ft* fingerTreeArray[MAX_ADD+1];
     
