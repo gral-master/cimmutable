@@ -625,6 +625,167 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
 
 }
 
+
+
+//----------------------------------------------------------------------------//
+//-------------------------Mutable Remove and Insert--------------------------//
+//----------------------------------------------------------------------------//
+/*******************
+*     Rotation     *
+*******************/
+imc_avl_node_t* single_rotation(imc_avl_node_t* root, int dir)
+{
+  imc_avl_node_t* save = !dir?root->right:root->left;
+
+  if(dir){
+    root->left = dir?save->right:save->left;;
+    save->right = root;
+  } else{
+    root->right = dir?save->right:save->left;;
+    save->left = root;
+  }
+  return save;
+}
+
+// dir == 0 means right-left and 1 means left-right
+imc_avl_node_t* double_rotation(imc_avl_node_t* root, int dir)
+{
+  if(dir){
+    root->left = single_rotation(!dir?root->right:root->left, !dir);
+  } else{
+    root->right = single_rotation(!dir?root->right:root->left, !dir);
+  }
+  
+  return single_rotation(root, dir);
+}
+
+void adjust_balance(imc_avl_node_t* x, int dir, int bal)
+{
+  imc_avl_node_t* y = dir?x->right:x->left;
+  imc_avl_node_t* z = !dir?y->right:y->left;
+
+  // Case: (A ,(x, +2), ((B, (z, 0), C), (y, -1), D))
+  if (z->balance == 0)
+    {
+      x->balance = y->balance = 0;
+    }
+  // Case: (A ,(x, +2), ((B, (z, +1), C), (y, -1), D))
+  else if (z->balance == bal)
+    {
+      x->balance = -bal;
+      y->balance = 0;
+    }
+  // Case: (A ,(x, +2), ((B, (z, -1), C), (y, -1), D))
+  else
+    {
+      x->balance = 0;
+      y->balance = bal;
+    }
+
+  z->balance = 0;
+}
+
+
+/*******************
+*    Insertion     *
+*******************/
+
+imc_avl_node_t* insert_balance(imc_avl_node_t* root, int dir) {
+
+    imc_avl_node_t* n = dir?root->right:root->left;
+    int bal = dir == 0 ? -1 : +1;
+
+    if (n->balance == bal)
+    {
+        root->balance = n->balance = 0;
+        root = single_rotation(root, !dir);
+    }
+    else /* n->balance == -bal */
+    {
+        adjust_balance(root, dir, bal);
+        root = double_rotation(root, !dir);
+    }
+
+    return root;
+}
+
+imc_avl_node_t* insert_node(imc_avl_node_t* root, imc_data_t* data, imc_key_t* key,
+                            int (*comparator)(imc_key_t*, imc_key_t*)) {
+  /* Empty tree case */
+  if(root == NULL){
+    root = malloc(sizeof(imc_avl_node_t));
+    root->data = data;
+    root->key = key;
+    root->ref_counter =1;
+    root->balance = 0;
+    root->right = NULL;
+    root->left = NULL;
+  } else {
+      imc_avl_node_t* head = malloc(sizeof(imc_avl_node_t)); /* False tree root */
+      imc_avl_node_t* s, *t;     /* Place to rebalance and parent */
+      imc_avl_node_t* p, *q;     /* Iterator and save pointer */
+      int dir;
+      
+      t = head;
+      t->right = root;
+      
+      /* Search down the tree, saving rebalance points */
+      for (s = p = t->right;; p = q)
+        {
+          dir = comparator(p->key,key)==-1;
+          
+          if(dir){
+            q = p->right;
+          } else {
+            q = p->left;
+          }
+          
+          if (q == NULL)
+            break;
+
+          if (q->balance != 0)
+            {
+              t = p;
+              s = q;
+            }
+        }
+
+      /* Insert the new node */
+      q = make_node(data);
+      if(dir)
+        p->right = q;
+      else
+        p->left = q;
+      
+      /* Update balance factors */
+      for (p = s; p != q; p = dir?p->right:p->left) {
+          dir = comparator(p->key,key)==-1;
+          p->balance += dir == 0 ? -1 : +1;
+      }
+
+      q = s; /* Save rebalance point for parent fix */
+
+      /* Rebalance if necessary */
+      if (abs(s->balance) > 1)
+        {
+          dir = comparator(s->key,key)==-1;;
+          s = insert_balance(s, dir);
+        }
+
+      /* Fix parent */
+      if (q == head->right)
+        root = s;
+      else if(q == t->right)
+        t->right = s;
+      else
+        t->left = s;
+      free(head);
+    }
+
+  return root;
+}
+
+
 //----------------------------------------------------------------------------//
 //-------------------------Functions for Merge and Split----------------------//
 //----------------------------------------------------------------------------//
