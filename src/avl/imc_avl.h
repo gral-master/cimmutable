@@ -59,6 +59,8 @@ int check_invariant(imc_avl_node_t* tree,
 imc_avl_node_t* imc_avl_merge(  imc_avl_node_t* tree_front,
                                 imc_avl_node_t* tree_tail);
 
+imc_avl_node_t* imc_avl_copy (imc_avl_node_t* tree);
+
 /* user-side memory management */
 
 int imc_avl_unref(imc_avl_node_t* tree);

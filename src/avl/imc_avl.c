@@ -625,6 +625,28 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
 
 }
 
+//----------------------------------------------------------------------------//
+//-------------------------Functions for Merge and Split----------------------//
+//----------------------------------------------------------------------------//
+
+
+imc_avl_node_t* imc_avl_copy (imc_avl_node_t* tree) {
+    if (tree != NULL) {
+        imc_avl_node_t* new_tree = malloc(sizeof(imc_avl_node_t));
+        new_tree->ref_counter = 1;
+        new_tree->balance = tree->balance;
+        new_tree->data = tree->data;
+        new_tree->key = tree->key;
+        new_tree->left = imc_avl_copy(tree->left);
+        new_tree->right = imc_avl_copy(tree->right);
+        return new_tree;
+    }
+    else {
+        return NULL;
+    }
+}
+
+
 
 //----------------------------------------------------------------------------//
 //-------------------------Dump Function--------------------------------------//
@@ -702,7 +724,6 @@ void imc_avl_dump(imc_avl_node_t* tree,
     }
 
     printf("*************************************\n");
-
 }
 
 
