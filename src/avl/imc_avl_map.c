@@ -62,9 +62,9 @@ void imc_avl_map_dump_rec(imc_avl_node_t* tree,
                           void (*print_data)(imc_data_t*)){
     if (tree != NULL) {
         imc_avl_map_dump_rec(tree->left, print_key, print_data);
-        printf(" (key : ");
+        printf(" (");
         print_key(tree->key);
-        printf(" | Data : ");
+        printf(" : ");
         print_data(tree->data);
         printf(") ");
         imc_avl_map_dump_rec(tree->right, print_key, print_data);
@@ -76,11 +76,9 @@ void imc_avl_map_dump_rec(imc_avl_node_t* tree,
 void imc_avl_map_dump(imc_avl_map_t* map,
                       void (*print_key)(imc_key_t*),
                       void (*print_data)(imc_data_t*)){
-    printf("SALUT J'AFFICHE\n");
     printf("[");
     imc_avl_map_dump_rec(map->tree, print_key, print_data);
-    printf("]");
-    printf("SALUT C'EST FINI\n");
+    printf("]\n");
 }
 
 
