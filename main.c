@@ -77,6 +77,7 @@ int main() {
   }
 
   /* print, split and print again */
+  puts("\n\nBEGIN SPLIT TESTING\n\n");
   sprintf(str, "split_before.dot");
   imc_rrb_emit(vec, str, print);
 
