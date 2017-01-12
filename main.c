@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include "./src/rrb_vector/rrb_vect.h"
 //Compile with gcc main.c obj/*.o -lm
 
@@ -10,56 +11,70 @@ char* print(imc_data_t* data) {
   sprintf(str, "%d", data->id);
   return str;
 }
+
+int next_rand(int a, int b) {
+  return a + rand() % b;
+}
+
 int main() {
+  /* Seed generation */
+  time_t t;
+  srand((unsigned) time(&t));
+
+  /* rrb and data definition */
   imc_rrb_t* vec = imc_rrb_create();
+  imc_data_t* data;
 
-  imc_data_t* data = malloc(sizeof(int));
-  data->id = 5;
-  imc_rrb_t* vec2 = imc_rrb_push(vec, data);
+  /* push and print n times */
+  puts("\n\nBEGIN PUSH AND PRINT TESTING\n\n");
+  char *str = malloc(sizeof(char) * 100);
+  for(int i = 0; i<33; i++) {
+    sprintf(str, "rrb_size_%d", i);
+    imc_rrb_emit(vec, str, print);
+    data = malloc(sizeof(imc_data_t));
+    data->id = next_rand(0, 10);
+    vec = imc_rrb_push(vec, data);
+  }
+  free(str);
 
-  imc_data_t* data2 = malloc(sizeof(int));
-  data2->id = 7;
-  imc_rrb_t* vec3 = imc_rrb_push(vec2, data2);
-
-  // imc_data_t* data_lookup = imc_rrb_lookup(vec3, 0);
-  // printf("found at 0 : %d \n", data_lookup->id);
-  //
-  // imc_data_t* data_lookup2 = imc_rrb_lookup(vec3, 1);
-  // printf("found at 1 : %d \n", data_lookup2->id);
-
-imc_rrb_t* vec4;
+  /* push n times */
+  puts("\n\nBEGIN PUSH TESTING\n\n");
   for(int i = 0; i< 1050; i++) {
-    vec4 = imc_rrb_push(vec3, data2);
-    vec3 = imc_rrb_push(vec4, data2);
+    data = malloc(sizeof(imc_data_t));
+    data->id = next_rand(0, 10);
+    vec = imc_rrb_push(vec, data);
   }
 
-  imc_data_t* popped = NULL;
-  vec4 = imc_rrb_pop(vec3, &popped);
-  printf("last inserted : %d \n", popped->id);
-
-/*
-  for(int i = 0; i< 1035; i++) {
-    vec4 = imc_rrb_pop(vec4, &popped);
-    printf("last inserted : %d \n", popped->id);
+  /* lookup n random indexes */
+  puts("\n\nBEGIN LOOKUP TESTING\n\n");
+  for(int i = 0; i< 10; i++) {
+    int n = next_rand(0, imc_rrb_size(vec));
+    data = imc_rrb_lookup(vec, n);
+    printf("%dth data : %d\n", n, data->id);
   }
 
-  for(int i = 0; i< 10305; i++) {
-    vec4 = imc_rrb_push(vec4, data);
+  /* update and lookup n random indexes */
+  puts("\n\nBEGIN UPDATE TESTING\n\n");
+  for(int i = 0; i< 10; i++) {
+    int n = next_rand(0, imc_rrb_size(vec));
+    data = imc_rrb_lookup(vec, n);
+    printf("%dth data : %d\n", n, data->id);
+    data = malloc(sizeof(imc_data_t));
+    data->id = next_rand(0, 10);
+    vec = imc_rrb_update(vec, n, data);
+    data = imc_rrb_lookup(vec, n);
+    printf("%dth data : %d\n", n, data->id);
   }
-//lookup 10302
-imc_data_t* data_lookup = imc_rrb_lookup(vec4, 10302);
-printf("found at 10302 : %d \n", data_lookup->id);
-//update 10302
-imc_data_t* newdata = malloc(sizeof(int));
-newdata->id = 166;
-*/
-//vec4 = imc_rrb_update(vec4, 1030, newdata);
-/*
-//lookup 10302
-data_lookup = imc_rrb_lookup(vec4, 10302);
-printf("found at 10302 : %d \n", data_lookup->id);
-*/
-imc_rrb_emit(vec3, "essaiDOT.dot", print);
+
+  /* pop n indexes */
+  puts("\n\nBEGIN POP TESTING\n\n");
+  for(int i = 0; i< 10; i++) {
+    data = imc_rrb_lookup(vec, imc_rrb_size(vec)-1);
+    printf("Last data : %d\n", data->id);
+    vec = imc_rrb_pop(vec, &data);
+    printf("Popped data : %d\n", data->id);
+    free(data);
+  }
 
 
 }

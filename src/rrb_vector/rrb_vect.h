@@ -50,7 +50,7 @@
 //TODO define imc_data_t in a data.h file
 
 typedef struct imc_rrb {
-    int level;
+    int floor;
     int refs;
     int length;
     int* meta;
@@ -95,5 +95,9 @@ imc_rrb_t* imc_rrb_copy(imc_rrb_t* vec);
 imc_rrb_t* imc_rrb_create_leaf();
 
 imc_rrb_t* imc_rrb_pop(imc_rrb_t* vec, imc_data_t** data);
+
+void imc_rrb_increase_length(imc_rrb_t* vec, int index);
+
+void imc_rrb_decrease_length(imc_rrb_t* vec, int index);
 
 #endif
