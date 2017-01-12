@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <time.h>
 #include "fingertree.h"
 #include "invariants.h"
 #include "list.h"
@@ -1456,4 +1457,22 @@ list* affix_to_list(ft* fg,int preorsuf){
         l=add(new_affix->nodes[i],l);
     }
     return l;
+}
+
+
+ft* rand_gene(int nbelem,int* elems){
+srand(time(NULL));
+ ft* tab[nbelem+1];
+ int r,i=1;
+ tab[0]= create_empty();
+ while(i<=nbelem){
+   r = rand()%2;
+   tab[i] = ft_add(&elems[i-1],tab[i-1],r);
+   i++;
+
+ }
+
+ return tab[nbelem];
+  
+
 }
