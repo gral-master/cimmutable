@@ -40,7 +40,8 @@
 #ifndef _IMC_RRB_VECT_H
 #define _IMC_RRB_VECT_H
 
-#include "../../include/vector.h" //-I -L à la compile pour faire #include <vector.h>
+#include "../../include/vector.h"
+//-I -L à la compile pour faire #include <vector.h>
 #include <stdio.h>
 
 /* ARRAY_SIZE should be a power of 2 */
@@ -100,4 +101,12 @@ void imc_rrb_increase_length(imc_rrb_t* vec, int index);
 
 void imc_rrb_decrease_length(imc_rrb_t* vec, int index);
 
+int imc_rrb_split(imc_rrb_t* vec_in, int index,
+                  imc_rrb_t** vec_out1, imc_rrb_t** vec_out2);
+
+void imc_rrb_build_left(imc_rrb_t* vec_in, imc_rrb_t* left, int index);
+
+void imc_rrb_build_right(imc_rrb_t* vec_in, imc_rrb_t* right, int index);
+
+int imc_rrb_unref(imc_rrb_t* vec);
 #endif

@@ -26,19 +26,6 @@
 #ifndef _VECTOR_H
 #define _VECTOR_H
 
-/*#define _STRUCT_HEADER()                                              \
-    int (*size)(imc_vector_t*);                                         \
-    imc_vector_t* (*update)(imc_vector_t*, int, imc_data_t*);           \
-    imc_data_t* (*lookup)(imc_vector_t*, int);                          \
-    imc_vector_t* (*push)(imc_vector_t*, imc_data_t*);                  \
-    imc_vector_t* (*pop)(imc_vector_t*, imc_data_t**);                  \
-    int (*imc_vector_split)(imc_vector_t*, int,                         \
-                            imc_vector_t**, imc_vector_t**);            \
-    imc_vector_t* (*imc_vector_merge)(imc_vector_t*, imc_vector_t*);    \
-    int (*imc_vector_unref)(imc_vector_t*);                             \
-    void (*imc_vector_dump)(imc_vector_t*);
-*/
-
 typedef struct imc_vector{} imc_vector_t;
 
 typedef struct imc_data{int id;} imc_data_t;
