@@ -2,8 +2,10 @@
 #define _FINGER_TYPES_
 
 typedef int finger_data_t;
+
 typedef enum {TREE_NODE, DATA_NODE} node_type_t;
 typedef enum {EMPTY_NODE, SINGLE_NODE, DEEP_NODE} deep_type_t;
+typedef enum {LEFT, RIGHT} side_t;
 
 struct fingernode_t_def;
 
@@ -11,6 +13,7 @@ typedef struct fingernode_t_def{
   int ref_counter;
   int tag;
   int arity;
+  int lookup_idx;
   node_type_t node_type;
   union {
     struct fingernode_t_def** children;
