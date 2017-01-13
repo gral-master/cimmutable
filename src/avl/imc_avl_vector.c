@@ -61,10 +61,6 @@ imc_vector_avl_t* imc_vector_avl_pop(imc_vector_avl_t* vec,
     new_version->tree = imc_avl_remove(vec->tree, vec->last_value,
                                     push_pop_comparator, &data);
     new_version->last_value = vec->last_value-1;
-    if(prev_data == NULL){
-        printf("ERROR : pop function disfunctionment!!");
-    }
-
     return new_version;
 }
 
