@@ -374,8 +374,9 @@ void emit_node(imc_rrb_t* vec, char* from, char* prefix, FILE* fp,
    */
 
   fprintf(fp, "node_%s[label = \"", prefix);
-  //Pas exactement pareil si c'est une feuille
+  //current node
   char suffix;
+  //if intern node, draw it with all its cells
   if(vec->floor != 0) {
     for(int i =0; i<ARRAY_SIZE; i++) {
       if(vec->node.next[i] != NULL) {
@@ -383,17 +384,19 @@ void emit_node(imc_rrb_t* vec, char* from, char* prefix, FILE* fp,
         //printf("prefix : %s\n", prefix);
         //printf("suffix : %c\n", suffix);
         fprintf(fp, "<i%s> %d", concatc(prefix, suffix), i);
-        if(i != ARRAY_SIZE-1 && vec->node.next[i+1] != NULL) {
-          fprintf(fp, "| ");
-        }
+      } else {
+        fprintf(fp, "<i%s> ", concatc(prefix, suffix));
+      }
+      if(i != ARRAY_SIZE-1 && vec->node.next[i+1] != NULL) {
+        fprintf(fp, "| ");
       }
     }
     fprintf(fp, "\"];\n");
-
+    //Draw arrow from parent to first cell, if it is not the root
     if(from != NULL) {
       fprintf(fp, "%s -> \"node_%s\":i%s0;\n", from, prefix, prefix);
     }
-    //"node0":f2 -> "node4":f1;
+    //recursive calls to draw children
     for(int i =0; i<ARRAY_SIZE; i++) {
       if(vec->node.next[i] != NULL) {
         suffix = i<10?i+48:i+55;
@@ -402,14 +405,18 @@ void emit_node(imc_rrb_t* vec, char* from, char* prefix, FILE* fp,
         emit_node(vec->node.next[i], str_from, concatc(prefix, suffix), fp, print);
       }
     }
+    //If it is a leaf
   } else {
+      // draw the leaf and its cells
       for(int i =0; i<ARRAY_SIZE; i++) {
         if(vec->node.data[i] != NULL) {
           suffix = i<10?i+48:i+55;
           fprintf(fp, "<i%s> %s ", concatc(prefix, suffix), print(vec->node.data[i]));
-          if(i != ARRAY_SIZE-1 && vec->node.next[i+1] != NULL) {
-            fprintf(fp, "|");
-          }
+        } else {
+          fprintf(fp, "<i%s> ", concatc(prefix, suffix));
+        }
+        if(i != ARRAY_SIZE-1 && vec->node.next[i+1] != NULL) {
+          fprintf(fp, "|");
         }
       }
       fprintf(fp, "\"];\n");
