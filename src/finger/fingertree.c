@@ -937,6 +937,8 @@ view ft_delete(ft* fgt,int preorsuf){
             }
         }
     }
+    free_reflist(rl_fgt);
+    free_reflist(rl_res);
     
     return stres;
 }

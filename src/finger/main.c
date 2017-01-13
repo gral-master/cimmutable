@@ -19,13 +19,16 @@ int main(int argc, char **argv)
         data[i] = i * 5;
     }
     
-    simulation_add(200,5,800,1000);
+    //simulation_add(200,5,800,1000);
     
     ft* fingerTreeArray[MAX_ADD+1];
     
     fingerTreeArray[0] = create_empty();
     for (int i = 1; i < MAX_ADD+1; i++) {
         fingerTreeArray[i] = ft_add((void*)&data[i-1],fingerTreeArray[i-1],1);
+
+
+	
         //ft_display(fingerTreeArray[i]);
         //puts("\n****************************");
     }
@@ -42,9 +45,9 @@ int main(int argc, char **argv)
     /* ft* res = ft_concat(fingerTreeArray[MAX_ADD],fingerTreeArray2[MAX_ADD]); */
     /*   ft_display(res); */
     
-    /*
+    
      // ft_delete
-    view tmp;
+     view tmp;
      ft* fingerTreeArray1[MAX_ADD+1];
      fingerTreeArray1[0]= fingerTreeArray[MAX_ADD];
      ft_display(fingerTreeArray[MAX_ADD]);
@@ -57,21 +60,20 @@ int main(int argc, char **argv)
       ft_display(fingerTreeArray1[i]);
       printf("\n");
      }
-     */
     
-    ft_display(fingerTreeArray[MAX_ADD]);
-    printf("\n");
+    /* ft_display(fingerTreeArray1[MAX_ADD]); */
+    /* printf("\n"); */
     
-    // ft_split
-    int sindex = MAX_ADD*1/3;
-    split sres = ft_split(fingerTreeArray[MAX_ADD], sindex);
+    /* // ft_split */
+    /* int sindex = MAX_ADD*1/3; */
+    /* split sres = ft_split(fingerTreeArray[MAX_ADD], sindex); */
     
-    printf("Split: content of node at index %d: %d\n", sindex, *((int*)sres.node->true_node->data));
-    printf("left finger tree for %d:\n", sindex);
-    ft_display(sres.ft1);
-    printf("\nright finger tree for %d:\n", sindex);
-    ft_display(sres.ft2);
-    printf("\n");
+    /* printf("Split: content of node at index %d: %d\n", sindex, *((int*)sres.node->true_node->data)); */
+    /* printf("left finger tree for %d:\n", sindex); */
+    /* ft_display(sres.ft1); */
+    /* printf("\nright finger tree for %d:\n", sindex); */
+    /* ft_display(sres.ft2); */
+    /* printf("\n"); */
     
     // ft_lookup
     /*
@@ -100,12 +102,13 @@ int main(int argc, char **argv)
     /* } */
     
     // ft_unref
-    /*
+    
     for (int i = 0; i < MAX_ADD+1; i++) {
         printf("%d\n", i);
         ft_unref(fingerTreeArray[i]);
+	if(i!=0)
+     	 ft_unref(fingerTreeArray1[i]);
     }
-    */
     
     // ft_concat
    //   TODO
