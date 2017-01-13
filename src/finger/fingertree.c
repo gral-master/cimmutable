@@ -95,87 +95,283 @@ node* create_node_node() {
     return n;
 }
 
-ft* ft_add(void* data, ft* fgt,int preorsuf) {
-    // Preconditions & Invariants
-    /*checkInvariants(fgt);*/
 
-    ft* res;
-    node* new_elem = create_data_node(data);
-    res=add_elem_deep_recur(fgt,preorsuf,new_elem);
-    res->size = fgt->size+1;
+void shift_elements(affix* new_affix,int index,int preorsuf){
+  int i;
+  if(preorsuf){
+    for(i=index;i<3;i++) {
+      new_affix->nodes[i]=new_affix->nodes[i+1];
+    }
 
-    // Postconditions & Invariants
-    //checkInvariants(fgt);
+  }
+  else{
+    for(i=index-1;i>=0;i--) {
+      new_affix->nodes[i+1]=new_affix->nodes[i];
+    }
+  }
+
+}
+
+
+void update_affix(affix* new_affix,affix* old_affix,int preorsuf,node* data_node){
+  if(preorsuf){
+    new_affix->nodes[3]=data_node;
+    new_affix->nodes[2]=old_affix->nodes[3];
+    new_affix->nodes[1]=NULL;
+    new_affix->nodes[0]=NULL;
+    new_affix->size=data_node->size + old_affix->nodes[3]->size;
+  }
+  else{
+    new_affix->nodes[0]=data_node;
+    new_affix->nodes[1]=old_affix->nodes[0];
+    new_affix->nodes[2]=NULL;
+    new_affix->nodes[3]=NULL;
+    new_affix->size=data_node->size + old_affix->nodes[0]->size;
+  }
+
+}
+
+void add_elems_node(node* new_node,affix* old_affix,int preorsuf ){
+  int i;
+  if(preorsuf){
+    for(i=2;i>=0;i--){
+      new_node->true_node->internal_node[i] = old_affix->nodes[i];
+      new_node->size += old_affix->nodes[i]->size;
+    }
+  }
+  else{
+	     
+    for(i=0;i<3;i++){
+      new_node->true_node->internal_node[i] = old_affix->nodes[i+1];
+      new_node->size += old_affix->nodes[i+1]->size;
+    }
+  }
+
+
+}
+
+list* nodes(list*l){
+    node *tmp, *tmp2;
+    list* res;
+
+    if(l==NULL){
+        printf("nodes: error list NULL\n");
+        exit(-1);
+    }
+    else if(l->next==NULL){
+        printf("nodes: error list->next =  NULL\n");
+        exit(-1);
+    }
+    else if(l->next->next==NULL){
+        // List of 2 -> Node2
+        tmp = create_node_node();
+        tmp->true_node->internal_node[0]= l->elem;
+        tmp->true_node->internal_node[1]= l->next->elem;
+        tmp->true_node->internal_node[2]= NULL;
+
+        l=removel(l);
+        l=removel(l);
+        res = add(tmp,l);
+
+    }
+    else if(l->next->next->next==NULL){
+        // List of 3 -> Node3
+        tmp = create_node_node();
+        tmp->true_node->internal_node[0]= l->elem;
+        tmp->true_node->internal_node[1]= l->next->elem;
+        tmp->true_node->internal_node[2]= l->next->next->elem;
+        l=removel(l);
+        l=removel(l);
+        l=removel(l);
+        res = add(tmp,l);
+    }
+    else if (l->next->next->next->next == NULL) {
+        // List of 4 -> 2 Node2
+        tmp = create_node_node();
+        tmp->true_node->internal_node[0] = l->elem;
+        tmp->true_node->internal_node[1] = l->next->elem;
+
+        tmp2 = create_node_node();
+        tmp2->true_node->internal_node[0] = l->next->next->elem;
+        tmp2->true_node->internal_node[1] = l->next->next->next->elem;
+
+        l=removel(l);
+        l=removel(l);
+        l=removel(l);
+        l=removel(l);
+
+        res=add(tmp2,l);
+        res=add(tmp,res);
+    } else {
+        // Default -> Node3, recursive call
+        res = create_lempty();
+        tmp = create_node_node();
+        tmp->true_node->internal_node[0]= l->elem;
+        tmp->true_node->internal_node[1]= l->next->elem;
+        tmp->true_node->internal_node[2]= l->next->next->elem;
+        l=removel(l);
+        l=removel(l);
+        l=removel(l);
+        res = nodes(l);
+        res = add(tmp,res);
+    }
     return res;
 }
 
-void node_display(node* node) {
-    if (node == NULL){
-        printf("NULL");
-        return;
-    }
-    switch (node->type) {
-        case DATA_TYPE:
-            printf("%d", *((int*)node->true_node->data));
-            break;
-        case NODE_TYPE:
-            printf("Node(");
-            for (int i = 0; i < 3; i++){
-                if (node->true_node->internal_node[i] != NULL) {
-                    node_display(node->true_node->internal_node[i]);
-                    printf(",");
-                }
-            }
-            printf(")");
-            break;
-        default:
-            printf("_");
-    }
+
+
+void invers_recursif(node*elem){
+  if(elem->type==DATA_TYPE)
+    return;
+  else{
+    node**simpl=elem->true_node->internal_node;
+    node*tmp=simpl[0];
+    simpl[0]=simpl[2];
+    simpl[2]=tmp;
+    invers_recursif(simpl[0]);
+    invers_recursif(simpl[1]);
+    invers_recursif(simpl[2]);
+
+  }
+
 }
 
-void ft_display(ft* fgt) {
-    if(fgt==NULL)
-    {
-        puts("NULL!!!");
+/* checks if there is available space in the suffix of the deep
+* to make it generic we use
+* preorsuf to search in the prefix or suffix (0 for prefix, 1 for suffix)
+* Returns the next available index of the affix, or -1 if there is none.
+*/
+int check_available_space(ft* fgt,int preorsuf){
+
+
+    if(fgt->type!=DEEP_TYPE){
+        printf("error not a deep\n");
         exit(-1);
     }
-    switch (fgt->type) {
-        case EMPTY_TYPE:
-            printf("EMPTY");
+    int i;
+    affix*old_affix;
+    if(preorsuf){
+      old_affix = fgt->true_ft->d->suffix;
+      int  j = old_affix->size;
+
+      for (i = 3; i >= 0; i--) {
+        if (j == 0)
             break;
-        case SINGLE_TYPE:
-            printf("Single(");
-            node_display(fgt->true_ft->single);
-            printf(")");
-            break;
-        case DEEP_TYPE:
-            printf("Deep([");
-            // Prefix
-            for (int i = 0; i < 4; i++){
-                if (fgt->true_ft->d->prefix->nodes[i] != NULL){
-		  printf("[%d]:",i);
-                    node_display(fgt->true_ft->d->prefix->nodes[i]);
-                    printf(",");
-                }
-            }
-            printf("],");
-            // Deeper
-            ft_display(fgt->true_ft->d->deeper);
-            // Suffix
-            printf(",[");
-            for (int i =0; i <4; i++){
-                if (fgt->true_ft->d->suffix->nodes[i] != NULL){
-		  printf("[%d]:",i);
-                    node_display(fgt->true_ft->d->suffix->nodes[i]);
-                    printf(",");
-                }
-            }
-            printf("])");
-            break;
-        default:
-            printf("Error: Unsupported\n");
+        j -= old_affix->nodes[i]->size;
+      }
+
+      if (i < 0) {
+        return -1;
+      }
+
     }
+    else{
+         old_affix = fgt->true_ft->d->prefix;
+      int j = old_affix->size;
+
+      for (i = 0; i < 4; i++) {
+        if (j == 0)
+	  break;
+        j -= old_affix->nodes[i]->size;
+      }
+
+      if (i > 3) {
+        return -1;
+      }
+
+    }
+
+
+    return i;
 }
+
+
+void copy_pref(ft*res,ft* fgt){
+    int j;
+    /* i did not see how to keep your code when changing convention*/
+    /* for(i=0,j=0;i<fgt->true_ft->d->prefix->size;i += fgt->true_ft->d->prefix->nodes[j]->size,j++){ */
+    for(j=0;j<4;j++){
+      if(fgt->true_ft->d->prefix->nodes[j]==NULL)
+	res->true_ft->d->prefix->nodes[j]=NULL;
+      else{
+        res->true_ft->d->prefix->nodes[j]=fgt->true_ft->d->prefix->nodes[j];
+        fgt->true_ft->d->prefix->nodes[j]->ref_count++;
+      }
+    }
+    res->true_ft->d->prefix->size = fgt->true_ft->d->prefix->size;
+}
+
+void copy_suff(ft*res,ft* fgt){
+    int j;
+    /* for(i=0,j=0;i<fgt->true_ft->d->suffix->size;i += fgt->true_ft->d->suffix->nodes[j]->size,j++){ */
+    for(j=0;j<4;j++){
+      if(fgt->true_ft->d->suffix->nodes[j]==NULL)
+	res->true_ft->d->suffix->nodes[j]=NULL;
+      else{
+        res->true_ft->d->suffix->nodes[j]=fgt->true_ft->d->suffix->nodes[j];
+        fgt->true_ft->d->suffix->nodes[j]->ref_count++;
+      }
+    }
+    res->true_ft->d->suffix->size = fgt->true_ft->d->suffix->size;
+}
+
+affix* get_right_affix(ft*res,int preorsuf, int inv){
+    affix*new_affix;
+    if(inv){
+        if(preorsuf)
+        preorsuf=0;
+        else
+        preorsuf=1;
+    }
+
+    if(preorsuf) {
+        new_affix=res->true_ft->d->suffix;
+    } else {
+        new_affix=res->true_ft->d->prefix;
+    }
+    return new_affix;
+}
+
+ft* ft_concat(ft* ft1,ft* ft2){
+    // Preconditions & Invariants
+    /* TODO
+    checkInvariants(ft1);
+    checkInvariants(ft2);
+     */
+    
+    ft* res;
+    list* l=NULL;
+    res = concat_w_middle(ft1,l,ft2);
+    
+    // Postconditions & Invariants
+    /* TODO
+    checkInvariants(res);
+     */
+    return res;
+}
+
+void remove_from_affix(affix* new_affix,affix* old_affix,int index,int preorsuf){
+  int i;
+  if(preorsuf){
+    new_affix->size = old_affix->size - new_affix->nodes[3]->size;
+    for(i=3;i>=index;i--) {
+      new_affix->nodes[i]=new_affix->nodes[i-1];
+    }
+    new_affix->nodes[index]=NULL;
+	
+  }
+  else{
+    new_affix->size = old_affix->size - new_affix->nodes[0]->size;
+    for(i=0;i<index;i++) {
+      new_affix->nodes[i]=new_affix->nodes[i+1];
+    }
+    new_affix->nodes[index]=NULL;
+	    
+
+  }
+
+}
+
 
 /*
 * this function is recursive. it builds the resulting finger tree
@@ -274,125 +470,108 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data_node){
     return res;
 }
 
-void shift_elements(affix* new_affix,int index,int preorsuf){
-  int i;
-  if(preorsuf){
-    for(i=index;i<3;i++) {
-      new_affix->nodes[i]=new_affix->nodes[i+1];
-    }
 
-  }
-  else{
-    for(i=index-1;i>=0;i--) {
-      new_affix->nodes[i+1]=new_affix->nodes[i];
-    }
-  }
-
-}
-
-
-void update_affix(affix* new_affix,affix* old_affix,int preorsuf,node* data_node){
-  if(preorsuf){
-    new_affix->nodes[3]=data_node;
-    new_affix->nodes[2]=old_affix->nodes[3];
-    new_affix->nodes[1]=NULL;
-    new_affix->nodes[0]=NULL;
-    new_affix->size=data_node->size + old_affix->nodes[3]->size;
-  }
-  else{
-    new_affix->nodes[0]=data_node;
-    new_affix->nodes[1]=old_affix->nodes[0];
-    new_affix->nodes[2]=NULL;
-    new_affix->nodes[3]=NULL;
-    new_affix->size=data_node->size + old_affix->nodes[0]->size;
-  }
-
-}
-
-void add_elems_node(node* new_node,affix* old_affix,int preorsuf ){
-  int i;
-  if(preorsuf){
-    for(i=2;i>=0;i--){
-      new_node->true_node->internal_node[i] = old_affix->nodes[i];
-      new_node->size += old_affix->nodes[i]->size;
-    }
-  }
-  else{
-	     
-    for(i=0;i<3;i++){
-      new_node->true_node->internal_node[i] = old_affix->nodes[i+1];
-      new_node->size += old_affix->nodes[i+1]->size;
-    }
-  }
-
-
-}
-
-
-void invers_recursif(node*elem){
-  if(elem->type==DATA_TYPE)
-    return;
-  else{
-    node**simpl=elem->true_node->internal_node;
-    node*tmp=simpl[0];
-    simpl[0]=simpl[2];
-    simpl[2]=tmp;
-    invers_recursif(simpl[0]);
-    invers_recursif(simpl[1]);
-    invers_recursif(simpl[2]);
-
-  }
-
-}
-
-/* checks if there is available space in the suffix of the deep
-* to make it generic we use
-* preorsuf to search in the prefix or suffix (0 for prefix, 1 for suffix)
-* Returns the next available index of the affix, or -1 if there is none.
+/**
+* Makes a list from the affix of a finger tree.
 */
-int check_available_space(ft* fgt,int preorsuf){
-
-
-    if(fgt->type!=DEEP_TYPE){
-        printf("error not a deep\n");
-        exit(-1);
+list* affix_to_list(ft* fg,int preorsuf){
+    affix* new_affix;
+    list*l=NULL;
+    if(preorsuf) {
+        new_affix=fg->true_ft->d->suffix;
+    } else {
+        new_affix=fg->true_ft->d->prefix;
     }
     int i;
-    affix*old_affix;
-    if(preorsuf){
-      old_affix = fgt->true_ft->d->suffix;
-      int  j = old_affix->size;
-
-      for (i = 3; i >= 0; i--) {
-        if (j == 0)
-            break;
-        j -= old_affix->nodes[i]->size;
-      }
-
-      if (i < 0) {
-        return -1;
-      }
-
+    for(i=0;i<4;i++){
+        l=add(new_affix->nodes[i],l);
     }
-    else{
-       old_affix = fgt->true_ft->d->prefix;
-      int j = old_affix->size;
-
-      for (i = 0; i < 4; i++) {
-        if (j == 0)
-	  break;
-        j -= old_affix->nodes[i]->size;
-      }
-
-      if (i > 3) {
-        return -1;
-      }
-
-    }
-
-
-    return i;
+    return l;
 }
+
+
+ft* ft_add(void* data, ft* fgt,int preorsuf) {
+    // Preconditions & Invariants
+    /*checkInvariants(fgt);*/
+
+    ft* res;
+    node* new_elem = create_data_node(data);
+    res=add_elem_deep_recur(fgt,preorsuf,new_elem);
+    res->size = fgt->size+1;
+
+    // Postconditions & Invariants
+    //checkInvariants(fgt);
+    return res;
+}
+
+void node_display(node* node) {
+    if (node == NULL){
+        printf("NULL");
+        return;
+    }
+    switch (node->type) {
+        case DATA_TYPE:
+            printf("%d", *((int*)node->true_node->data));
+            break;
+        case NODE_TYPE:
+            printf("Node(");
+            for (int i = 0; i < 3; i++){
+                if (node->true_node->internal_node[i] != NULL) {
+                    node_display(node->true_node->internal_node[i]);
+                    printf(",");
+                }
+            }
+            printf(")");
+            break;
+        default:
+            printf("_");
+    }
+}
+
+void ft_display(ft* fgt) {
+    if(fgt==NULL)
+    {
+        puts("NULL!!!");
+        exit(-1);
+    }
+    switch (fgt->type) {
+        case EMPTY_TYPE:
+            printf("EMPTY");
+            break;
+        case SINGLE_TYPE:
+            printf("Single(");
+            node_display(fgt->true_ft->single);
+            printf(")");
+            break;
+        case DEEP_TYPE:
+            printf("Deep([");
+            // Prefix
+            for (int i = 0; i < 4; i++){
+                if (fgt->true_ft->d->prefix->nodes[i] != NULL){
+		  printf("[%d]:",i);
+                    node_display(fgt->true_ft->d->prefix->nodes[i]);
+                    printf(",");
+                }
+            }
+            printf("],");
+            // Deeper
+            ft_display(fgt->true_ft->d->deeper);
+            // Suffix
+            printf(",[");
+            for (int i =0; i <4; i++){
+                if (fgt->true_ft->d->suffix->nodes[i] != NULL){
+		  printf("[%d]:",i);
+                    node_display(fgt->true_ft->d->suffix->nodes[i]);
+                    printf(",");
+                }
+            }
+            printf("])");
+            break;
+        default:
+            printf("Error: Unsupported\n");
+    }
+}
+
 
 
 
@@ -763,27 +942,6 @@ view ft_delete(ft* fgt,int preorsuf){
 }
 
 
-void remove_from_affix(affix* new_affix,affix* old_affix,int index,int preorsuf){
-  int i;
-  if(preorsuf){
-    new_affix->size = old_affix->size - new_affix->nodes[3]->size;
-    for(i=3;i>=index;i--) {
-      new_affix->nodes[i]=new_affix->nodes[i-1];
-    }
-    new_affix->nodes[index]=NULL;
-	
-  }
-  else{
-    new_affix->size = old_affix->size - new_affix->nodes[0]->size;
-    for(i=0;i<index;i++) {
-      new_affix->nodes[i]=new_affix->nodes[i+1];
-    }
-    new_affix->nodes[index]=NULL;
-	    
-
-  }
-
-}
 
 // Split and its helper functions
 // Size and ref_count are not yet managed
@@ -1260,70 +1418,6 @@ split ft_split(ft* fgt, int index) {
 }
 
 
-void copy_pref(ft*res,ft* fgt){
-    int j;
-    /* i did not see how to keep your code when changing convention*/
-    /* for(i=0,j=0;i<fgt->true_ft->d->prefix->size;i += fgt->true_ft->d->prefix->nodes[j]->size,j++){ */
-    for(j=0;j<4;j++){
-      if(fgt->true_ft->d->prefix->nodes[j]==NULL)
-	res->true_ft->d->prefix->nodes[j]=NULL;
-      else{
-        res->true_ft->d->prefix->nodes[j]=fgt->true_ft->d->prefix->nodes[j];
-        fgt->true_ft->d->prefix->nodes[j]->ref_count++;
-      }
-    }
-    res->true_ft->d->prefix->size = fgt->true_ft->d->prefix->size;
-}
-
-void copy_suff(ft*res,ft* fgt){
-    int j;
-    /* for(i=0,j=0;i<fgt->true_ft->d->suffix->size;i += fgt->true_ft->d->suffix->nodes[j]->size,j++){ */
-    for(j=0;j<4;j++){
-      if(fgt->true_ft->d->suffix->nodes[j]==NULL)
-	res->true_ft->d->suffix->nodes[j]=NULL;
-      else{
-        res->true_ft->d->suffix->nodes[j]=fgt->true_ft->d->suffix->nodes[j];
-        fgt->true_ft->d->suffix->nodes[j]->ref_count++;
-      }
-    }
-    res->true_ft->d->suffix->size = fgt->true_ft->d->suffix->size;
-}
-
-affix* get_right_affix(ft*res,int preorsuf, int inv){
-    affix*new_affix;
-    if(inv){
-        if(preorsuf)
-        preorsuf=0;
-        else
-        preorsuf=1;
-    }
-
-    if(preorsuf) {
-        new_affix=res->true_ft->d->suffix;
-    } else {
-        new_affix=res->true_ft->d->prefix;
-    }
-    return new_affix;
-}
-
-ft* ft_concat(ft* ft1,ft* ft2){
-    // Preconditions & Invariants
-    /* TODO
-    checkInvariants(ft1);
-    checkInvariants(ft2);
-     */
-    
-    ft* res;
-    list* l=NULL;
-    res = concat_w_middle(ft1,l,ft2);
-    
-    // Postconditions & Invariants
-    /* TODO
-    checkInvariants(res);
-     */
-    return res;
-}
-
 ft* concat_w_middle(ft* ft1, list* l,ft* ft2){
     ft* res;
     node* x;
@@ -1373,95 +1467,11 @@ ft* concat_w_middle(ft* ft1, list* l,ft* ft2){
     return res;
 }
 
-list* nodes(list*l){
-    node *tmp, *tmp2;
-    list* res;
 
-    if(l==NULL){
-        printf("nodes: error list NULL\n");
-        exit(-1);
-    }
-    else if(l->next==NULL){
-        printf("nodes: error list->next =  NULL\n");
-        exit(-1);
-    }
-    else if(l->next->next==NULL){
-        // List of 2 -> Node2
-        tmp = create_node_node();
-        tmp->true_node->internal_node[0]= l->elem;
-        tmp->true_node->internal_node[1]= l->next->elem;
-        tmp->true_node->internal_node[2]= NULL;
-
-        l=removel(l);
-        l=removel(l);
-        res = add(tmp,l);
-
-    }
-    else if(l->next->next->next==NULL){
-        // List of 3 -> Node3
-        tmp = create_node_node();
-        tmp->true_node->internal_node[0]= l->elem;
-        tmp->true_node->internal_node[1]= l->next->elem;
-        tmp->true_node->internal_node[2]= l->next->next->elem;
-        l=removel(l);
-        l=removel(l);
-        l=removel(l);
-        res = add(tmp,l);
-    }
-    else if (l->next->next->next->next == NULL) {
-        // List of 4 -> 2 Node2
-        tmp = create_node_node();
-        tmp->true_node->internal_node[0] = l->elem;
-        tmp->true_node->internal_node[1] = l->next->elem;
-
-        tmp2 = create_node_node();
-        tmp2->true_node->internal_node[0] = l->next->next->elem;
-        tmp2->true_node->internal_node[1] = l->next->next->next->elem;
-
-        l=removel(l);
-        l=removel(l);
-        l=removel(l);
-        l=removel(l);
-
-        res=add(tmp2,l);
-        res=add(tmp,res);
-    } else {
-        // Default -> Node3, recursive call
-        res = create_lempty();
-        tmp = create_node_node();
-        tmp->true_node->internal_node[0]= l->elem;
-        tmp->true_node->internal_node[1]= l->next->elem;
-        tmp->true_node->internal_node[2]= l->next->next->elem;
-        l=removel(l);
-        l=removel(l);
-        l=removel(l);
-        res = nodes(l);
-        res = add(tmp,res);
-    }
-    return res;
-}
-
-/**
-* Makes a list from the affix of a finger tree.
-*/
-list* affix_to_list(ft* fg,int preorsuf){
-    affix* new_affix;
-    list*l=NULL;
-    if(preorsuf) {
-        new_affix=fg->true_ft->d->suffix;
-    } else {
-        new_affix=fg->true_ft->d->prefix;
-    }
-    int i;
-    for(i=0;i<4;i++){
-        l=add(new_affix->nodes[i],l);
-    }
-    return l;
-}
 
 
 ft* ft_generator(int nbelem,int* elems){
-srand(time(NULL));
+  srand((unsigned int)time(NULL));
  ft* tab[nbelem+1];
  int r,i=1;
  tab[0]= create_empty();
@@ -1471,10 +1481,10 @@ srand(time(NULL));
    i++;
 
  }
-
+ for(int j=0;j<nbelem;j++)
+   ft_unref(tab[j]);
  return tab[nbelem];
-  
-
+ 
 }
 
 
@@ -1504,6 +1514,7 @@ void simulation_add(int density_each_point, int shift, int starting_size, int fi
        clock_t end = clock();
      time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
      average = average + time_spent;
+     ft_unref(tmp);
       
     }
     average = average/density_each_point;
