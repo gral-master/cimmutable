@@ -174,7 +174,6 @@ imc_rrb_t* imc_rrb_push_not_full(imc_rrb_t* vec, imc_data_t* data) {
 }
 // add at the end <--- DOXYGENIZE PLEASE!
 imc_rrb_t* imc_rrb_push(imc_rrb_t* vec, imc_data_t* data) {
-
 	//algorithm
 
 	if(imc_rrb_full(vec)==1) {
@@ -207,9 +206,10 @@ imc_rrb_t* imc_rrb_pop(imc_rrb_t* vec, imc_data_t** data) {
 	vec = new_root;
 	int sub_index = 0;
 	int last_index = new_root->length-1;
-	while(vec->floor!=1) {
+	while(vec->floor != 1) {
 		sub_index = imc_rrb_subindex(vec, last_index); // We want the last elem
-		vec->node.next[sub_index] = imc_rrb_copy(vec->node.next[sub_index]); // This function updates refs to node
+		vec->node.next[sub_index] = imc_rrb_copy(vec->node.next[sub_index]);
+        // This function updates refs to node
 		printf("Pop in a vector of size %d at floor %d, taken : %d \n", vec->length,
 			   vec->floor, sub_index);
 		vec->length -= 1;
@@ -231,7 +231,6 @@ imc_rrb_t* imc_rrb_pop(imc_rrb_t* vec, imc_data_t** data) {
 	vec->node.data[sub_index] = NULL;
 	vec->length -= 1;
 	return new_root;
-
 }
 
 int imc_rrb_split(imc_rrb_t* vec_in, int index, imc_rrb_t** vec_out1,
@@ -243,7 +242,7 @@ int imc_rrb_split(imc_rrb_t* vec_in, int index, imc_rrb_t** vec_out1,
 
 void imc_rrb_build_left(imc_rrb_t* vec_in, imc_rrb_t* left,
                         int index){
-	int i, split_index = imc_rrb_subindex(vec_in, index);
+    int i, split_index = imc_rrb_subindex(vec_in, index);
 
 	left->floor = vec_in->floor;
 	if(vec_in->floor == 0){
@@ -258,7 +257,7 @@ void imc_rrb_build_left(imc_rrb_t* vec_in, imc_rrb_t* left,
   
 	for(i = 0; i < split_index; i++){
 		left->node.next[i] = vec_in->node.next[i];
-		left->node.next[i]->refs++;
+		if(left->node.next[i] != NULL) left->node.next[i]->refs++;
 		if(is_balanced == 0) left->meta[i] = vec_in->meta[i];
 	}
 	if(vec_in->floor > 1) left->node.next[split_index] = imc_rrb_create();
@@ -268,11 +267,13 @@ void imc_rrb_build_left(imc_rrb_t* vec_in, imc_rrb_t* left,
 					   left->node.next[split_index], index);
 	if(is_balanced == 0){
 		if(split_index == 0){
-			left->meta[split_index] = imc_rrb_size(left->node.next[split_index]);
+			left->meta[split_index] = 
+                imc_rrb_size(left->node.next[split_index]);
 		}
 		else{
 			left->meta[split_index] =
-				imc_rrb_size(left->node.next[split_index]) + left->meta[split_index-1];
+				imc_rrb_size(left->node.next[split_index]) + 
+                left->meta[split_index-1];
 		}
 		left->length = left->meta[split_index];
 	}
@@ -292,7 +293,7 @@ void imc_rrb_build_right(imc_rrb_t* vec_in, imc_rrb_t* right,
 			right->length = -1;
 			return;
 		}
-		for(j = 0, i = split_index+1; i > ARRAY_SIZE; i++, j++){
+		for(j = 0, i = split_index+1; i < ARRAY_SIZE; i++, j++){
 			right->node.data[j] = vec_in->node.data[i];
 		}
 		right->length = j+1;
@@ -301,8 +302,10 @@ void imc_rrb_build_right(imc_rrb_t* vec_in, imc_rrb_t* right,
 	right->meta = malloc(sizeof(int) * ARRAY_SIZE);
   
 	for(i = split_index+1; i < ARRAY_SIZE; i++){
-		right->node.next[i] = vec_in->node.next[i];
-		right->node.next[i]->refs++;
+	    right->node.next[i] = vec_in->node.next[i];
+		if(right->node.next[i] != NULL){
+            right->node.next[i]->refs++;
+        }
 	}
 	if(vec_in->floor > 1) right->node.next[split_index] = imc_rrb_create();
 	else right->node.next[split_index] = imc_rrb_create_leaf();
@@ -329,7 +332,8 @@ void imc_rrb_build_right(imc_rrb_t* vec_in, imc_rrb_t* right,
 			right->meta[i] = imc_rrb_size(right->node.next[split_index]);
 		}
 		if(i > split_index){
-			right->meta[i] = right->meta[i-1] + imc_rrb_size(right->node.next[i]); 
+			right->meta[i] = right->meta[i-1] + 
+                imc_rrb_size(right->node.next[i]); 
 		}
 	}
 	right->length = right->meta[ARRAY_SIZE-1]; 
@@ -383,60 +387,64 @@ void imc_rrb_emit(imc_rrb_t* vec, const char* path, char* (*print)(imc_data_t*))
 //On pourrait faire un emit_node_compact ?
 void emit_node(imc_rrb_t* vec, char* from, char* prefix, FILE* fp,
                char* (*print)(imc_data_t*)) {
-	/* added i (as identifier) to the prefix, because of a graphviz bug :
-	 * https://rt.cpan.org/Public/Bug/Display.html?id=105171
-	 * Please use after that dot -Tsvg INPUT.dot -o OUTPUT.svg
-	 * and use a good visualizer if your graph is large.
-	 */
+    /* added i (as identifier) to the prefix, because of a graphviz bug :
+     * https://rt.cpan.org/Public/Bug/Display.html?id=105171
+     * Please use after that dot -Tsvg INPUT.dot -o OUTPUT.svg
+     * and use a good visualizer if your graph is large.
+     */
 
-	fprintf(fp, "node_%s[label = \"", prefix);
-	//Pas exactement pareil si c'est une feuille
-	char suffix;
-	if(vec->floor != 0) {
-		for(int i =0; i<ARRAY_SIZE; i++) {
-			if(vec->node.next[i] != NULL) {
-				suffix = i<10?i+48:i+55;
-				//printf("prefix : %s\n", prefix);
-				//printf("suffix : %c\n", suffix);
-				fprintf(fp, "<i%s> %d", concatc(prefix, suffix), i);
-				if(i != ARRAY_SIZE-1 && vec->node.next[i+1] != NULL) {
-					fprintf(fp, "| ");
-				}
-			}
-		}
-		fprintf(fp, "\"];\n");
-
-		if(from != NULL) {
-			fprintf(fp, "%s -> \"node_%s\":i%s0;\n", from, prefix, prefix);
-		}
-		//"node0":f2 -> "node4":f1;
-		for(int i =0; i<ARRAY_SIZE; i++) {
-			if(vec->node.next[i] != NULL) {
-				suffix = i<10?i+48:i+55;
-				char* str_from = malloc(sizeof(char) * 100);
-				sprintf(str_from, "\"node_%s\":i%s", prefix, concatc(prefix, suffix));
-				emit_node(vec->node.next[i], str_from,
-						  concatc(prefix, suffix), fp, print);
-			}
-		}
-	} else {
-		for(int i =0; i<ARRAY_SIZE; i++) {
-			if(vec->node.data[i] != NULL) {
-				suffix = i<10?i+48:i+55;
-				fprintf(fp, "<i%s> %s ", concatc(prefix, suffix),
-						print(vec->node.data[i]));
-				if(i != ARRAY_SIZE-1 && vec->node.next[i+1] != NULL) {
-					fprintf(fp, "|");
-				}
-			}
-		}
-		fprintf(fp, "\"];\n");
-		if(from != NULL) {
-			fprintf(fp, "%s -> \"node_%s\":i%s0;\n", from, prefix, prefix);
-		}
-	}
+    fprintf(fp, "node_%s[label = \"", prefix);
+    //current node
+    char suffix;
+    //if intern node, draw it with all its cells
+    if(vec->floor != 0) {
+        for(int i =0; i<ARRAY_SIZE; i++) {
+            suffix = i<10?i+48:i+55;
+            if(vec->node.next[i] != NULL) {
+                //printf("prefix : %s\n", prefix);
+                //printf("suffix : %c\n", suffix);
+                fprintf(fp, "<i%s> %d", concatc(prefix, suffix), i);
+            } else {
+                fprintf(fp, "<i%s> ", concatc(prefix, suffix));
+            }
+            if(i != ARRAY_SIZE-1) {
+                fprintf(fp, "| ");
+            }
+        }
+        fprintf(fp, "\"];\n");
+        //Draw arrow from parent to first cell, if it is not the root
+        if(from != NULL) {
+            fprintf(fp, "%s -> \"node_%s\":i%s0;\n", from, prefix, prefix);
+        }
+        //recursive calls to draw children
+        for(int i =0; i<ARRAY_SIZE; i++) {
+            if(vec->node.next[i] != NULL) {
+                suffix = i<10?i+48:i+55;
+                char* str_from = malloc(sizeof(char) * 100);
+                sprintf(str_from, "\"node_%s\":i%s", prefix, concatc(prefix, suffix));
+                emit_node(vec->node.next[i], str_from, concatc(prefix, suffix), fp, print);
+            }
+        }
+        //If it is a leaf
+    } else {
+        // draw the leaf and its cells
+        for(int i =0; i<ARRAY_SIZE; i++) {
+            suffix = i<10?i+48:i+55;
+            if(vec->node.data[i] != NULL) {
+                fprintf(fp, "<i%s> %s ", concatc(prefix, suffix), print(vec->node.data[i]));
+            } else {
+                fprintf(fp, "<i%s> ", concatc(prefix, suffix));
+            }
+            if(i != ARRAY_SIZE-1) {
+                fprintf(fp, "|");
+            }
+        }
+        fprintf(fp, "\"];\n");
+        if(from != NULL) {
+            fprintf(fp, "%s -> \"node_%s\":i%s0;\n", from, prefix, prefix);
+        }
+    }
 }
-
 char* concatc(char* str, char c) {
     size_t len = strlen(str);
     char *str2 = malloc(len + 1 + 1 );
@@ -584,11 +592,11 @@ imc_rrb_t* imc_rrb_create() {
         puts("Erreur allocation ! \n");
         return NULL;
     }
-    vec -> floor = 1;
-    vec -> refs = 1;
-    vec -> length = 0;
-    vec -> meta = NULL;
-    vec -> node.next = malloc(sizeof(imc_rrb_t*) * ARRAY_SIZE);
+    vec->floor = 1;
+    vec->refs = 1;
+    vec->length = 0;
+    vec->meta = NULL;
+    vec->node.next = malloc(sizeof(imc_rrb_t*) * ARRAY_SIZE);
 
     if(vec -> node.next == NULL){
         LOG(1, "Allocation failure %s", strerror(errno));

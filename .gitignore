@@ -37,3 +37,4 @@ docs/*
 # Debug files
 *.dSYM/
 *.su
+dot/
