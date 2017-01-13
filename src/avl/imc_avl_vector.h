@@ -8,7 +8,7 @@
 //----------------------------------------------------------------------------//
 typedef struct imc_vector_avl_t{
     imc_avl_node_t* tree;
-    int size;
+    int last_value;
 } imc_vector_avl_t;
 
 
