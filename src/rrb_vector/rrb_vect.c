@@ -243,7 +243,9 @@ void imc_rrb_build_left(imc_rrb_t* vec_in, imc_rrb_t* left,
 
   for(i = 0; i < split_index; i++){
     left->node.next[i] = vec_in->node.next[i];
-    left->node.next[i]->refs++;
+    if(left->node.next[i]!=NULL) {
+      left->node.next[i]->refs++;
+    }
     if(is_balanced == 0) left->meta[i] = vec_in->meta[i];
   }
   if(vec_in->floor > 1) left->node.next[split_index] = imc_rrb_create();
@@ -287,7 +289,9 @@ void imc_rrb_build_right(imc_rrb_t* vec_in, imc_rrb_t* right,
 
   for(i = split_index+1; i < ARRAY_SIZE; i++){
     right->node.next[i] = vec_in->node.next[i];
-    right->node.next[i]->refs++;
+    if(right->node.next[i]!=NULL) {
+      right->node.next[i]->refs++;
+    }
   }
   if(vec_in->floor > 1) right->node.next[split_index] = imc_rrb_create();
   else right->node.next[split_index] = imc_rrb_create_leaf();
@@ -379,15 +383,15 @@ void emit_node(imc_rrb_t* vec, char* from, char* prefix, FILE* fp,
   //if intern node, draw it with all its cells
   if(vec->floor != 0) {
     for(int i =0; i<ARRAY_SIZE; i++) {
+      suffix = i<10?i+48:i+55;
       if(vec->node.next[i] != NULL) {
-        suffix = i<10?i+48:i+55;
         //printf("prefix : %s\n", prefix);
         //printf("suffix : %c\n", suffix);
         fprintf(fp, "<i%s> %d", concatc(prefix, suffix), i);
       } else {
         fprintf(fp, "<i%s> ", concatc(prefix, suffix));
       }
-      if(i != ARRAY_SIZE-1 && vec->node.next[i+1] != NULL) {
+      if(i != ARRAY_SIZE-1) {
         fprintf(fp, "| ");
       }
     }
@@ -409,13 +413,13 @@ void emit_node(imc_rrb_t* vec, char* from, char* prefix, FILE* fp,
   } else {
       // draw the leaf and its cells
       for(int i =0; i<ARRAY_SIZE; i++) {
+        suffix = i<10?i+48:i+55;
         if(vec->node.data[i] != NULL) {
-          suffix = i<10?i+48:i+55;
           fprintf(fp, "<i%s> %s ", concatc(prefix, suffix), print(vec->node.data[i]));
         } else {
           fprintf(fp, "<i%s> ", concatc(prefix, suffix));
         }
-        if(i != ARRAY_SIZE-1 && vec->node.next[i+1] != NULL) {
+        if(i != ARRAY_SIZE-1) {
           fprintf(fp, "|");
         }
       }
