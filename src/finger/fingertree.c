@@ -492,7 +492,7 @@ list* affix_to_list(ft* fg,int preorsuf){
 
 ft* ft_add(void* data, ft* fgt,int preorsuf) {
     // Preconditions & Invariants
-    /*checkInvariants(fgt);*/
+    checkInvariants(fgt);
 
     ft* res;
     node* new_elem = create_data_node(data);
@@ -500,7 +500,7 @@ ft* ft_add(void* data, ft* fgt,int preorsuf) {
     res->size = fgt->size+1;
 
     // Postconditions & Invariants
-    //checkInvariants(fgt);
+    checkInvariants(fgt);
     return res;
 }
 
@@ -673,10 +673,7 @@ void node_unref(node* n) {
     }
 }
 
-void ft_unref(ft* ft) {
-    // Preconditions & Invariants
-    checkInvariants(ft);
-    
+void ft_unref_rec(ft* ft) {
     ft->ref_count--;
     
     if (ft->ref_count == 0) {
@@ -699,7 +696,7 @@ void ft_unref(ft* ft) {
             free(ft->true_ft->d->prefix);
             
             // Deep
-            ft_unref(ft->true_ft->d->deeper);
+            ft_unref_rec(ft->true_ft->d->deeper);
             
             // Suffix
             for (int i = 0; i < 4; i++) {
@@ -714,9 +711,205 @@ void ft_unref(ft* ft) {
             free(ft);
         }
     }
+}
+
+void ft_unref(ft* ft) {
+    // Preconditions & Invariants
+    checkInvariants(ft);
     
+
+    ft_unref_rec(ft);
     // Postconditions & Invariants
     
+}
+
+view ft_delete_rec(ft* fgt, int preorsuf) {
+    ft* res;
+    view stres;
+    affix*old_affix;
+    affix*new_affix;
+    if(fgt->type==EMPTY_TYPE){
+        /* It might be better to throw an exception see with Hugo*/
+        res = create_empty();
+        stres.fg=res;
+        stres.elem=NULL;
+    }
+    else if(fgt->type == SINGLE_TYPE) {
+        res = create_empty();
+        stres.fg=res;
+        stres.elem=fgt->true_ft->single;
+    }
+    else{
+        if(preorsuf) {
+            stres.elem = fgt->true_ft->d->suffix->nodes[3];
+        } else {
+            stres.elem = fgt->true_ft->d->prefix->nodes[0];
+        }
+        int index = check_available_space(fgt,preorsuf);
+        if((preorsuf==0 && index!=1) || (preorsuf==1 && index!=2)) {
+            /* the resulting tree is of type deep*/
+            res = create_deep();
+            if (index==-1) {
+                if(preorsuf)index=0;
+                else index=3;
+            }
+            /* lets simply remove an element from the affix*/
+            copy_pref(res,fgt);
+            copy_suff(res,fgt);
+            new_affix=get_right_affix(res,preorsuf,0);
+            old_affix=get_right_affix(fgt,preorsuf,0);
+            res->true_ft->d->deeper = fgt->true_ft->d->deeper;
+            fgt->true_ft->d->deeper->ref_count++;
+            remove_from_affix(new_affix,old_affix,index,preorsuf);
+            res->size = res->true_ft->d->prefix->size + res->true_ft->d->suffix->size + res->true_ft->d->deeper->size;
+        }
+        else{
+            /* there is only one element in the affix*/
+            if(fgt->true_ft->d->deeper->type==EMPTY_TYPE){
+                /* the deeper is empty
+                 we look the other side and see if we can take one element*/
+                int inv;
+                if(preorsuf)inv=0;else inv=1;
+                index = check_available_space(fgt,inv);
+                if((preorsuf==1 && index!=1) || (preorsuf==0 && index!=2)){
+                    // We take an element from the other side
+                    if(index==-1) {
+                        if(preorsuf) index=3;
+                        else index=0;
+                    }
+                    else {
+                        if(preorsuf) index--;
+                        else  index++;
+                    }
+                    
+                    res=create_deep();
+                    new_affix=get_right_affix(res,preorsuf,0);
+                    old_affix=get_right_affix(fgt,preorsuf,1);
+                    if(preorsuf)new_affix->nodes[3]=old_affix->nodes[index];
+                    else new_affix->nodes[0]=old_affix->nodes[index];
+                    /*old_affix->nodes[index]->ref_count++;*/
+                    
+                    /* if(old_affix->nodes[index]->type==DATA_TYPE)*/
+                    /*   { */
+                    
+                    /*   } */
+                    /* else{ */
+                    /*   node* tmp = create_node_node(); */
+                    /*   node**simpl=old_affix->nodes[index]->true_node->internal_node; */
+                    /*   for(int i=0;i<3;i++){ */
+                    /* 	int j=2-i; */
+                    /* 	tmp->true_node->internal_node[i]=simpl[j]; */
+                    /* 	tmp->size+=simpl[j]->size;  */
+                    /* 	simpl[i]->ref_count++; */
+                    /*   } */
+                    /*   new_affix->nodes[0] = tmp; */
+                    /* } */
+                    new_affix->size = old_affix->nodes[index]->size;
+                    if(preorsuf) {
+                        copy_pref(res,fgt);
+                    }
+                    else {
+                        copy_suff(res,fgt);
+                    }
+                    new_affix=get_right_affix(res,preorsuf,1);
+                    new_affix->size -= new_affix->nodes[index]->size;
+                    new_affix->nodes[index]=NULL;
+                    res->size = res->true_ft->d->prefix->size + res->true_ft->d->suffix->size + res->true_ft->d->deeper->size;
+                    
+                    
+                }
+                else{
+                    // There is only 1 element on the other side
+                    // We put it in a Single
+                    old_affix=get_right_affix(fgt,preorsuf,1);
+                    if(!preorsuf){
+                        
+                        res=create_single(old_affix->nodes[3]);
+                        old_affix->nodes[3]->ref_count++;
+                        
+                    }
+                    else{
+                        res=create_single(old_affix->nodes[0]);
+                        old_affix->nodes[0]->ref_count++;
+                    }
+                }
+            }
+            else if(fgt->true_ft->d->deeper->type==SINGLE_TYPE){
+                // The deeper is of type Single
+                node**tmp;
+                res = create_deep();
+                res->true_ft->d->deeper=create_empty();
+                new_affix=get_right_affix(res,preorsuf,0);
+                if(preorsuf) {
+                    copy_pref(res,fgt);
+                } else {
+                    copy_suff(res,fgt);
+                }
+                tmp = fgt->true_ft->d->deeper->true_ft->single->
+                true_node->internal_node;
+                int i,j;
+                if(preorsuf){
+                    for(i=0;i<3;i++){
+                        j=i+1;
+                        if (tmp[i] == NULL) break;
+                        new_affix->size += tmp[i]->size;
+                        new_affix->nodes[j]=tmp[i];
+                        tmp[i]->ref_count++;
+                    }
+                    
+                }
+                else{
+                    
+                    for(i=0;i<3;i++){
+                        j=i;
+                        if (tmp[i] == NULL) break;
+                        new_affix->size += tmp[i]->size;
+                        new_affix->nodes[j]=tmp[i];
+                        tmp[i]->ref_count++;
+                    }
+                }
+                res->size = res->true_ft->d->prefix->size + res->true_ft->d->suffix->size + res->true_ft->d->deeper->size;
+            }
+            else{
+                /* the deeper is of type deep*/
+                node** getres;
+                res = create_deep();
+                if(preorsuf) {
+                    copy_pref(res,fgt);
+                } else {
+                    copy_suff(res,fgt);
+                }
+                view tmp =ft_delete_rec(fgt->true_ft->d->deeper,preorsuf);
+                new_affix=get_right_affix(res,preorsuf,0);
+                getres = (tmp.elem)->true_node->internal_node;
+                if(preorsuf){
+                    int j;
+                    for(int i=0;i<3;i++){
+                        j=i+1;
+                        if (getres[i] == NULL) break;
+                        new_affix->size += getres[i]->size;
+                        new_affix->nodes[j]=getres[i];
+                        getres[i]->ref_count++;
+                    }
+                }
+                else{
+                    for(int i=0;i<3;i++){
+                        
+                        if (getres[i] == NULL) break;
+                        
+                        new_affix->size += getres[i]->size;
+                        new_affix->nodes[i]=getres[i];
+                        getres[i]->ref_count++;
+                    }
+                    
+                }
+                res->true_ft->d->deeper= tmp.fg;
+                res->size = res->true_ft->d->prefix->size + res->true_ft->d->suffix->size + res->true_ft->d->deeper->size;
+            }
+        }
+    }
+    stres.fg=res;
+    return stres;
 }
 
 view ft_delete(ft* fgt,int preorsuf){
@@ -734,191 +927,7 @@ view ft_delete(ft* fgt,int preorsuf){
         rd_fgt.ref = 0;
     }
     
-    ft* res;
-    view stres;
-    affix*old_affix;
-    affix*new_affix;
-    if(fgt->type==EMPTY_TYPE){
-      /* It might be better to throw an exception see with Hugo*/
-        res = create_empty();
-        stres.fg=res;
-        stres.elem=NULL;
-    }
-    else if(fgt->type == SINGLE_TYPE) {
-        res = create_empty();
-        stres.fg=res;
-        stres.elem=fgt->true_ft->single;
-    }
-    else{
-        if(preorsuf) {
-            stres.elem = fgt->true_ft->d->suffix->nodes[3];
-        } else {
-            stres.elem = fgt->true_ft->d->prefix->nodes[0];
-        }
-     	int index = check_available_space(fgt,preorsuf);
-     	if((preorsuf==0 && index!=1) || (preorsuf==1 && index!=2)) {
-            /* the resulting tree is of type deep*/
-            res = create_deep();
-            if (index==-1) {
-	      if(preorsuf)index=0;
-	      else index=3;
-            }
-            /* lets simply remove an element from the affix*/
-            copy_pref(res,fgt);
-            copy_suff(res,fgt);
-            new_affix=get_right_affix(res,preorsuf,0);
-            old_affix=get_right_affix(fgt,preorsuf,0);
-            res->true_ft->d->deeper = fgt->true_ft->d->deeper;
-            fgt->true_ft->d->deeper->ref_count++;
-	    remove_from_affix(new_affix,old_affix,index,preorsuf);
-            res->size = res->true_ft->d->prefix->size + res->true_ft->d->suffix->size + res->true_ft->d->deeper->size;
-        }
-	else{
-            /* there is only one element in the affix*/
-            if(fgt->true_ft->d->deeper->type==EMPTY_TYPE){
-                /* the deeper is empty
-                we look the other side and see if we can take one element*/
-                int inv;
-                if(preorsuf)inv=0;else inv=1;
-                index = check_available_space(fgt,inv);
-                if((preorsuf==1 && index!=1) || (preorsuf==0 && index!=2)){
-                    // We take an element from the other side
-                    if(index==-1) {
-		      if(preorsuf) index=3;
-		      else index=0;
-                    }
-		    else {
-		      if(preorsuf) index--;
-		      else  index++;
-                    }
-		    
-                    res=create_deep();
-                    new_affix=get_right_affix(res,preorsuf,0);
-                    old_affix=get_right_affix(fgt,preorsuf,1);
-		    if(preorsuf)new_affix->nodes[3]=old_affix->nodes[index];
-		    else new_affix->nodes[0]=old_affix->nodes[index];
-		    /*old_affix->nodes[index]->ref_count++;*/
-		    
-		    /* if(old_affix->nodes[index]->type==DATA_TYPE)*/
-		    /*   { */
-		   
-		    /*   } */
-		    /* else{ */
-		    /*   node* tmp = create_node_node(); */
-		    /*   node**simpl=old_affix->nodes[index]->true_node->internal_node; */
-		    /*   for(int i=0;i<3;i++){ */
-		    /* 	int j=2-i; */
-		    /* 	tmp->true_node->internal_node[i]=simpl[j]; */
-		    /* 	tmp->size+=simpl[j]->size;  */
-		    /* 	simpl[i]->ref_count++; */
-		    /*   } */
-		    /*   new_affix->nodes[0] = tmp; */
-		    /* } */
-		    new_affix->size = old_affix->nodes[index]->size;
-                    if(preorsuf) {
-                        copy_pref(res,fgt);
-                    }
-		    else {
-                        copy_suff(res,fgt);
-                    }
-                    new_affix=get_right_affix(res,preorsuf,1);
-                    new_affix->size -= new_affix->nodes[index]->size;
-                    new_affix->nodes[index]=NULL;
-                    res->size = res->true_ft->d->prefix->size + res->true_ft->d->suffix->size + res->true_ft->d->deeper->size;
-		    
-
-                }
-		else{
-                    // There is only 1 element on the other side
-                    // We put it in a Single
-		  old_affix=get_right_affix(fgt,preorsuf,1);
-		  if(!preorsuf){
-		     
-                    res=create_single(old_affix->nodes[3]);
-                    old_affix->nodes[3]->ref_count++;
-
-		  }
-		  else{
-                    res=create_single(old_affix->nodes[0]);
-                    old_affix->nodes[0]->ref_count++;
-		  }
-                }
-            }
-            else if(fgt->true_ft->d->deeper->type==SINGLE_TYPE){
-                // The deeper is of type Single
-                node**tmp;
-                res = create_deep();
-                res->true_ft->d->deeper=create_empty();
-                new_affix=get_right_affix(res,preorsuf,0);
-                if(preorsuf) {
-                    copy_pref(res,fgt);
-                } else {
-                    copy_suff(res,fgt);
-                }
-                tmp = fgt->true_ft->d->deeper->true_ft->single->
-                true_node->internal_node;
-		int i,j;
-		if(preorsuf){
-		  for(i=0;i<3;i++){
-		    j=i+1;
-                    if (tmp[i] == NULL) break;
-                    new_affix->size += tmp[i]->size;
-                    new_affix->nodes[j]=tmp[i];
-                    tmp[i]->ref_count++;
-		  }
-
-		}
-		else{
-                
-		  for(i=0;i<3;i++){
-		    j=i;
-                    if (tmp[i] == NULL) break;
-                    new_affix->size += tmp[i]->size;
-                    new_affix->nodes[j]=tmp[i];
-                    tmp[i]->ref_count++;
-		  }
-		}
-                res->size = res->true_ft->d->prefix->size + res->true_ft->d->suffix->size + res->true_ft->d->deeper->size;
-            }
-            else{
-                /* the deeper is of type deep*/
-                node** getres;
-                res = create_deep();
-                if(preorsuf) {
-                    copy_pref(res,fgt);
-                } else {
-                    copy_suff(res,fgt);
-                }
-                view tmp =ft_delete(fgt->true_ft->d->deeper,preorsuf);
-                new_affix=get_right_affix(res,preorsuf,0);
-                getres = (tmp.elem)->true_node->internal_node;
-		if(preorsuf){
-		  int j;
-		  for(int i=0;i<3;i++){
-		    j=i+1;
-                    if (getres[i] == NULL) break;
-                    new_affix->size += getres[i]->size;
-                    new_affix->nodes[j]=getres[i];
-                    getres[i]->ref_count++;
-		  }
-		}
-		else{
-		  for(int i=0;i<3;i++){
-		 
-                    if (getres[i] == NULL) break;
-                    
-                    new_affix->size += getres[i]->size;
-                    new_affix->nodes[i]=getres[i];
-                    getres[i]->ref_count++;
-		  }
-
-		}
-                res->true_ft->d->deeper= tmp.fg;
-                res->size = res->true_ft->d->prefix->size + res->true_ft->d->suffix->size + res->true_ft->d->deeper->size;
-            }
-        }
-    }
-    stres.fg=res;
+    view stres = ft_delete_rec(fgt, preorsuf);
     
     // Postconditions & Invariants
     checkInvariants(stres.fg);
@@ -1114,7 +1123,7 @@ ft* borrowR(affix* pr, ft* deeper) {
         res = nodearray_to_ft(nodes, node_count);
     }
     else {
-        view v = ft_delete(deeper, 1);
+        view v = ft_delete_rec(deeper, 1);
         res = create_deep_withoutaffix();
         res->true_ft->d->prefix = pr;
         res->true_ft->d->deeper = v.fg;
@@ -1371,11 +1380,7 @@ splitnode node_split(node* n, int index) {
     return sn;
 }
 
-split ft_split(ft* fgt, int index) {
-    // Preconditions & Invariants
-    checkInvariants(fgt);
-    assert(fgt->type != EMPTY_TYPE);
-    
+split ft_split_rec(ft* fgt, int index) {
     split s;
     
     if (fgt->type == SINGLE_TYPE) {
@@ -1404,7 +1409,7 @@ split ft_split(ft* fgt, int index) {
         }
         else {
             // The node is in the deeper
-            recs = ft_split(d->deeper, index - d->prefix->size);
+            recs = ft_split_rec(d->deeper, index - d->prefix->size);
             splitnode recsn = node_split(recs.node, index - d->prefix->size - recs.ft1->size);
             
             s.ft1 = create_deepR(d->prefix, recs.ft1, recsn.left);
@@ -1412,6 +1417,16 @@ split ft_split(ft* fgt, int index) {
             s.ft2 = create_deepL(recsn.right, recs.ft2, d->suffix);
         }
     }
+    
+    return s;
+}
+
+split ft_split(ft* fgt, int index) {
+    // Preconditions & Invariants
+    checkInvariants(fgt);
+    assert(fgt->type != EMPTY_TYPE);
+    
+    split s = ft_split_rec(fgt, index);
     
     checkInvariants(s.ft1);
     checkInvariants(s.ft2);

@@ -42,8 +42,8 @@ int main(int argc, char **argv)
     /* } */
 
     /* puts("concat"); */
-    /* ft* res = ft_concat(fingerTreeArray[MAX_ADD],fingerTreeArray2[MAX_ADD]); */
-    /*   ft_display(res); */
+    ft* res = ft_concat(fingerTreeArray[MAX_ADD],fingerTreeArray[MAX_ADD-1]);
+    ft_display(res);
     
     
      // ft_delete
@@ -64,16 +64,16 @@ int main(int argc, char **argv)
     /* ft_display(fingerTreeArray1[MAX_ADD]); */
     /* printf("\n"); */
     
-    /* // ft_split */
-    /* int sindex = MAX_ADD*1/3; */
-    /* split sres = ft_split(fingerTreeArray[MAX_ADD], sindex); */
+    // ft_split
+    int sindex = MAX_ADD*1/3;
+    split sres = ft_split(fingerTreeArray[MAX_ADD], sindex);
     
-    /* printf("Split: content of node at index %d: %d\n", sindex, *((int*)sres.node->true_node->data)); */
-    /* printf("left finger tree for %d:\n", sindex); */
-    /* ft_display(sres.ft1); */
-    /* printf("\nright finger tree for %d:\n", sindex); */
-    /* ft_display(sres.ft2); */
-    /* printf("\n"); */
+    printf("Split: content of node at index %d: %d\n", sindex, *((int*)sres.node->true_node->data));
+    printf("left finger tree for %d:\n", sindex);
+    ft_display(sres.ft1);
+    printf("\nright finger tree for %d:\n", sindex);
+    ft_display(sres.ft2);
+    printf("\n");
     
     // ft_lookup
     /*
