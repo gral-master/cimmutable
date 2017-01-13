@@ -16,7 +16,6 @@ void checkNode(node* n) {
             else
                 break;
         }
-        
         assert(predictedSize == n->size);
     }
 }

@@ -40,26 +40,28 @@ int main(int argc, char **argv)
     /* 	 ft_display(fingerTreeArray2[i]); */
     /* 	 puts("\n****************************"); */
     /* } */
-
-    /* puts("concat"); */
-    /* ft* res = ft_concat(fingerTreeArray[MAX_ADD],fingerTreeArray2[MAX_ADD]); */
-    /*   ft_display(res); */
+    ft_display(fingerTreeArray[MAX_ADD-1]);
+    puts("2");
+       ft_display(fingerTreeArray[MAX_ADD]);
+    puts("concat");
+    ft* res = ft_concat(fingerTreeArray[MAX_ADD-1],fingerTreeArray[MAX_ADD]);
+      ft_display(res);
     
     
      // ft_delete
-     view tmp;
-     ft* fingerTreeArray1[MAX_ADD+1];
-     fingerTreeArray1[0]= fingerTreeArray[MAX_ADD];
-     ft_display(fingerTreeArray[MAX_ADD]);
-     for(int i = 1; i< MAX_ADD+1;i++){
-      tmp= ft_delete(fingerTreeArray1[i-1],1);
-      fingerTreeArray1[i] = tmp.fg;
-      printf("\nelem: ");
-      node_display(tmp.elem);
-      printf("\ntree: ");
-      ft_display(fingerTreeArray1[i]);
-      printf("\n");
-     }
+     /* view tmp; */
+     /* ft* fingerTreeArray1[MAX_ADD+1]; */
+     /* fingerTreeArray1[0]= fingerTreeArray[MAX_ADD]; */
+     /* ft_display(fingerTreeArray[MAX_ADD]); */
+     /* for(int i = 1; i< MAX_ADD+1;i++){ */
+     /*  tmp= ft_delete(fingerTreeArray1[i-1],1); */
+     /*  fingerTreeArray1[i] = tmp.fg; */
+     /*  printf("\nelem: "); */
+     /*  node_display(tmp.elem); */
+     /*  printf("\ntree: "); */
+     /*  ft_display(fingerTreeArray1[i]); */
+     /*  printf("\n"); */
+     /* } */
     
     /* ft_display(fingerTreeArray1[MAX_ADD]); */
     /* printf("\n"); */
@@ -103,12 +105,12 @@ int main(int argc, char **argv)
     
     // ft_unref
     
-    for (int i = 0; i < MAX_ADD+1; i++) {
-        printf("%d\n", i);
-        ft_unref(fingerTreeArray[i]);
-	if(i!=0)
-     	 ft_unref(fingerTreeArray1[i]);
-    }
+    /* for (int i = 0; i < MAX_ADD+1; i++) { */
+    /*     printf("%d\n", i); */
+    /*     ft_unref(fingerTreeArray[i]); */
+    /* 	if(i!=0) */
+    /*  	 ft_unref(fingerTreeArray1[i]); */
+    /* } */
     
     // ft_concat
    //   TODO

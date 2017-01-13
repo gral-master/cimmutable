@@ -168,6 +168,7 @@ list* nodes(list*l){
         tmp->true_node->internal_node[0]= l->elem;
         tmp->true_node->internal_node[1]= l->next->elem;
         tmp->true_node->internal_node[2]= NULL;
+	tmp->size = l->elem->size + l->next->elem->size;
 
         l=removel(l);
         l=removel(l);
@@ -180,6 +181,7 @@ list* nodes(list*l){
         tmp->true_node->internal_node[0]= l->elem;
         tmp->true_node->internal_node[1]= l->next->elem;
         tmp->true_node->internal_node[2]= l->next->next->elem;
+	tmp->size = l->elem->size + l->next->elem->size+ l->next->next->elem->size;
         l=removel(l);
         l=removel(l);
         l=removel(l);
@@ -190,11 +192,11 @@ list* nodes(list*l){
         tmp = create_node_node();
         tmp->true_node->internal_node[0] = l->elem;
         tmp->true_node->internal_node[1] = l->next->elem;
-
+       tmp->size = l->elem->size + l->next->elem->size;
         tmp2 = create_node_node();
         tmp2->true_node->internal_node[0] = l->next->next->elem;
         tmp2->true_node->internal_node[1] = l->next->next->next->elem;
-
+	tmp2->size = l->next->next->elem->size + l->next->next->next->elem->size;
         l=removel(l);
         l=removel(l);
         l=removel(l);
@@ -209,6 +211,7 @@ list* nodes(list*l){
         tmp->true_node->internal_node[0]= l->elem;
         tmp->true_node->internal_node[1]= l->next->elem;
         tmp->true_node->internal_node[2]= l->next->next->elem;
+	tmp->size = l->elem->size + l->next->elem->size+ l->next->next->elem->size;
         l=removel(l);
         l=removel(l);
         l=removel(l);
@@ -334,19 +337,17 @@ affix* get_right_affix(ft*res,int preorsuf, int inv){
 
 ft* ft_concat(ft* ft1,ft* ft2){
     // Preconditions & Invariants
-    /* TODO
+    
     checkInvariants(ft1);
     checkInvariants(ft2);
-     */
-    
-    ft* res;
+     ft* res;
     list* l=NULL;
     res = concat_w_middle(ft1,l,ft2);
     
     // Postconditions & Invariants
-    /* TODO
+    puts("res");
+    ft_display(res);
     checkInvariants(res);
-     */
     return res;
 }
 
@@ -1465,6 +1466,7 @@ ft* concat_w_middle(ft* ft1, list* l,ft* ft2){
         l = nodes(l);
         deeper_tmp = concat_w_middle(ft1->true_ft->d->deeper,l,ft2->true_ft->d->deeper);
         res->true_ft->d->deeper = deeper_tmp;
+	res->size = deeper_tmp->size + res->true_ft->d->prefix->size + res->true_ft->d->suffix->size;
     }
     return res;
 }
