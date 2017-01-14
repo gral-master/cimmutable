@@ -827,11 +827,11 @@ void imc_avl_add_tree_rec ( imc_avl_node_t* main_tree,
 }
 
 
-imc_avl_node_t* imc_avl_merge(  imc_avl_node_t* tree1,
-                                imc_avl_node_t* tree2,
+imc_avl_node_t* imc_avl_merge(  imc_avl_node_t* tree_src,
+                                imc_avl_node_t* tree_merged,
                                 int (*comparator)(imc_key_t*, imc_key_t*)) {
-    imc_avl_node_t* new_tree = imc_avl_copy(tree1);
-    imc_avl_add_tree_rec(new_tree, tree2, comparator);
+    imc_avl_node_t* new_tree = imc_avl_copy(tree_src);
+    imc_avl_add_tree_rec(new_tree, tree_merged, comparator);
     return new_tree;
 }
 

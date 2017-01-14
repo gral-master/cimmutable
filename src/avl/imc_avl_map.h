@@ -34,8 +34,17 @@ imc_avl_map_t* imc_avl_map_remove(imc_avl_map_t* map,
 
 imc_key_t** imc_avl_map_keys(imc_avl_map_t* map);
 
-// iterator ?
-typedef imc_avl_map_iterator_t;
+imc_avl_map_t* imc_avl_map_merge(imc_avl_map_t* src_map,
+                                 imc_avl_map_t* merged_map);
+// iterator
+typedef struct imc_avl_map_iterator_t {
+    imc_key_t* current_key;
+    imc_data_t* current_data;
+} imc_avl_map_iterator_t;
+
+imc_avl_map_iterator_t* imc_avl_map_iterator_init();
+
+void imc_avl_map_iterator_destroy(imc_avl_map_iterator_t* iter);
 
 void imc_avl_map_iterate(imc_avl_map_t* map,
             imc_avl_map_iterator_t *iter);

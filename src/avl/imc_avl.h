@@ -57,8 +57,8 @@ int imc_avl_split(  imc_avl_node_t* tree_in,
 int check_invariant(imc_avl_node_t* tree,
                 int (*comparator)(imc_key_t*, imc_key_t*));
 
-imc_avl_node_t* imc_avl_merge(  imc_avl_node_t* tree_front,
-                                imc_avl_node_t* tree_tail,
+imc_avl_node_t* imc_avl_merge(  imc_avl_node_t* tree_src,
+                                imc_avl_node_t* tree_merged,
                                 int (*comparator)(imc_key_t*, imc_key_t*));
 
 imc_avl_node_t* imc_avl_copy (imc_avl_node_t* tree);
