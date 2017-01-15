@@ -1,4 +1,4 @@
-
+/*
 #include <stdlib.h>
 #include <stdio.h>
 #include "imc_avl.h"
@@ -58,10 +58,10 @@ int main ()
 
 
 	return 0;
-}
+}*/
 
 
-/*
+
 #include <stdlib.h>
 #include <stdio.h>
 #include "imc_avl.h"
@@ -95,8 +95,9 @@ int main ()
 	imc_key_t key[8] = {10, 4, 6, 12, 14, 8, 16, 18};
 
 	imc_avl_map_t* map = imc_avl_map_create(compare);
+	imc_avl_map_t* map2 = imc_avl_map_create(compare);
     int i;
-	for (i = 0 ; i < 8 ; i++)
+	for (i = 0 ; i < 4 ; i++)
 	{
         replace = NULL;
 		map = imc_avl_map_update(map, &key[i], &data[i], &replace);
@@ -104,14 +105,17 @@ int main ()
         //parcour_infix(tree);
 	}
 
+	for (i = 4 ; i < 8 ; i++)
+	{
+        replace = NULL;
+		map2 = imc_avl_map_update(map2, &key[i], &data[i], &replace);
+		imc_avl_map_dump(map, print, print);
+        //parcour_infix(tree);
+	}
+
 
 	replace = NULL;
-	map = imc_avl_map_remove(map, &key[0], &replace);
-	imc_avl_map_dump(map, print, print);
-    //parcour_infix(tree);
 
-    replace = NULL;
-    map = imc_avl_map_remove(map, &key[3], &replace);
     imc_avl_map_dump(map, print, print);
     //parcour_infix(tree);
 
@@ -121,4 +125,4 @@ int main ()
 
 	return 0;
 }
-*/
+

@@ -32,6 +32,9 @@ imc_avl_map_t* imc_avl_map_remove(imc_avl_map_t* map,
             imc_key_t* key,
             imc_data_t** data);
 
+imc_avl_map_t* imc_avl_map_merge( imc_avl_node_t* map_1,
+                                  imc_avl_node_t* map_2);
+
 imc_key_t** imc_avl_map_keys(imc_avl_map_t* map);
 
 // iterator ?
