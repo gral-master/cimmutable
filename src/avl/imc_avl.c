@@ -824,6 +824,7 @@ void imc_avl_add_tree_rec ( imc_avl_node_t* main_tree,
                             imc_avl_node_t* second_tree,
                             int (*comparator)(imc_key_t*, imc_key_t*)) {
     if (second_tree != NULL) {
+        printf("TEST : %d\n", *second_tree->key);
         imc_avl_add_tree_rec(main_tree, second_tree->left, comparator);
         insert_node(main_tree, second_tree->data, second_tree->key, comparator);
         imc_avl_add_tree_rec(main_tree, second_tree->right, comparator);
@@ -831,6 +832,14 @@ void imc_avl_add_tree_rec ( imc_avl_node_t* main_tree,
 }
 
 
+imc_avl_node_t* imc_avl_merge(  imc_avl_node_t* tree_src,
+                                imc_avl_node_t* tree_merged,
+                                int (*comparator)(imc_key_t*, imc_key_t*)) {
+    printf("TEST\n");
+    imc_avl_node_t* new_tree = imc_avl_copy(tree_src);
+    imc_avl_add_tree_rec(new_tree, tree_merged, comparator);
+    return new_tree;
+}
 
 
 

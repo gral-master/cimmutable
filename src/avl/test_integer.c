@@ -129,16 +129,17 @@ int main ()
 
 	replace = NULL;
 	map_merged = imc_avl_map_merge(map, map2);
-    imc_avl_map_dump(map_merged, print, print);
+    //imc_avl_map_dump(map_merged, print, print);
     //parcour_infix(tree);
 
+/*
 	imc_avl_dump(map->tree, print2);
 	imc_avl_dump(map2->tree, print2);
 
 	imc_avl_dump(map_merged->tree, print2);
 
 
-	//printf("%d\n", (int) *result);
+	//printf("%d\n", (int) *result);*/
 
 
 	return 0;
