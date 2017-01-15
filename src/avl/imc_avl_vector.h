@@ -8,7 +8,7 @@
 //----------------------------------------------------------------------------//
 typedef struct imc_vector_avl_t{
     imc_avl_node_t* tree;
-    int size;
+    int last_value;
 } imc_vector_avl_t;
 
 
@@ -45,5 +45,7 @@ imc_vector_avl_t* imc_vector_avl_merge(imc_vector_avl_t* vec_front,
 
 int imc_vector_avl_unref(imc_vector_avl_t* vec);
 
-void imc_vector_avl_dump(imc_vector_avl_t* vec);
+void imc_vector_avl_dump(imc_vector_avl_t* vec,
+                      void (*print_key)(imc_key_t*),
+                      void (*print_data)(imc_data_t*));
 #endif

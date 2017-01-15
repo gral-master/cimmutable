@@ -44,8 +44,73 @@ imc_key_t** imc_avl_map_keys(imc_avl_map_t* map){
     return tab;
 }
 
+imc_avl_map_t* imc_avl_map_merge(imc_avl_map_t* src_map,
+                                 imc_avl_map_t* merged_map){
+    if(src_map == NULL){
+        return merged_map;
+    }
+    if(merged_map == NULL){
+        return src_map;
+    }
+    if(src_map->comparator != merged_map->comparator){
+        fprintf(stderr,
+                "Can't merge two maps with different comparator functions.\n");
+        return NULL;
+    }
+    imc_avl_map_t* new_map = imc_avl_map_create(src_map->comparator);
+    new_map->tree = imc_avl_merge(src_map->tree, merged_map->tree,
+                                  src_map->comparator);
+    return new_map;
+}
+
+//----------------------------------------------------------------------------//
+//----------------------------Iterator functions------------------------------//
+//----------------------------------------------------------------------------//
+imc_avl_map_iterator_t* imc_avl_map_iterator_init() {
+    return malloc(sizeof(imc_avl_map_iterator_t));
+}
+
+void imc_avl_map_iterator_destroy(imc_avl_map_iterator_t* iter) {
+    return free(iter);
+}
+
+int imc_avl_map_iterate_rec(imc_avl_node_t* tree, imc_avl_map_iterator_t *iter,
+                            int (*comparator)(imc_key_t*, imc_key_t*)){
+    if(tree == NULL){
+        return 0;
+    }
+    if(iter->current_data == NULL && iter->current_key == NULL){
+        while(tree->left != NULL){
+            tree = tree->left;
+        }
+        iter->current_key = tree->key;
+        iter->current_data = tree->data;
+        return 1;
+    }
+    switch (comparator(tree->key, iter->current_key)){
+        case 1 :
+            if(! imc_avl_map_iterate_rec(tree->left,iter,comparator)){
+                iter->current_data = tree->data;
+                iter->current_key = tree->key;
+            }
+            return 1;
+        case 0 :
+            iter->current_data = NULL;
+            iter->current_key = NULL;
+        case -1 :
+            return imc_avl_map_iterate_rec(tree->right,iter,comparator);
+    }
+    return 0;
+}
+
 void imc_avl_map_iterate(imc_avl_map_t* map, imc_avl_map_iterator_t *iter){
-    //TODO verify the type of iter!!!
+    if(iter == NULL){
+        return;
+    }
+    if( ! imc_avl_map_iterate_rec(map->tree, iter, map->comparator)){
+        iter->current_data = NULL;
+        iter->current_key = NULL;
+    }
 }
 
 /* user-side memory management */
@@ -69,7 +134,7 @@ void imc_avl_map_dump_rec(imc_avl_node_t* tree,
         printf(") ");
         imc_avl_map_dump_rec(tree->right, print_key, print_data);
     }
-    
+
 }
 
 void imc_avl_map_dump(imc_avl_map_t* map,
@@ -79,6 +144,3 @@ void imc_avl_map_dump(imc_avl_map_t* map,
     imc_avl_map_dump_rec(map->tree, print_key, print_data);
     printf("]\n");
 }
-
-
-
