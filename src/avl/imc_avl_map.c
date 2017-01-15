@@ -143,4 +143,5 @@ void imc_avl_map_dump(imc_avl_map_t* map,
     printf("[");
     imc_avl_map_dump_rec(map->tree, print_key, print_data);
     printf("]\n");
+    printf("TESt : %d \n", *map->tree->key);
 }

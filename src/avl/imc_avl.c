@@ -795,6 +795,8 @@ imc_avl_node_t* insert_node(imc_avl_node_t* root, imc_data_t* data, imc_key_t* k
 //----------------------------------------------------------------------------//
 //-------------------------Functions for Merge and Split----------------------//
 //----------------------------------------------------------------------------//
+
+
 imc_avl_node_t* imc_avl_copy (imc_avl_node_t* tree) {
     if (tree != NULL) {
         imc_avl_node_t* new_tree = malloc(sizeof(imc_avl_node_t));
@@ -816,6 +818,8 @@ imc_avl_node_t* imc_avl_copy (imc_avl_node_t* tree) {
 //----------------------------------------------------------------------------//
 //-------------------------Merge----------------------------------------------//
 //----------------------------------------------------------------------------//
+
+
 void imc_avl_add_tree_rec ( imc_avl_node_t* main_tree,
                             imc_avl_node_t* second_tree,
                             int (*comparator)(imc_key_t*, imc_key_t*)) {
@@ -827,13 +831,6 @@ void imc_avl_add_tree_rec ( imc_avl_node_t* main_tree,
 }
 
 
-imc_avl_node_t* imc_avl_merge(  imc_avl_node_t* tree_src,
-                                imc_avl_node_t* tree_merged,
-                                int (*comparator)(imc_key_t*, imc_key_t*)) {
-    imc_avl_node_t* new_tree = imc_avl_copy(tree_src);
-    imc_avl_add_tree_rec(new_tree, tree_merged, comparator);
-    return new_tree;
-}
 
 
 
