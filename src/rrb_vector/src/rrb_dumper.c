@@ -121,10 +121,20 @@ void ppp(const rrb_vector_t *rrb, int tab, bool leafs, FILE *file) {
             if (leafs == false) {
                 fprintf(file, "Level : %d }\n", rrb->level);
                 return;
-            } else {
-                fprintf(file, "\n");
+            }
+            fprintf(file, "\n");
+            tabulation(tab + 2, file);
+            fprintf(file, "Level : %d\n", rrb->level);
+            if (rrb->meta != NULL) {
                 tabulation(tab + 2, file);
-                fprintf(file, "Level : %d\n", rrb->level);
+                fprintf(file, "Meta : [");
+                for (int i = 0; i < 32; i++) {
+                    if (i < 31) {
+                        fprintf(file, "%d, ", rrb->meta[i]);
+                    } else {
+                        fprintf(file, "%d]\n", rrb->meta[i]);
+                    }
+                }
             }
             for (int i = 0; i < 32; i++) {
                 if (rrb->children.data[i] != NULL) {
@@ -139,6 +149,17 @@ void ppp(const rrb_vector_t *rrb, int tab, bool leafs, FILE *file) {
             fprintf(file, "Node %p {\n", rrb);
             tabulation(tab + 2, file);
             fprintf(file, "Level : %d\n", rrb->level);
+            if (rrb->meta != NULL) {
+                tabulation(tab + 2, file);
+                fprintf(file, "Meta : [");
+                for (int i = 0; i < 32; i++) {
+                    if (i < 31) {
+                        fprintf(file, "%d, ", rrb->meta[i]);
+                    } else {
+                        fprintf(file, "%d]\n", rrb->meta[i]);
+                    }
+                }
+            }
             for (int i = 0; i < 32; i++) {
                 if (rrb->children.arr[i] != NULL) {
                     ppp(rrb->children.arr[i], tab + 2, leafs, file);
