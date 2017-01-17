@@ -61,6 +61,15 @@ rrb_vector_t *rrb_create();
 rrb_vector_t *rrb_push(rrb_vector_t *rrb, imc_data_t *data);
 
 /**
+ * Pop the last element from an RRB-Tree. As RRBs are immutable, a new version
+ * is created and returned. The element is returned as data.
+ * @param  rrb  The RRB-Tree.
+ * @param data  The removed data.
+ * @return      The new tree resulting from pop.
+ */
+rrb_vector_t *rrb_pop(rrb_vector_t *rrb, imc_data_t **data);
+
+/**
  * Takes an RRB-Tree, updates the data contained at the corresponding index,
  * and returns the corresponding new RRB.
  * @param  rrb   The RRB-Tree to update.

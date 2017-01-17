@@ -111,5 +111,8 @@ int main() {
 
     printf("\nGet number %d: %d\n", get, *rrb_lookup(meta, 62));
 
+    imc_data_t *temp2;
+    rrb_ppp_leafs(rrb_pop(meta, &temp2));
+
     return 0;
 }
