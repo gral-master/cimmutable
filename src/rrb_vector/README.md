@@ -37,5 +37,10 @@ when the structure is splitted of merged, there is no need for changing the loca
 -unref
 -dump
 
+## What could be improved ?
+
+- Meta calculus when inserting element.
+- Meta calculus when looking for element.
+
 ##Tests
 TODO
