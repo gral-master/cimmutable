@@ -104,14 +104,14 @@ int main ()
 	imc_avl_map_t* map = imc_avl_map_create(compare);
 	imc_avl_map_t* map2 = imc_avl_map_create(compare);
     int i;
-    
+
 	for (i = 0 ; i < 4 ; i++)
 	{
         replace = NULL;
 		map = imc_avl_map_update(map, &key[i], &data[i], &replace);
 		//imc_avl_map_dump(map, print, print);
         //parcour_infix(tree);
-		
+
 	}
 
 	for (i = 4 ; i < 5 ; i++)
@@ -132,7 +132,7 @@ int main ()
     //imc_avl_map_dump(map_merged, print, print);
     //parcour_infix(tree);
 
-/*
+
 	imc_avl_dump(map->tree, print2);
 	imc_avl_dump(map2->tree, print2);
 
@@ -144,4 +144,3 @@ int main ()
 
 	return 0;
 }
-

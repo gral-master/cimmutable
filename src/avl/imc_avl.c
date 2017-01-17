@@ -732,7 +732,7 @@ imc_avl_node_t* insert_node(imc_avl_node_t* root, imc_data_t* data, imc_key_t* k
       /* Search down the tree, saving rebalance points */
       for (s = p = t->right;; p = q)
         {
-          dir = comparator(p->key,key)==-1;
+          dir = !(comparator(p->key,key)==-1);
 
           if(dir){
             q = p->right;
@@ -765,7 +765,7 @@ imc_avl_node_t* insert_node(imc_avl_node_t* root, imc_data_t* data, imc_key_t* k
 
       /* Update balance factors */
       for (p = s; p != q; p = dir?p->right:p->left) {
-          dir = comparator(p->key,key)==-1;
+          dir = !(comparator(p->key,key)==-1);
           p->balance += dir == 0 ? -1 : +1;
       }
 
@@ -774,7 +774,7 @@ imc_avl_node_t* insert_node(imc_avl_node_t* root, imc_data_t* data, imc_key_t* k
       /* Rebalance if necessary */
       if (abs(s->balance) > 1)
         {
-          dir = comparator(s->key,key)==-1;;
+          dir = !(comparator(s->key,key)==-1);;
           s = insert_balance(s, dir);
         }
 
