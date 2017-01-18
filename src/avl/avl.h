@@ -11,23 +11,22 @@
 #ifndef __AVL__
 #define __AVL__
 
+/* avl_data_t and data_as_string **must** be defined on a 
+   higher level of abstraction. */
+typedef struct _avl_data_t avl_data_t;
+char* avl_data_as_string (avl_data_t* data);
+
 typedef struct _avl_tree avl_tree;
 
-typedef struct _data_t {
-  int content;
-} data_t;
-
-data_t* make_data(int content);
-
-avl_tree* avl_make_empty_tree(int (*compare)(struct _data_t*, struct _data_t*));
+avl_tree* avl_make_empty_tree(int (*compare)(struct _avl_data_t*, struct _avl_data_t*));
 
 void avl_erase_tree(avl_tree* t);
 
-data_t* avl_search(avl_tree* tree, data_t* data);
+avl_data_t* avl_search(avl_tree* tree, avl_data_t* data);
 
-avl_tree* avl_insert(avl_tree* tree, data_t* data);
+avl_tree* avl_insert(avl_tree* tree, avl_data_t* data);
 
-avl_tree* avl_remove(avl_tree* tree, data_t* data);
+avl_tree* avl_remove(avl_tree* tree, avl_data_t* data);
 
 void avl_traverse_and_print(avl_tree* tree);
 
