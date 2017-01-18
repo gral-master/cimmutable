@@ -98,7 +98,7 @@ int main ()
 	imc_data_t* replace;
 
 	imc_data_t data[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-	imc_key_t key[8] = {10, 4, 6, 12, 14, 8, 16, 18};
+	imc_key_t key[8] = {10, 3, 6, 12, 14, 2, 16, 18};
 
 	imc_avl_map_t* map_merged = imc_avl_map_create(compare);
 	imc_avl_map_t* map = imc_avl_map_create(compare);
@@ -114,7 +114,7 @@ int main ()
 
 	}
 
-	for (i = 4 ; i < 5 ; i++)
+	for (i = 4 ; i < 8 ; i++)
 	{
         replace = NULL;
 		map2 = imc_avl_map_update(map2, &key[i], &data[i], &replace);

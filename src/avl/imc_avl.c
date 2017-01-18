@@ -732,7 +732,7 @@ imc_avl_node_t* insert_node(imc_avl_node_t* root, imc_data_t* data, imc_key_t* k
       /* Search down the tree, saving rebalance points */
       for (s = p = t->right;; p = q)
         {
-          dir = !(comparator(p->key,key)==-1);
+          dir = !(comparator(p->key,key) > 0);
 
           if(dir){
             q = p->right;
@@ -765,7 +765,7 @@ imc_avl_node_t* insert_node(imc_avl_node_t* root, imc_data_t* data, imc_key_t* k
 
       /* Update balance factors */
       for (p = s; p != q; p = dir?p->right:p->left) {
-          dir = !(comparator(p->key,key)==-1);
+          dir = !(comparator(p->key,key) > 0);
           p->balance += dir == 0 ? -1 : +1;
       }
 
@@ -774,7 +774,7 @@ imc_avl_node_t* insert_node(imc_avl_node_t* root, imc_data_t* data, imc_key_t* k
       /* Rebalance if necessary */
       if (abs(s->balance) > 1)
         {
-          dir = !(comparator(s->key,key)==-1);;
+          dir = !(comparator(s->key,key) > 0);;
           s = insert_balance(s, dir);
         }
 
@@ -820,15 +820,17 @@ imc_avl_node_t* imc_avl_copy (imc_avl_node_t* tree) {
 //----------------------------------------------------------------------------//
 
 
-void imc_avl_add_tree_rec ( imc_avl_node_t* main_tree,
+imc_avl_node_t* imc_avl_add_tree_rec ( imc_avl_node_t* main_tree,
                             imc_avl_node_t* second_tree,
                             int (*comparator)(imc_key_t*, imc_key_t*)) {
     if (second_tree != NULL) {
-        printf("TEST : %d\n", second_tree->key);
-        imc_avl_add_tree_rec(main_tree, second_tree->left, comparator);
-        insert_node(main_tree, second_tree->data, second_tree->key, comparator);
-        imc_avl_add_tree_rec(main_tree, second_tree->right, comparator);
+        printf("TEST : %d\n", *second_tree->key);
+        main_tree = imc_avl_add_tree_rec(main_tree, second_tree->left, comparator);
+        main_tree = insert_node(main_tree, second_tree->data, second_tree->key, comparator);
+        main_tree = imc_avl_add_tree_rec(main_tree, second_tree->right, comparator);
     }
+
+    return main_tree;
 }
 
 
@@ -836,8 +838,7 @@ imc_avl_node_t* imc_avl_merge(  imc_avl_node_t* tree_src,
                                 imc_avl_node_t* tree_merged,
                                 int (*comparator)(imc_key_t*, imc_key_t*)) {
     imc_avl_node_t* new_tree = imc_avl_copy(tree_src);
-    imc_avl_add_tree_rec(new_tree, tree_merged, comparator);
-    return new_tree;
+    return imc_avl_add_tree_rec(new_tree, tree_merged, comparator);
 }
 
 
