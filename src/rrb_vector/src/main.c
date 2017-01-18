@@ -1,11 +1,11 @@
 #include "rrb_vector.h"
 #include "rrb_dumper.h"
 
-rrb_vector_t *make_meta_vector() {
+rrb_t *make_meta_vector() {
     int *temp;
     int counter = 0;
 
-    rrb_vector_t *rrb0 = rrb_create();
+    rrb_t *rrb0 = rrb_create();
     for (int i = 0; i < 32; i++) {
         temp = malloc(sizeof *temp);
         *temp = counter++;
@@ -19,7 +19,7 @@ rrb_vector_t *make_meta_vector() {
     }
 
 
-    rrb_vector_t *rrb1 = rrb_create();
+    rrb_t *rrb1 = rrb_create();
     for (int i = 0; i < 10; i++) {
         temp = malloc(sizeof *temp);
         *temp = counter++;
@@ -34,7 +34,7 @@ rrb_vector_t *make_meta_vector() {
 
     rrb1->full = true;
 
-    rrb_vector_t *rrb2 = rrb_create();
+    rrb_t *rrb2 = rrb_create();
     for (int i = 0; i < 20; i++) {
         temp = malloc(sizeof *temp);
         *temp = counter++;
@@ -47,7 +47,7 @@ rrb_vector_t *make_meta_vector() {
         }
     }
 
-    rrb_vector_t *rrb3 = malloc(sizeof *rrb3);
+    rrb_t *rrb3 = malloc(sizeof *rrb3);
     rrb3->level = 2;
     rrb3->ref = 1;
     rrb3->elements = 62;
@@ -57,10 +57,10 @@ rrb_vector_t *make_meta_vector() {
     rrb3->meta[2] = 62;
     rrb3->full = false;
     rrb3->leafs = false;
-    rrb3->children.arr = calloc(32, sizeof *rrb3->children.arr);
-    rrb3->children.arr[0] = rrb0;
-    rrb3->children.arr[1] = rrb1;
-    rrb3->children.arr[2] = rrb2;
+    rrb3->nodes.child = calloc(32, sizeof *rrb3->nodes.child);
+    rrb3->nodes.child[0] = rrb0;
+    rrb3->nodes.child[1] = rrb1;
+    rrb3->nodes.child[2] = rrb2;
 
     rrb1->ref = 2;
     rrb2->ref = 2;
@@ -76,7 +76,7 @@ int main() {
     int *temp;
     int counter = 0, get = 564;
 
-    rrb_vector_t *rrb1 = rrb_create();
+    rrb_t *rrb1 = rrb_create();
 
     for (int i = 0; i < 1025; i++) {
         temp = malloc(sizeof *temp);
@@ -101,7 +101,7 @@ int main() {
 
     rrb_ppp(rrb1);
 
-    rrb_vector_t *meta = make_meta_vector();
+    rrb_t *meta = make_meta_vector();
     rrb_ppp_leafs(meta);
 
     temp = malloc(sizeof *temp);
