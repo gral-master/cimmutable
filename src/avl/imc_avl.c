@@ -357,6 +357,12 @@ imc_avl_node_t* imc_avl_insert_rec( imc_avl_node_t* tree,
     return new_node;
 }
 
+void print4 (int* nb, char* b)
+{
+
+    sprintf(b, "(%03d)", *nb);
+}
+
 imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
                                 imc_data_t* data, imc_key_t* key,
                                 int (*comparator)(imc_key_t*, imc_key_t*),
@@ -366,6 +372,9 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
     imc_avl_node_t* result;
     int k;
 
+    //imc_avl_dump(result, print4);
+
+    printf("AVL : KEY : %d\n", *key);
     k = check_invariant(tree, comparator);
     if (k == -1) printf("INSERT_ERROR_AV\n");
     else printf("INSERT_OK_AV\n");
@@ -376,6 +385,7 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
     if (k == -1) printf("INSERT_ERROR_AP\n");
     else printf("INSERT_OK_AP\n");
 
+    //imc_avl_dump(result, print4);
 
     return result;
 }

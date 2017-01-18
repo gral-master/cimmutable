@@ -61,7 +61,7 @@ int main ()
 }*/
 
 
-
+/*
 #include <stdlib.h>
 #include <stdio.h>
 #include "imc_avl.h"
@@ -143,5 +143,87 @@ int main ()
 	//printf("%d\n", (int) *result);
 
 
+	return 0;
+}
+
+*/
+
+
+
+#include <stdlib.h>
+#include <stdio.h>
+#include "imc_avl.h"
+#include "imc_avl_vector.h"
+
+
+
+int compare (int* a , int* b)
+{
+	return *a - *b;
+}
+
+void print (int* nb)
+{
+
+	printf("%d", *nb);
+}
+
+void print2 (int* nb, char* b)
+{
+
+	sprintf(b, "(%03d)", *nb);
+}
+
+void parcour_infix(imc_avl_node_t* tree)
+{    if(tree == NULL) return;
+    parcour_infix(tree->left);
+    printf("tree->key = %d, tree->balance = %d, tree->ref = %d\n", *tree->key, tree->balance, tree->ref_counter);
+    parcour_infix(tree->right);
+}
+
+int main ()
+{
+	imc_data_t data[8] = {8, 3, 9, 23, 2, 8, 5, 13};
+	imc_data_t* result;
+
+	imc_vector_avl_t* vector = imc_vector_avl_create();
+    int i;
+
+	for (i = 0 ; i < 8 ; i++)
+	{
+		imc_vector_avl_dump(vector, print);
+		vector = imc_vector_avl_push(vector, &data[i]);
+		//imc_avl_map_dump(map, print, print);
+        //parcour_infix(tree);
+
+        
+
+	}
+
+	/*
+	printf("\n\nTOTO\n");
+	vector = imc_vector_avl_pop(vector, &result);
+	printf("LastData : %d\n", *result);
+
+	vector = imc_vector_avl_pop(vector, &result);
+	printf("LastData : %d\n", *result);
+
+	vector = imc_vector_avl_pop(vector, &result);
+	printf("LastData : %d\n", *result);
+
+	//printf("%d\n", (int) *result);
+
+	for (i = 5 ; i < 8 ; i++)
+	{
+
+		vector = imc_vector_avl_push(vector, &data[i]);
+		//imc_avl_map_dump(map, print, print);
+        //parcour_infix(tree);
+
+        imc_vector_avl_dump(vector, print);
+
+	}
+
+	*/
 	return 0;
 }
