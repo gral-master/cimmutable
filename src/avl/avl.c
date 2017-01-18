@@ -23,22 +23,25 @@ typedef struct _avl_node {
 
 struct _avl_tree {
   avl_node* root;
+  int size;
   int (*compare)(struct _data_t*, struct _data_t*);
 };
 
+void avl_update(avl_tree* tree, data_t* data);
+void avl_insert_mutable(avl_tree* tree, void* data);
+  
 /*******************
  *   Constructors   *
  *******************/
 
 data_t* make_data(int content) {
-  data_t* r = malloc(sizeof(*r));
+  data_t* r = malloc(sizeof *r);
   r->content = content;
   return r;
 }
 
 avl_node* make_node(data_t* data) {
   avl_node* r = malloc(sizeof(*r));
-
   r->data = data;
   r->ref_count = 1;
   r->balance = 0;
@@ -50,6 +53,7 @@ avl_tree* avl_make_empty_tree(int (*compare)(struct _data_t*, struct _data_t*)) 
   avl_tree* r = malloc(sizeof(*r));
   r->root = NULL;
   r->compare = compare;
+  r->size = 0;
   return r;
 }
 
@@ -72,6 +76,7 @@ avl_node* avl_copy_node(avl_node* node) {
 avl_tree* avl_copy_tree(avl_tree* tree) {
   if (tree) {
     avl_tree* new = malloc(sizeof(*new));
+    new->size = tree->size;
     if ((new->root = tree->root) != NULL) {
       new->root->ref_count++;
     }
@@ -85,20 +90,20 @@ avl_tree* avl_copy_tree(avl_tree* tree) {
  *    Destructor    *
  *******************/
 
-void erase_tree(avl_node* root) {
+void erase_node(avl_node* root) {
 
   if (root && --root->ref_count == 0) {
     avl_node* l = root->sons[0], *r = root->sons[1];
 
     free(root->data);
     free(root);
-    erase_tree(l);
-    erase_tree(r);
+    erase_node(l);
+    erase_node(r);
   }
 }
 
 void avl_erase_tree(avl_tree* tree) {
-  erase_tree(tree->root);
+  erase_node(tree->root);
   free(tree);
 }
 
@@ -108,16 +113,16 @@ void avl_erase_tree(avl_tree* tree) {
 
 data_t* search_r(avl_node* root, data_t* data,
 		 int (*compare)(struct _data_t*, struct _data_t*)) {
-  if (root == NULL)
+  if (root == NULL) {
     return NULL;
-  else
-    if ((*compare)(data, root->data) == 0)
+  } else { 
+    if ((*compare)(data, root->data) == 0) {
       return root->data;
-    else
-      {
-	int dir = (*compare)(root->data, data) < 0;
-        return search_r(root->sons[dir], data, compare);
-      }
+    } else {
+      int dir = (*compare)(root->data, data) < 0;
+      return search_r(root->sons[dir], data, compare);
+    }
+  }
 }
 
 data_t* avl_search(avl_tree* tree, data_t* data) {
@@ -130,8 +135,7 @@ data_t* avl_search(avl_tree* tree, data_t* data) {
  *******************/
 
 // dir == 0 means left rotation and 1 means right
-avl_node* single_rotation(avl_node* root, int dir)
-{
+avl_node* single_rotation(avl_node* root, int dir) {
   avl_node* save = root->sons[!dir];
 
   root->sons[!dir] = save->sons[dir];
@@ -141,13 +145,10 @@ avl_node* single_rotation(avl_node* root, int dir)
 }
 
 // dir == 0 means right-left and 1 means left-right
-avl_node* double_rotation(avl_node* root, int dir)
-{
+avl_node* double_rotation(avl_node* root, int dir) {
   root->sons[!dir] = single_rotation(root->sons[!dir], !dir);
   return single_rotation(root, dir);
 }
-
-
 
 
 // dir == 0 means left rotation and 1 means right
@@ -230,37 +231,42 @@ avl_node* insert_balance(avl_node* root, int dir)
 }
 
 avl_node* insert_node(avl_node* root, data_t* data,
-		      int (*compare)(struct _data_t*, struct _data_t*))
-{
+		      int (*compare)(struct _data_t*, struct _data_t*),
+		      int* node_inserted) {
   /* Empty tree case */
-  if(root == NULL)
+  if (root == NULL) {
     root = make_node(data);
-  else
-    {
-      avl_node* head = make_node((void*)0); /* False tree root */
-      avl_node *s, *t;     /* Place to rebalance and parent */
-      avl_node *p, *q;     /* Iterator and save pointer */
-      int dir;
+  } else {
+    avl_node* head = make_node((void*)0); /* False tree root */
+    avl_node *s, *t;     /* Place to rebalance and parent */
+    avl_node *p, *q;     /* Iterator and save pointer */
+    int dir;
 
-      t = head;
-      root = t->sons[1] = avl_copy_node(root);
-      /* Search down the tree, saving rebalance points */
-      for (s = p = t->sons[1];; p = q) {
-	dir = (*compare)(p->data, data) < 0;
-	if(p->sons[dir]) p->sons[dir]->ref_count--; // undo the increment done by avl_copy_node.
-	q = p->sons[dir] = avl_copy_node(p->sons[dir]);
-	
-	if (q == NULL)
-	  break;
-	
-	if (q->balance != 0) {
-	  t = p;
-	  s = q;
-	}
+    t = head;
+    root = t->sons[1] = avl_copy_node(root);
+    /* Search down the tree, saving rebalance points */
+    for (s = p = t->sons[1];; p = q) {
+      int comp = (*compare)(p->data, data);
+      if (comp == 0) { // No need to insert.
+	return root;
       }
-      
-      /* Insert the new node */
-      p->sons[dir] = q = make_node(data);
+      dir = comp < 0;
+      if(p->sons[dir]) p->sons[dir]->ref_count--; // undo the increment done by avl_copy_node.
+      q = p->sons[dir] = avl_copy_node(p->sons[dir]);
+	
+      if (q == NULL)
+	break;
+	
+      if (q->balance != 0) {
+	t = p;
+	s = q;
+      }
+    }
+    *node_inserted = 1; // the node will be created.
+    
+    
+    /* Insert the new node */
+    p->sons[dir] = q = make_node(data);
 
       /* Update balance factors */
       for (p = s; p != q; p = p->sons[dir])
@@ -288,12 +294,20 @@ avl_node* insert_node(avl_node* root, data_t* data,
   return root;
 }
 
-avl_tree* avl_insert(avl_tree* tree, data_t* data)
-{
-  avl_node* root = insert_node(tree->root, data, tree->compare);
+avl_tree* avl_insert(avl_tree* tree, data_t* data) {
+  int node_inserted = 0;
+  avl_node* root = insert_node(tree->root, data, tree->compare, &node_inserted);
 
   avl_tree* new_tree = avl_make_empty_tree(tree->compare);
   new_tree->root = root;
+  new_tree->size = tree->size;
+
+  if (node_inserted) {
+    new_tree->size++;
+  } else {
+    /* mutable modification of the new tree to insert the data */
+    avl_update(new_tree, data);
+  }
 
   return new_tree;
 }
@@ -330,56 +344,49 @@ avl_node* remove_balance(avl_node* root, int dir, int *done)
 }
 
 avl_node* remove_node(avl_node* root, data_t* data, int* done,
-		      int (*compare)(struct _data_t*, struct _data_t*))
-{
-  if (root != NULL)
-    {
-      int dir;
-      root = avl_copy_node(root);
+		      int (*compare)(struct _data_t*, struct _data_t*)) {
+  if (root != NULL) {
+    int dir;
+    root = avl_copy_node(root);
 
-      /* Remove node */
-      if ((*compare)(root->data, data) == 0)
-        {
-          /* Unsons and fix parent */
-          if (root->sons[0] == NULL || root->sons[1] == NULL)
-            {
-              dir = root->sons[0] == NULL;
+    /* Remove node */
+    if ((*compare)(root->data, data) == 0) {
+      /* Unsons and fix parent */
+      if (root->sons[0] == NULL || root->sons[1] == NULL) {
+	dir = root->sons[0] == NULL;
 
-              return avl_copy_node(root->sons[dir]);
-            }
-          else
-            {
-              /* Find inorder predecessor */
-              avl_node* heir = root->sons[0];
+	return avl_copy_node(root->sons[dir]);
+      } else {
+	/* Find inorder predecessor */
+	avl_node* heir = root->sons[0];
 
-              while (heir->sons[1] != NULL) {
-		heir = heir->sons[1];
-	      }
+	while (heir->sons[1] != NULL) {
+	  heir = heir->sons[1];
+	}
 
-              /* Copy and set new search data */
-	      root->data = heir->data;
-              data = heir->data;
-            }
-        }
-
-      dir = (*compare)(root->data, data) < 0;
-      if(root->sons[dir]) root->sons[dir]->ref_count--;
-      root->sons[dir] = remove_node(root->sons[dir], data, done, compare);
-
-
-
-      if (!*done)
-        {
-          /* Update balance factors */
-          root->balance += dir != 0 ? -1 : +1;
-
-          /* Terminate or rebalance as necessary */
-          if (abs(root->balance) == 1)
-            *done = 1;
-          else if (abs(root->balance) > 1)
-            root = remove_balance(root, dir, done);
-        }
+	/* Copy and set new search data */
+	root->data = heir->data;
+	data = heir->data;
+      }
     }
+
+    dir = (*compare)(root->data, data) < 0;
+    if(root->sons[dir]) root->sons[dir]->ref_count--;
+    root->sons[dir] = remove_node(root->sons[dir], data, done, compare);
+
+
+
+    if (!*done) {
+      /* Update balance factors */
+      root->balance += dir != 0 ? -1 : +1;
+
+      /* Terminate or rebalance as necessary */
+      if (abs(root->balance) == 1)
+	*done = 1;
+      else if (abs(root->balance) > 1)
+	root = remove_balance(root, dir, done);
+    }
+  }
   else
     *done = 1;
 
@@ -387,14 +394,53 @@ avl_node* remove_node(avl_node* root, data_t* data, int* done,
   return root;
 }
 
-avl_tree* avl_remove(avl_tree* tree, data_t* data)
-{
+avl_tree* avl_remove(avl_tree* tree, data_t* data) {
   int done = 0;
 
   avl_tree* new_tree = avl_make_empty_tree(tree->compare);
   new_tree->root = remove_node(tree->root, data, &done, tree->compare);
 
   return new_tree;
+}
+
+/***********************
+ *      Update         *
+ ***********************/
+void update_r(avl_node* root, data_t* data,
+	      int (*compare)(struct _data_t*, struct _data_t*)) {
+  int comp = (*compare)(data, root->data);
+  if (comp == 0) {
+    root->data = data;
+  } else {
+    int dir = comp < 0;
+    update_r(root->sons[dir], data, compare);
+  }
+}
+
+/* Warning: this function **assumes** that the node "data" isn't already
+   in the tree. To use it, call avl_insert first. */
+void avl_update(avl_tree* tree, data_t* data) {
+  update_r(tree->root, data, tree->compare);
+}
+
+/***********************
+ *       Merge         *
+ ***********************/
+void merge_r(avl_tree* ret, avl_node* orig) {
+  if (orig != NULL) {
+    avl_insert_mutable(ret, orig->data);
+    if (orig->sons[0]) merge_r(ret, orig->sons[0]);
+    if (orig->sons[1]) merge_r(ret, orig->sons[1]);
+  }
+}
+
+avl_tree* merge(avl_tree* tree1, avl_tree* tree2) {
+  avl_tree* new = avl_make_empty_tree(tree1->compare);
+
+  merge_r(new, tree1->root);
+  merge_r(new, tree2->root);
+  
+  return new;
 }
 
 /***********************
@@ -448,4 +494,79 @@ void avl_print_aux(avl_node* node, int tab){
 
 void avl_print(avl_tree* tree){
   avl_print_aux(tree->root, 0);
+}
+
+
+/**************************
+ *   Mutable operations   *
+ **************************/
+
+avl_node* insert_node_mutable( avl_node* root, void* data,
+			      int (*compare)(struct _data_t*, struct _data_t*) ) {
+  /* Empty tree case */
+  if (root == NULL) {
+    root = make_node(data);
+  }
+  else {
+      avl_node* head = make_node((void*)0); /* False tree root */
+      avl_node *s, *t;     /* Place to rebalance and parent */
+      avl_node *p, *q;     /* Iterator and save pointer */
+      int dir;
+      
+      t = head;
+      t->sons[1] = root;
+      
+      /* Search down the tree, saving rebalance points */
+      for (s = p = t->sons[1];; p = q) {
+	int comp = (*compare)(p->data, data);
+	if (comp == 0) {
+	  return NULL; /* ignore duplicated key */
+	}
+	dir = comp < 0;
+	q = p->sons[dir];
+          
+	if (q == NULL)
+	  break;
+
+	if (q->balance != 0) {
+	  t = p;
+	  s = q;
+	}
+      }
+
+      /* Insert the new node */
+      p->sons[dir] = q = make_node(data);
+      
+      /* Update balance factors */
+      for (p = s; p != q; p = p->sons[dir]) {
+	dir = (*compare)(p->data, data) < 0;
+	p->balance += dir == 0 ? -1 : +1;
+      }
+
+      q = s; /* Save rebalance point for parent fix */
+
+      /* Rebalance if necessary */
+      if (abs(s->balance) > 1) {
+	dir = (*compare)(s->data, data) < 0;
+	s = insert_balance(s, dir);
+      }
+
+      /* Fix parent */
+      if (q == head->sons[1])
+        root = s;
+      else
+        t->sons[q == t->sons[1]] = s;
+  }
+
+  return root;
+}
+
+void avl_insert_mutable(avl_tree* tree, void* data) {
+  avl_node* root = insert_node_mutable(tree->root, data, tree->compare);
+
+  /* root != NULL iff the node wasn't present before */
+  if (root) {
+    tree->root = root;
+    tree->size++;
+  }
 }

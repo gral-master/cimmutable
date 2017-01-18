@@ -45,7 +45,8 @@ int main(int argc, char* argv[])
   total_time = (clock() - start_time)/((float)CLOCKS_PER_SEC);
 
   for(int i=0; i<n; i++){
-    t[n] = avl_remove(t[n] , make_data(i));
+    if (i % 2 == 0) 
+      t[n] = avl_remove(t[n] , make_data(i));
   }
   avl_print(t[n-1]);
   avl_print(t[n]);
