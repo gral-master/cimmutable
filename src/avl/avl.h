@@ -33,5 +33,7 @@ void avl_traverse_and_print(avl_tree* tree);
 
 void avl_print(avl_tree* tree);
 
+avl_tree* merge(avl_tree* tree1, avl_tree* tree2);
+
 
 #endif
