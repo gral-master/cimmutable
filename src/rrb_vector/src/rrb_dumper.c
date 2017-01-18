@@ -1,9 +1,11 @@
 #include "rrb_dumper.h"
 
+/** Adds tabulation to the file, to pad text. */
 void tabulation(int number, FILE *file) {
     fprintf(file, "%*s", number, "");
 }
 
+/** Dump the nodes into the dotfile. */
 void dump_nodes(rrb_vector_t *rrb, FILE *file, int tab) {
     tabulation(tab, file);
     fprintf(file, "node%p[label = \"", rrb);
@@ -31,6 +33,7 @@ void dump_nodes(rrb_vector_t *rrb, FILE *file, int tab) {
     }
 }
 
+/** Dump the edges into the dotfile. */
 void dump_edges(rrb_vector_t *rrb, FILE *file, int tab) {
     tabulation(tab, file);
     if (rrb->leafs == true) {
@@ -48,88 +51,155 @@ void dump_edges(rrb_vector_t *rrb, FILE *file, int tab) {
     }
 }
 
-void rrb_dump(rrb_vector_t *rrb, char *file) {
-    FILE *fh = fopen(file, "w");
-    fprintf(fh, "digraph rrbtree {\n");
-    tabulation(2, fh);
-    fprintf(fh, "node [shape = record, height = 0.1];\n");
-    dump_nodes(rrb, fh, 2);
-    fprintf(fh, "}\n");
-    fclose(fh);
+/** Dump the structure into a dotfile. */
+void rrb_to_dotfile(rrb_vector_t *rrb, char *path) {
+    FILE *file = fopen(path, "w");
+    if (file == NULL) {
+        fprintf(stderr, "Unable to open %s\n", path);
+        exit(EXIT_FAILURE);
+    } else {
+        fprintf(file, "digraph rrbtree {\n");
+        tabulation(2, file);
+        fprintf(file, "node [shape = record, height = 0.1];\n");
+        dump_nodes(rrb, file, 2);
+        fprintf(file, "}\n");
+        fclose(file);
+    }
 }
 
-void pp(const rrb_vector_t *rrb, int tab) {
+/** Pretty print the structure into the file. */
+void pp(const rrb_vector_t *rrb, int tab, FILE *file) {
     if (rrb != NULL) {
         if (rrb->leafs == true) {
-            tabulation(tab, stdout);
-            printf("Node {\n");
+            tabulation(tab, file);
+            fprintf(file, "Node {\n");
             for (int i = 0; i < 32; i++) {
                 if (rrb->children.data[i] != NULL) {
-                    tabulation(tab + 2, stdout);
-                    printf("Leaf : %d\n", *rrb->children.data[i]);
+                    tabulation(tab + 2, file);
+                    fprintf(file, "Leaf : %d\n", *rrb->children.data[i]);
                 }
             }
-            tabulation(tab, stdout);
-            printf("}\n");
+            tabulation(tab, file);
+            fprintf(file, "}\n");
         } else {
             for (int i = 0; i < 32; i++) {
                 if (rrb->children.arr[i] != NULL) {
-                    tabulation(tab, stdout);
-                    printf("Node {\n");
-                    pp(rrb->children.arr[i], tab + 2);
-                    tabulation(tab, stdout);
-                    printf("}\n");
+                    tabulation(tab, file);
+                    fprintf(file, "Node {\n");
+                    pp(rrb->children.arr[i], tab + 2, file);
+                    tabulation(tab, file);
+                    fprintf(file, "}\n");
                 }
             }
         }
     }
 }
 
+/** Pretty print the structure into the stdout. */
 void rrb_pp(const rrb_vector_t *rrb) {
-    pp(rrb, 0);
+    pp(rrb, 0, stdout);
 }
 
-void ppp(const rrb_vector_t *rrb, int tab, bool leafs) {
+/** Pretty print the structure into the file indicated by path. */
+void rrb_pp_file(const rrb_vector_t *rrb, char *path) {
+    FILE *file = fopen(path, "w");
+    if (file == NULL) {
+        fprintf(stderr, "Unable to open file %s\n", path);
+        exit(EXIT_FAILURE);
+    } else {
+        pp(rrb, 0, file);
+        fclose(file);
+    }
+}
+
+/** Pretty print the structure with pointers to the file, w/ or w/o leafs. */
+void ppp(const rrb_vector_t *rrb, int tab, bool leafs, FILE *file) {
     if (rrb != NULL) {
         if (rrb->leafs == true) {
-            tabulation(tab, stdout);
-            printf("Node %p { ", rrb);
+            tabulation(tab, file);
+            fprintf(file, "Node %p { ", rrb);
             if (leafs == false) {
-                printf("Level : %d }\n", rrb->level);
+                fprintf(file, "Level : %d }\n", rrb->level);
                 return;
-            } else {
-                printf("\n");
-                tabulation(tab + 2, stdout);
-                printf("Level : %d\n", rrb->level);
+            }
+            fprintf(file, "\n");
+            tabulation(tab + 2, file);
+            fprintf(file, "Level : %d\n", rrb->level);
+            if (rrb->meta != NULL) {
+                tabulation(tab + 2, file);
+                fprintf(file, "Meta : [");
+                for (int i = 0; i < 32; i++) {
+                    if (i < 31) {
+                        fprintf(file, "%d, ", rrb->meta[i]);
+                    } else {
+                        fprintf(file, "%d]\n", rrb->meta[i]);
+                    }
+                }
             }
             for (int i = 0; i < 32; i++) {
                 if (rrb->children.data[i] != NULL) {
-                    tabulation(tab + 2, stdout);
-                    printf("%d: Leaf -> %d\n", i, *rrb->children.data[i]);
+                    tabulation(tab + 2, file);
+                    fprintf(file, "%d: Leaf -> %d\n", i, *rrb->children.data[i]);
                 }
             }
-            tabulation(tab, stdout);
-            printf("}\n");
+            tabulation(tab, file);
+            fprintf(file, "}\n");
         } else {
-            tabulation(tab, stdout);
-            printf("Node %p {\n", rrb);
-            tabulation(tab + 2, stdout);
-            printf("Level : %d\n", rrb->level);
+            tabulation(tab, file);
+            fprintf(file, "Node %p {\n", rrb);
+            tabulation(tab + 2, file);
+            fprintf(file, "Level : %d\n", rrb->level);
+            if (rrb->meta != NULL) {
+                tabulation(tab + 2, file);
+                fprintf(file, "Meta : [");
+                for (int i = 0; i < 32; i++) {
+                    if (i < 31) {
+                        fprintf(file, "%d, ", rrb->meta[i]);
+                    } else {
+                        fprintf(file, "%d]\n", rrb->meta[i]);
+                    }
+                }
+            }
             for (int i = 0; i < 32; i++) {
                 if (rrb->children.arr[i] != NULL) {
-                    ppp(rrb->children.arr[i], tab + 2, leafs);
+                    ppp(rrb->children.arr[i], tab + 2, leafs, file);
                 }
             }
             tabulation(tab, stdout);
-            printf("}\n");
+            fprintf(file, "}\n");
         }
     }
 }
 
+/** Pretty print the structure with pointers to the console. */
 void rrb_ppp(const rrb_vector_t *rrb) {
-    ppp(rrb, 0, false);
+    ppp(rrb, 0, false, stdout);
 }
 
+/** Pretty print the structure with pointers and leafs to the console. */
 void rrb_ppp_leafs(const rrb_vector_t *rrb) {
-    ppp(rrb, 0, true);
+    ppp(rrb, 0, true, stdout);
+}
+
+/** Pretty print the structure with pointers to the file indicated by path. */
+void rrb_ppp_file(const rrb_vector_t *rrb, char *path) {
+    FILE *file = fopen(path, "w");
+    if (file == NULL) {
+        fprintf(stderr, "Unable to open file %s\n", path);
+        exit(EXIT_FAILURE);
+    } else {
+        ppp(rrb, 0, false, file);
+        fclose(file);
+    }
+}
+/** Pretty print the structure with pointers and leafs to the file indicated by path. */
+void rrb_ppp_leafs_file(const rrb_vector_t *rrb, char *path) {
+    FILE *file = fopen(path, "w");
+    if (file == NULL) {
+        fprintf(stderr, "Unable to open file %s\n", path);
+        exit(EXIT_FAILURE);
+    } else {
+        ppp(rrb, 0, true, file);
+        fclose(file);
+    }
 }
