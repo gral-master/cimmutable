@@ -27,6 +27,8 @@ int main ()
 {
 	imc_data_t* replace;
 
+	imc_data_t* test;
+
 	imc_data_t data[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 	imc_key_t key[8] = {10, 4, 6, 12, 14, 8, 16, 18};
 
@@ -36,11 +38,13 @@ int main ()
 	{
         replace = NULL;
 		tree = imc_avl_insert(tree, &data[i], &key[i], &compare, &replace);
-		imc_avl_dump(tree, print);
         //parcour_infix(tree);
 	}
 
-
+	imc_avl_dump(tree, print);
+	test = imc_avl_lookup(tree, &key[3], &compare);
+	printf("TESTLOOKUP : %d\n", *test);
+	
 	replace = NULL;
 	tree = imc_avl_remove(tree, &key[0], &compare, &replace);
     printf("tree->balance = %d\n", tree->balance);
@@ -52,7 +56,7 @@ int main ()
     printf("tree->balance = %d\n", tree->balance);
     imc_avl_dump(tree, print);
     parcour_infix(tree);
-
+	
 
 	//printf("%d\n", (int) *result);
 
@@ -183,6 +187,7 @@ void parcour_infix(imc_avl_node_t* tree)
 
 int main ()
 {
+	imc_data_t* test;
 	imc_data_t data[8] = {8, 3, 9, 23, 2, 8, 5, 13};
 	imc_data_t* result;
 
@@ -199,6 +204,11 @@ int main ()
         
 
 	}
+
+	test = imc_vector_avl_lookup(vector, 3);
+
+	printf("TEST 22 : %d\n", *test);
+
 
 	/*
 	printf("\n\nTOTO\n");
@@ -222,8 +232,9 @@ int main ()
 
         imc_vector_avl_dump(vector, print);
 
-	}
+	}*/
 
-	*/
+	
 	return 0;
 }
+

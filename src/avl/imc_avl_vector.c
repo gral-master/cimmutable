@@ -3,10 +3,17 @@
 #include <stdio.h>
 
 
+int int_comparator(imc_key_t *first_key, imc_key_t* second_key){
+    if(first_key > second_key){
+        return 1;
+    }
+    return first_key < second_key ? -1 : 0 ;
+}
+
 void print3 (int* nb, char* b)
 {
 
-    sprintf(b, "(%03d)", *nb);
+    sprintf(b, "(%03d)", nb);
 }
 
 
@@ -31,49 +38,43 @@ imc_vector_avl_t* imc_vector_avl_update(imc_vector_avl_t* vec, int index,
                                         imc_data_t* data){
     imc_vector_avl_t *new_version = malloc(sizeof(imc_vector_avl_t));
     imc_data_t *prev_data=NULL;
-    new_version->tree = imc_avl_insert(vec->tree, data, &index,
-                                       &key_comparator, &prev_data);
-    
+    new_version->tree = imc_avl_insert(vec->tree, data, index,
+                                       &int_comparator, &prev_data);
     new_version->last_value = index > vec->last_value ? index : vec->last_value;
     
     return new_version;
 }
 
 imc_data_t* imc_vector_avl_lookup(imc_vector_avl_t* vec, int index){
-    return imc_avl_lookup(vec->tree, &index, key_comparator);
+    return imc_avl_lookup(vec->tree, index, int_comparator);
 }
-
-
-
-
 
 // add at the end <--- DOXYGENIZE PLEASE!
 imc_vector_avl_t* imc_vector_avl_push(imc_vector_avl_t* vec,
 			      imc_data_t* data){
-
-    
     imc_vector_avl_t *new_version = malloc(sizeof(imc_vector_avl_t));
     imc_data_t *prev_data=NULL;
-    new_version->last_value = vec->last_value + 1;
-    new_version->tree = imc_avl_insert(vec->tree, data, &new_version->last_value,
-                                       &key_comparator, &prev_data);
+    new_version->tree = imc_avl_insert(vec->tree, data, vec->last_value+1,
+                                       &int_comparator, &prev_data);
+    new_version->last_value = vec->last_value+1;
     
+    imc_avl_dump(new_version->tree, print3);
     return new_version;
 }
 
 imc_vector_avl_t* imc_vector_avl_pop(imc_vector_avl_t* vec,
 			     imc_data_t** data){
     imc_vector_avl_t *new_version = malloc(sizeof(imc_vector_avl_t));
-    new_version->tree = imc_avl_remove(vec->tree, &vec->last_value,
-                                    &key_comparator, data);
+    new_version->tree = imc_avl_remove(vec->tree, vec->last_value,
+                                    &int_comparator, data);
     new_version->last_value = vec->last_value-1;
     return new_version;
 }
 
 int imc_vector_avl_split(imc_vector_avl_t* vec_in,
-		     int index,
-		     imc_vector_avl_t** vec_out1,
-		     imc_vector_avl_t** vec_out2){
+            		     int index,
+            		     imc_vector_avl_t** vec_out1,
+            		     imc_vector_avl_t** vec_out2){
 return 0;
 }
 
@@ -97,7 +98,7 @@ void imc_vector_avl_dump_rec(imc_avl_node_t* tree,
     if (tree != NULL) {
         imc_vector_avl_dump_rec(tree->left, print_data);
         printf(" (");
-        printf("%d", *tree->key);
+        printf("%d", tree->key);
         printf(" : ");
         print_data(tree->data);
         printf(") ");

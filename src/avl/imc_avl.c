@@ -39,6 +39,16 @@ int check_balance_rec(imc_avl_node_t* tree, int* valid) {
     }
 }
 
+void imc_avl_keys(imc_avl_node_t* tree, imc_key_t** tab, int* indice){
+    if (tree != NULL) {
+        imc_avl_keys(tree->left, tab, indice);
+        tab[*indice] = tree->key;
+        *indice = *indice + 1;
+        imc_avl_keys(tree->right, tab, indice);
+    }
+
+}
+
 int check_invariant(imc_avl_node_t* tree,
                 int (*comparator)(imc_key_t*, imc_key_t*)) {
     int i;
@@ -197,28 +207,19 @@ int imc_avl_height(imc_avl_node_t* tree){
 imc_data_t* imc_avl_lookup(imc_avl_node_t* tree, imc_key_t* key,
                            int (*comparator)(imc_key_t*, imc_key_t*)) {
     if (tree != NULL) {
-        if (*tree->key == *key) {
+        if (comparator(tree->key, key) == 0) {
             return tree->data;
         } else {
-            if (comparator(key, tree->key)) {
+            if (comparator(key, tree->key) > 0) {
                 return imc_avl_lookup(tree->right, key,comparator);
             } else {
                 return imc_avl_lookup(tree->left, key,comparator);
             }
         }
     } else {
+
         return NULL;
     }
-}
-
-void imc_avl_keys(imc_avl_node_t* tree, imc_key_t** tab, int* indice){
-    if (tree != NULL) {
-        imc_avl_keys(tree->left, tab, indice);
-        tab[*indice] = tree->key;
-        *indice = *indice + 1;
-        imc_avl_keys(tree->right, tab, indice);
-    }
-
 }
 
 //----------------------------------------------------------------------------//
@@ -357,10 +358,14 @@ imc_avl_node_t* imc_avl_insert_rec( imc_avl_node_t* tree,
     return new_node;
 }
 
-void print4 (int* nb, char* b)
-{
+void imc_avl_keys(imc_avl_node_t* tree, imc_key_t** tab, int* indice){
+    if (tree != NULL) {
+        imc_avl_keys(tree->left, tab, indice);
+        tab[*indice] = tree->key;
+        *indice = *indice + 1;
+        imc_avl_keys(tree->right, tab, indice);
+    }
 
-    sprintf(b, "(%03d)", *nb);
 }
 
 imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
@@ -371,15 +376,20 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
 
     imc_avl_node_t* result;
     int k;
+    int indice = 0;
 
-    //imc_avl_dump(result, print4);
 
-    printf("AVL : KEY : %d\n", *key);
+    imc_avl_node_t tree_condi = imc_avl_copy(tree);
+    imc_key_t** tab_pre = malloc(sizeof(imc_key_t*) * imc_avl_size(tree_condi));
+    
     k = check_invariant(tree, comparator);
     if (k == -1) printf("INSERT_ERROR_AV\n");
     else printf("INSERT_OK_AV\n");
 
     result = imc_avl_insert_rec(tree, data, key, comparator, prev_data);
+
+
+
 
     k = check_invariant(result, comparator);
     if (k == -1) printf("INSERT_ERROR_AP\n");
