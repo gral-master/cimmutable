@@ -2,10 +2,6 @@
 
 # Biham-Middleton-Levine Traffic Model
 
-# intalls (run in your terminal):
-# (echo y;echo) | perl -MCPAN -e 'install Term::ReadKey'
-# perl -MCPAN -e 'install Term::ANSIColo'
-
 use List::Util qw(min);
 use Term::ReadKey;
 use Term::ANSIColor;
@@ -14,8 +10,8 @@ use v5.14;
 $\ = $/;
 
 
-my $percent = 0.13;
-my $interval = 0.02;
+my $percent = 0.16;
+my $interval = 0.1;
 my $symbol = "▓";
 
 my ($width, $height) = GetTerminalSize();
@@ -46,7 +42,12 @@ while (1) {
 	    if ($board[$i][$j] == 1 && $board[$i][($j+1) % $width] == 0) {
 		$board[$i][($j+1) % $width] = 3;
 		$board[$i][$j] = 0;
-	    } elsif ($board[$i][$j] == 2 && $board[($i+1) % $height][$j] == 0 ) {
+	    }
+	}
+    } 
+    for (my $i = 0; $i < $height; $i++) {
+	for (my $j = 0; $j < $width; $j++) {
+	    if ($board[$i][$j] == 2 && $board[($i+1) % $height][$j] == 0 ) {
 		$board[($i+1) % $height][$j] = 4;
 	        $board[$i][$j] = 0;
 	    }
@@ -70,8 +71,8 @@ sub colorize {
     if ($n == 0) {
 	return " ";
     } elsif ($n == 1) {
-	return colored($symbol, 'blue');
-    } else {
 	return colored($symbol, 'red');
+    } else {
+	return colored($symbol, 'blue');
     } 
 }
