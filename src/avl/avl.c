@@ -15,6 +15,7 @@
 #include "avl.h"
 
 
+#define MAX(x,y) x < y ? y : x
 
 void avl_update(avl_tree* tree, avl_data_t* data);
 void avl_insert_mutable(avl_tree* tree, void* data);
@@ -78,7 +79,7 @@ void erase_node(avl_node* root) {
   if (root && --root->ref_count == 0) {
     avl_node* l = root->sons[0], *r = root->sons[1];
 
-    free(root->data);
+    //free(root->data); /* A corriger */
     free(root);
     erase_node(l);
     erase_node(r);
@@ -87,7 +88,7 @@ void erase_node(avl_node* root) {
 
 void avl_erase_tree(avl_tree* tree) {
   erase_node(tree->root);
-  free(tree);
+  //free(tree);
 }
 
 /*******************
@@ -135,8 +136,7 @@ avl_node* double_rotation(avl_node* root, int dir) {
 
 
 // dir == 0 means left rotation and 1 means right
-avl_node* single_rotation_remove(avl_node* root, int dir)
-{
+avl_node* single_rotation_remove(avl_node* root, int dir) {
   avl_node* save = avl_copy_node(root->sons[!dir]);
 
   root->sons[!dir] = save->sons[dir];
@@ -146,8 +146,7 @@ avl_node* single_rotation_remove(avl_node* root, int dir)
 }
 
 // dir == 0 means right-left and 1 means left-right
-avl_node* double_rotation_remove(avl_node* root, int dir)
-{
+avl_node* double_rotation_remove(avl_node* root, int dir) {
   root->sons[!dir] = single_rotation_remove(root->sons[!dir], !dir);
   return single_rotation(root, dir);
 }
@@ -194,21 +193,17 @@ void adjust_balance(avl_node* x, int dir, int bal)
  *    Insertion     *
  *******************/
 
-avl_node* insert_balance(avl_node* root, int dir)
-{
+avl_node* insert_balance(avl_node* root, int dir) {
   avl_node* n = root->sons[dir];
   int bal = dir == 0 ? -1 : +1;
 
-  if (n->balance == bal)
-    {
-      root->balance = n->balance = 0;
-      root = single_rotation(root, !dir);
-    }
-  else /* n->balance == -bal */
-    {
-      adjust_balance(root, dir, bal);
-      root = double_rotation(root, !dir);
-    }
+  if (n->balance == bal) {
+    root->balance = n->balance = 0;
+    root = single_rotation(root, !dir);
+  } else /* n->balance == -bal */ {
+    adjust_balance(root, dir, bal);
+    root = double_rotation(root, !dir);
+  }
 
   return root;
 }
@@ -428,7 +423,6 @@ avl_tree* merge(avl_tree* tree1, avl_tree* tree2) {
 /***********************
  * Invariants helpers  *
  ***********************/
-#define MAX(x,y) x < y ? y : x
 
 int depth_node (avl_node* node) {
   if (node) {

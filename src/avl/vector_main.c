@@ -88,17 +88,35 @@ void test_merge_with_update(int size) {
   printf("result = "); avl_vector_dump(new);
 }
 
-void avl_various_test() {
-  int n = 10;
-  avl_vector_t* t[n];
-  t[0] = avl_vector_create();
-    
-  for (int i = 0; i < n; i++)  {
-    t[i+1] = avl_vector_update(t[i], i, make_data(i));
+void test_split(int size) {
+  avl_vector_t* v = avl_vector_create();
+  for (int i = 0; i < size; i++) {
+    v = avl_vector_push(v, make_data(i));
   }
-
-  avl_vector_dump(t[n]);
+  printf("Before split: \n v = ");
+  avl_vector_dump(v);
+  printf("Spliting on %d.\n", size/2-1);
+  avl_vector_t *v1, *v2;
+  avl_vector_split(v, size/2-1, &v1, &v2);
+  printf("After:\nv1 = ");
+  avl_vector_dump(v1);
+  printf("v2 = ");
+  avl_vector_dump(v2);
 }
+
+void test_unref(int size) {
+  avl_vector_t* v = avl_vector_create();
+  for (int i = 0; i < size; i++) {
+    avl_vector_t* t = avl_vector_push(v, make_data(i));
+    avl_vector_unref(v);
+    *v = *t;
+  }
+  printf("After successive insertions (with unref of previous versions):\nv = ");
+  avl_vector_dump(v);
+}
+
+
+
 
 int main () {
 
@@ -107,7 +125,6 @@ int main () {
   printf("\n*************************\nTesting PUSH - POP  :\n\n");
   test_push_pop(10);
   
-
   printf("\n*************************\nTesting LOOKUP - POP  :\n\n");
   test_lookup_pop(10);
 
@@ -117,6 +134,11 @@ int main () {
   printf("\n*************************\nTesting MERGE (after UPDATEs)  :\n\n");
   test_merge_with_update(10);
 
+  printf("\n*************************\nTesting SPLIT :\n\n");
+  test_split(10);
+
+  printf("\n*************************\nTesting UNREF :\n\n");
+  test_unref(10);
 
   printf("\n\n");
   

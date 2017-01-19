@@ -45,10 +45,8 @@ int main(int argc, char* argv[])
   /* initialize random seed: */
   srand(time(NULL));
 
-  if(argc > 1)
-    n = atoi(argv[1]);
-  else
-    n = 10000;
+  if (argc > 1) n = atoi(argv[1]);
+  else n = 10000;
 
   avl_tree** t = malloc(sizeof(avl_tree*) * n+1);
 
@@ -56,21 +54,26 @@ int main(int argc, char* argv[])
 
   start_time = clock();
 
+  avl_tree* v = avl_make_empty_tree(compare);
   for (int i = 0; i < n; i++)  {
-    t[i+1] = avl_insert(t[i], make_data(i));
+    avl_tree* tmp = avl_insert(v, make_data(i));
+    avl_erase_tree(v);
+    *v = *tmp;
   }
-
+    avl_print(v);
+  /* for (int i = 0; i < n; i++)  { */
+  /*   t[i+1] = avl_insert(t[i], make_data(i)); */
+  /* } */
   total_time = (clock() - start_time)/((float)CLOCKS_PER_SEC);
-
-  for(int i=0; i<n; i++){
-    avl_data_t* tmp = NULL;
-    if (i % 2 == 0) {
-      t[n] = avl_remove(t[n] , make_data(i), &tmp);
-      printf("Should have remove %d. Removed %d\n", i, tmp->content);
-    }
-  }
-  avl_print(t[n-1]);
-  avl_print(t[n]);
+  /* for(int i=0; i<n; i++){ */
+  /*   avl_data_t* tmp = NULL; */
+  /*   if (i % 2 == 0) { */
+  /*     t[n] = avl_remove(t[n] , make_data(i), &tmp); */
+  /*     printf("Should have remove %d. Removed %d\n", i, tmp->content); */
+  /*   } */
+  /* } */
+  /* avl_print(t[n-1]); */
+  /* avl_print(t[n]); */
   
   printf("I did:\n- %d insertions\n- %d deletions\n- %d research\n in %f seconds\n", n, nbr, nbs, total_time);
 

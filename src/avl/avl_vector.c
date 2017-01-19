@@ -6,10 +6,9 @@
 #include "avl.h"
 #include "avl_vector.h"
 
-struct _avl_vector_t {
-  avl_tree* vector;
-  int max_index;
-};
+#define MAX(x,y) x < y ? y : x
+
+
 
 /*******************
  *   Boxing & co   *
@@ -144,6 +143,49 @@ avl_vector_t* avl_vector_merge (avl_vector_t* vec_front,
   return new;
 }
 
+
+void _split_vector_internal(avl_node* node, int index,
+			    avl_vector_t* vec_out1, avl_vector_t* vec_out2) {
+  if (node) {
+    avl_data_t* data = clone_avl_data(node->data);
+    if (data->index <= index) {
+      avl_insert_mutable(vec_out1->vector, data);
+      vec_out1->max_index = MAX(vec_out1->max_index, data->index);
+    } else {
+      data->index -= index+1;
+      avl_insert_mutable(vec_out2->vector, data);
+      vec_out2->max_index = MAX(vec_out2->max_index, data->index);
+    }
+    if (node->sons[0]) {
+      _split_vector_internal(node->sons[0], index, vec_out1, vec_out2);
+    }
+    if (node->sons[1]) {
+      _split_vector_internal(node->sons[1], index, vec_out1, vec_out2);
+    }
+  }
+}
+
+/* split ==> [0..index] [index+1..end] */
+int avl_vector_split(avl_vector_t* vec_in, int index,
+		     avl_vector_t** vec_out1, avl_vector_t** vec_out2) {
+  *vec_out1 = avl_vector_create();
+  *vec_out2 = avl_vector_create();
+  if (vec_in->max_index >= 0) {
+    _split_vector_internal(vec_in->vector->root, index, *vec_out1, *vec_out2);
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+int avl_vector_unref(avl_vector_t* vec) {
+  if (vec) {
+    avl_erase_tree(vec->vector);
+    //free(vec);
+  }
+  return 1;
+}
+
 void avl_vector_dump_ignore_empty(avl_vector_t* vec) {
   avl_traverse_and_print(vec->vector);
 }
@@ -157,7 +199,7 @@ void avl_vector_dump(avl_vector_t* vec) {
       printf("%s, ", data_string);
       free(data_string);
     } else {
-      printf("\\, ");
+      printf("_, ");
     }
   }
   if (vec->max_index >= 0) {
