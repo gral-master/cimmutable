@@ -230,6 +230,7 @@ avl_node* insert_node(avl_node* root, avl_data_t* data,
   /* Empty tree case */
   if (root == NULL) {
     root = make_node(data);
+    *node_inserted = 1;
   } else {
     avl_node* head = make_node((void*)0); /* False tree root */
     avl_node *s, *t;     /* Place to rebalance and parent */
@@ -311,40 +312,38 @@ avl_tree* avl_insert(avl_tree* tree, avl_data_t* data) {
  *     Deletion     *
  *******************/
 
-avl_node* remove_balance(avl_node* root, int dir, int *done)
-{
+avl_node* remove_balance(avl_node* root, int dir, int *done) {
   avl_node* n = root->sons[!dir];
   int bal = dir == 0 ? -1 : +1;
 
-  if (n->balance == -bal)
-    {
-      root->balance = n->balance = 0;
-      root = single_rotation_remove(root, dir);
-    }
-  else if (n->balance == bal)
-    {
-      adjust_balance(root, !dir, -bal);
-      root = double_rotation_remove(root, dir);
-    }
-  else /* n->balance == 0 */
-    {
-      root->balance = -bal;
-      n->balance = bal;
-      root = single_rotation_remove(root, dir);
-      *done = 1;
-    }
+  if (n->balance == -bal) {
+    root->balance = n->balance = 0;
+    root = single_rotation_remove(root, dir);
+  } else if (n->balance == bal) {
+    adjust_balance(root, !dir, -bal);
+    root = double_rotation_remove(root, dir);
+  } else /* n->balance == 0 */ {
+    root->balance = -bal;
+    n->balance = bal;
+    root = single_rotation_remove(root, dir);
+    *done = 1;
+  }
 
   return root;
 }
 
 avl_node* remove_node(avl_node* root, avl_data_t* data, int* done,
-		      int (*compare)(struct _avl_data_t*, struct _avl_data_t*)) {
+		      avl_data_t** ret_data,
+		      int (*compare)(struct _avl_data_t*, struct _avl_data_t*)){
   if (root != NULL) {
     int dir;
     root = avl_copy_node(root);
 
     /* Remove node */
     if ((*compare)(root->data, data) == 0) {
+
+      if (*ret_data == NULL) *ret_data = root->data;
+      
       /* Unsons and fix parent */
       if (root->sons[0] == NULL || root->sons[1] == NULL) {
 	dir = root->sons[0] == NULL;
@@ -366,9 +365,7 @@ avl_node* remove_node(avl_node* root, avl_data_t* data, int* done,
 
     dir = (*compare)(root->data, data) < 0;
     if(root->sons[dir]) root->sons[dir]->ref_count--;
-    root->sons[dir] = remove_node(root->sons[dir], data, done, compare);
-
-
+    root->sons[dir] = remove_node(root->sons[dir], data, done, ret_data, compare);
 
     if (!*done) {
       /* Update balance factors */
@@ -388,11 +385,13 @@ avl_node* remove_node(avl_node* root, avl_data_t* data, int* done,
   return root;
 }
 
-avl_tree* avl_remove(avl_tree* tree, avl_data_t* data) {
+avl_tree* avl_remove(avl_tree* tree, avl_data_t* data, avl_data_t** ret_data) {
   int done = 0;
 
+  *ret_data = NULL; /* Just checking */
+
   avl_tree* new_tree = avl_make_empty_tree(tree->compare);
-  new_tree->root = remove_node(tree->root, data, &done, tree->compare);
+  new_tree->root = remove_node(tree->root, data, &done, ret_data, tree->compare);
 
   return new_tree;
 }
@@ -402,7 +401,7 @@ avl_tree* avl_remove(avl_tree* tree, avl_data_t* data) {
  ***********************/
 void update_r(avl_node* root, avl_data_t* data,
 	      int (*compare)(struct _avl_data_t*, struct _avl_data_t*)) {
-  int comp = (*compare)(data, root->data);
+  int comp = (*compare)(root->data, data);
   if (comp == 0) {
     root->data = data;
   } else {
@@ -462,7 +461,13 @@ int depth (avl_tree* tree) {
 void traverse(avl_node* root) {
   if(root != NULL) {
     traverse(root->sons[0]);
-    printf("%s, ", avl_data_as_string(root->data));
+    if (root->data) {
+      char* data_string = avl_data_as_string(root->data);
+      printf("%s, ", data_string);
+      free(data_string);
+    } else {
+      printf("\\, ");
+    }
     traverse(root->sons[1]);
   }
 }
@@ -470,12 +475,21 @@ void traverse(avl_node* root) {
 void avl_traverse_and_print(avl_tree* tree) {
   printf("[ ");
   traverse(tree->root);
+  if (tree->size > 0) {
+    printf("\b\b ");
+  }
   printf("]\n");
 }
 
 void avl_print_aux(avl_node* node, int tab){
   if(node){
-    printf("%*s\n", tab*4, avl_data_as_string(node->data));
+    if (node->data) {
+      char* data_string = avl_data_as_string(node->data);
+      printf("%*s\n", tab*4, data_string);
+      free(data_string);
+    } else {
+      printf("%*s\n", tab*4, "\\");
+    }
     avl_print_aux(node->sons[0], tab+1);
     avl_print_aux(node->sons[1], tab+1);
   }else{

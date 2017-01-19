@@ -19,9 +19,11 @@ avl_vector_t* avl_vector_update(avl_vector_t* vec, int index,
 
 vector_data_t* avl_vector_lookup(avl_vector_t* vec, int index);
 
+avl_vector_t* avl_vector_push(avl_vector_t* vec, vector_data_t* data);
 
+avl_vector_t* avl_vector_pop(avl_vector_t* vec, vector_data_t** data);
 
-
+void avl_vector_dump_ignore_empty(avl_vector_t* vec);
 void avl_vector_dump(avl_vector_t* vec);
 
 

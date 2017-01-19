@@ -26,7 +26,7 @@ avl_data_t* avl_search(avl_tree* tree, avl_data_t* data);
 
 avl_tree* avl_insert(avl_tree* tree, avl_data_t* data);
 
-avl_tree* avl_remove(avl_tree* tree, avl_data_t* data);
+avl_tree* avl_remove(avl_tree* tree, avl_data_t* data, avl_data_t** ret_data);
 
 void avl_traverse_and_print(avl_tree* tree);
 
