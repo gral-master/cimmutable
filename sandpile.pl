@@ -1,5 +1,12 @@
 #!/usr/bin/perl
 
+# Abelian Sandpile model
+
+
+# intalls (run in your terminal):
+# (echo y;echo) | perl -MCPAN -e 'install Term::ReadKey'
+# perl -MCPAN -e 'install Term::ANSIColo'
+
 use List::Util qw(min);
 use Term::ReadKey;
 use Term::ANSIColor;
