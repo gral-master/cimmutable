@@ -2,6 +2,17 @@
 
 #define DEBUG 0
 
+/* Functions used before defintions. */
+rrb_t *add_leaf(rrb_t *rrb, imc_data_t *data, int where);
+rrb_t *add_node(rrb_t *rrb, imc_data_t *data, bool meta);
+rrb_t *update_leaf(rrb_t *rrb, int  where, imc_data_t *data);
+rrb_t *update_node(rrb_t *rrb, int *index, imc_data_t *data, bool meta);
+rrb_t *pop_node(rrb_t *rrb, imc_data_t **data, int *index, bool meta);
+rrb_t *pop_data(rrb_t *rrb, imc_data_t **data, int *index, bool meta);
+int split_leaf(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool meta);
+int split_node(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool meta);
+void consolidate_tree(rrb_t **rrb, bool top);
+
 /** Creates an empty array of nodes into rrb. */
 void make_nodes(rrb_t *rrb) {
     debug_print("make_nodes, beginning\n");
@@ -194,7 +205,7 @@ rrb_t *create_child(int level, imc_data_t *data) {
 }
 
 /** Adds a node, parent of the tree, and insert
-* the data at the correct level. */
+  * the data at the correct level. */
 rrb_t *add_as_parent_to(rrb_t *child, imc_data_t *data) {
     debug_print("add_as_parent_to, beginning\n");
     rrb_t *parent = create_w_nodes();
@@ -293,9 +304,6 @@ rrb_t *create_clone(const rrb_t *src, int level) {
     debug_print("create_clone, end\n");
     return clone;
 }
-
-rrb_t *add_leaf(rrb_t *rrb, imc_data_t *data, int where);
-rrb_t *add_node(rrb_t *rrb, imc_data_t *data, bool meta);
 
 /** Adds a node to a non fully tree. */
 rrb_t *add(rrb_t *clone, imc_data_t *data, bool meta) {
@@ -406,9 +414,6 @@ void rrb_unref(rrb_t *rrb) {
     debug_print("rrb_unref, end\n");
 }
 
-rrb_t *update_leaf(rrb_t *rrb, int  where, imc_data_t *data);
-rrb_t *update_node(rrb_t *rrb, int *index, imc_data_t *data, bool meta);
-
 /** Updates the tree by changing the data at index by data. */
 rrb_t *update(const rrb_t *rrb, int *index, imc_data_t *data, bool meta) {
     debug_print("update, beginning\n");
@@ -455,9 +460,6 @@ rrb_t *rrb_update(const rrb_t *rrb, int index, imc_data_t *data) {
         }
     }
 }
-
-rrb_t *pop_node(rrb_t *rrb, imc_data_t **data, int *index, bool meta);
-rrb_t *pop_data(rrb_t *rrb, imc_data_t **data, int *index, bool meta);
 
 /** Pop the last element for the tree, and put the data into data. */
 rrb_t *pop(const rrb_t* rrb, imc_data_t **data, int *index, bool meta) {
@@ -510,9 +512,7 @@ rrb_t *rrb_pop(rrb_t *rrb, imc_data_t **data) {
     }
 }
 
-int split_leaf(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool meta);
-int split_node(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool meta);
-
+/** Inits both left and right trees, according to the RRB-Tree provided. */
 void init_left_right(const rrb_t *rrb, rrb_t **left, rrb_t **right, bool leafs) {
     if (leafs == false) {
         *left = create_w_nodes();
@@ -527,49 +527,83 @@ void init_left_right(const rrb_t *rrb, rrb_t **left, rrb_t **right, bool leafs) 
     }
 }
 
-void consolidate_tree(rrb_t **rrb) {
-    if (*rrb != NULL && contains_nodes(*rrb)) {
-        if (rrb_size(*rrb) == 1) {
-            rrb_t *temp = inc_ref((*rrb)->nodes.child[0]);
-            dec_ref(*rrb);
-            *rrb = temp;
-            return consolidate_tree(rrb);
+/** Calculus the maximum size of a tree at its level. */
+size_t calc_size(int level) {
+    return 32 << (5 * (level - 2));
+}
+
+/** Finds if the tree needs a meta section or not. */
+bool find_if_meta(const rrb_t *rrb) {
+    if (rrb_size(rrb) == 0) {
+        return false;
+    }
+
+    for (int i = 1; i < 32; i++) {
+        if (rrb->nodes.child[i] == NULL) {
+            return false;
+        } else if (rrb_size(rrb->nodes.child[i - 1]) < calc_size(rrb->level - 2)) {
+            return true;
         }
+    }
+    return false;
+}
 
-        (*rrb)->elements = 0;
-        if ((*rrb)->level > 1) {
-            bool meta = false;
-            int prec = 32 << (5 * ((*rrb)->level - 1));
-            for (int i = 0; i < 32; i ++) {
-                consolidate_tree(&((*rrb)->nodes.child[i]));
-                if ((*rrb)->nodes.child[i] != NULL) {
-                    (*rrb)->elements += rrb_size((*rrb)->nodes.child[i]);
-                    if (prec < rrb_size((*rrb)->nodes.child[i])) {
-                        meta = true;
-                    }
-                    prec = rrb_size((*rrb)->nodes.child[i]);
-                }
-            }
+/** Checks and set the size correctly. */
+void set_proper_size(rrb_t *rrb) {
+    for (int i = 0; i < 32; i ++) {
+        consolidate_tree(&(rrb->nodes.child[i]), false);
+        if (rrb->nodes.child[i] != NULL) {
+            rrb->elements += rrb_size(rrb->nodes.child[i]);
+        }
+    }
+}
 
-            if (meta == true) {
-                (*rrb)->meta = make_meta();
-                (*rrb)->meta[0] = rrb_size((*rrb)->nodes.child[0]);
-                for (int i = 1; i < 32; i ++) {
-                    if ((*rrb)->nodes.child[i] != NULL) {
-                        (*rrb)->meta[i] = rrb_size((*rrb)->nodes.child[i]) + (*rrb)->meta[i - 1];
-                    }
-                }
+/** Checks and creates meta if needed. */
+void set_proper_meta(rrb_t *rrb) {
+    if (find_if_meta(rrb) == true) {
+        rrb->meta = make_meta();
+        rrb->meta[0] = rrb_size(rrb->nodes.child[0]);
+        for (int i = 1; i < 32; i ++) {
+            if (rrb->nodes.child[i] != NULL) {
+                rrb->meta[i] = rrb_size(rrb->nodes.child[i]) + rrb->meta[i - 1];
             }
         }
     }
 }
 
-void consolidate_trees(rrb_t **left, rrb_t **right) {
-    consolidate_tree(left);
-    consolidate_tree(right);
+/** Takes a tree just splitted and not well defined, and define everything as
+  * it should be, i.e., setting proper sizes and creating meta if needed. */
+void consolidate_tree(rrb_t **rrb, bool top) {
+    if (*rrb != NULL && contains_nodes(*rrb)) {
+        if (rrb_size(*rrb) == 1 && top == true) {
+            rrb_t *temp = inc_ref((*rrb)->nodes.child[0]);
+            dec_ref(*rrb);
+            *rrb = temp;
+            return consolidate_tree(rrb, true);
+        }
+
+        (*rrb)->elements = 0;
+        if ((*rrb)->level > 1) {
+            set_proper_size(*rrb);
+            set_proper_meta(*rrb);
+        }
+    }
 }
 
-int split(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool meta) {
+/** Shortcut, and nicer to read in rrb_split. */
+void consolidate_trees(rrb_t **left, rrb_t **right) {
+    consolidate_tree(left, true);
+    consolidate_tree(right, true);
+}
+
+/** Splits the tree. If the tree is not relaxed, left will not be relaxed.
+  * right will always be relaxed, due to the nature of the split.
+  * Rearranging the tree to make it balanced is possible, but really costly,
+  * as it involves a lot of memory moves from different nodes and leaf in the
+  * tree. It could be a possible improvement to provide different versions:
+  * split and split_balanced, which splits the tree, then do a balancing. */
+int split(const rrb_t *rrb, rrb_t **left, rrb_t **right,
+    int *index, bool meta) {
     if (contains_leafs(rrb)) {
         return split_leaf(rrb, left, right, index, meta);
     } else {
@@ -577,7 +611,9 @@ int split(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool meta) 
     }
 }
 
-int split_leaf(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool meta) {
+/** Convenient way to split a leaf. */
+int split_leaf(const rrb_t *rrb, rrb_t **left, rrb_t **right,
+    int *index, bool meta) {
     int where = place_to_look(rrb, index, meta);
     init_left_right(rrb, left, right, true);
     for (int i = 0; i < where; i++) {
@@ -591,7 +627,9 @@ int split_leaf(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool m
     return 1;
 }
 
-int split_node(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool meta) {
+/** Convenient way to split a node. */
+int split_node(const rrb_t *rrb, rrb_t **left, rrb_t **right,
+    int *index, bool meta) {
     int where = place_to_look(rrb, index, meta);
     init_left_right(rrb, left, right, false);
     for (int i = 0; i < where; i++) {
@@ -606,9 +644,13 @@ int split_node(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool m
             (*right)->elements += 1;
         }
     }
-    return split(rrb->nodes.child[where], &((*left)->nodes.child[where]), &((*right)->nodes.child[0]), index, meta);
+    return split(rrb->nodes.child[where], &((*left)->nodes.child[where]),
+        &((*right)->nodes.child[0]), index, meta);
 }
 
+/** Splits the RRB-Tree into two trees and stores both parts into left and
+  * right. Provides the index to indicates the cut. Element pointed by the index
+  * will be contained in right resulting tree. */
 int rrb_split(const rrb_t *rrb, rrb_t **left, rrb_t **right, int index) {
     debug_print("rrb_split, beginning\n");
     int value = 0;
