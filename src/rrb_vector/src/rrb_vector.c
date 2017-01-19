@@ -513,3 +513,77 @@ rrb_t *rrb_pop(rrb_t *rrb, imc_data_t **data) {
         return pop(rrb, data, &index, true);
     }
 }
+
+int split_leaf(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool meta);
+int split_node(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool meta);
+
+void init_left_right(const rrb_t *rrb, rrb_t **left, rrb_t **right, bool leafs) {
+    if (leafs == false) {
+        *left = create_w_nodes();
+        *right = create_w_nodes();
+        (*left)->level = rrb->level;
+        (*right)->level = rrb->level;
+        (*left)->elements += 1;
+        (*right)->elements += 1;
+    } else {
+        *left = create_w_leafs();
+        *right = create_w_leafs();
+    }
+}
+
+int split(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool meta) {
+    if (contains_leafs(rrb)) {
+        return split_leaf(rrb, left, right, index, meta);
+    } else {
+        return split_node(rrb, left, right, index, meta);
+    }
+}
+
+int split_leaf(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool meta) {
+    int where = place_to_look(rrb, index, meta);
+    init_left_right(rrb, left, right, true);
+    for (int i = 0; i < where; i++) {
+        (*left)->nodes.leaf[i] = rrb->nodes.leaf[i];
+        (*left)->elements += 1;
+    }
+    for (int i = where, j = 0; i < 32; i++, j++) {
+        (*right)->nodes.leaf[j] = rrb->nodes.leaf[i];
+        (*right)->elements += 1;
+    }
+    return 1;
+}
+
+int split_node(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool meta) {
+    int where = place_to_look(rrb, index, meta);
+    init_left_right(rrb, left, right, false);
+    for (int i = 0; i < where; i++) {
+        (*left)->nodes.child[i] = rrb->nodes.child[i];
+        inc_ref(rrb->nodes.child[i]);
+        (*left)->elements += 1;
+    }
+    for (int i = where + 1, j = 1; i < 32; i++, j++) {
+        (*right)->nodes.child[j] = rrb->nodes.child[i];
+        if (rrb->nodes.child[i] != NULL) {
+            inc_ref(rrb->nodes.child[i]);
+            (*right)->elements += 1;
+        }
+    }
+    return split(rrb->nodes.child[where], &((*left)->nodes.child[where]), &((*right)->nodes.child[0]), index, meta);
+}
+
+int rrb_split(const rrb_t *rrb, rrb_t **left, rrb_t **right, int index) {
+    debug_print("rrb_split, beginning\n");
+    int value = 0;
+    if (index > rrb->elements) {
+        return value;
+    }
+
+    if (rrb->meta == NULL) {
+        debug_print("rrb_split, meta null\n");
+        value = split(rrb, left, right, &index, false);
+    } else {
+        debug_print("rrb_split, meta\n");
+        value = split(rrb, left, right, &index, true);
+    }
+    return value;
+}

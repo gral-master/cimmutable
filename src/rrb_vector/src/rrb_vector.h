@@ -88,6 +88,16 @@ rrb_t *rrb_update(const rrb_t *rrb, int index, imc_data_t *data);
 imc_data_t *rrb_lookup(const rrb_t *rrb, int index);
 
 /**
+ * Splits an RRB-Tree accoring to the given index.
+ * @param  rrb   The RRB-Tree to split.
+ * @param  left  The left RRB-Tree obtained.
+ * @param  right The right RRB-Tree obtained.
+ * @param  index The index where cut.
+ * @return       0 if didn't work, 1 otherwise.
+ */
+int rrb_split(const rrb_t *rrb, rrb_t **left, rrb_t **right, int index);
+
+/**
  * Returns the size of an RRB-Tree.
  * @param  rrb The RRB-Tree to know the size.
  * @return     The size of the RRB-Tree if any, else -1.

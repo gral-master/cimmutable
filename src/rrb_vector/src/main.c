@@ -114,5 +114,15 @@ int main() {
     imc_data_t *temp2;
     rrb_ppp_leafs(rrb_pop(meta, &temp2));
 
+    rrb_t *left, *right;
+    rrb_split(rrb1, &left, &right, 50);
+
+    printf("\nSplitted trees.\n\n");
+
+    rrb_ppp(left);
+    rrb_ppp(right);
+
+    printf("\nSize of trees: %zu, %zu\n", rrb_size(left), rrb_size(right));
+
     return 0;
 }
