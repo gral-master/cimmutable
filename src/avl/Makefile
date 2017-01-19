@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-W -Wall -std=c99 -pedantic -O3
 LDFLAGS=
-EXEC= avl
+EXEC= avl vector
 SRC= $(wildcard *.c)
 OBJ= $(SRC:.c=.o)
 
@@ -10,7 +10,8 @@ all: $(EXEC)
 avl: main.o avl.o
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
-main.o: avl.h avl.c
+vector: vector_main.o avl.o avl_vector.o
+	@$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c
 	@$(CC) -o $@ -c $< $(CFLAGS)

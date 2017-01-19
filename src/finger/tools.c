@@ -77,19 +77,33 @@ void dump_to_dot(deep_t* tree, char* fname) {
  ** STACK OPERATIONS
  **/
 
-int is_empty_stack(deep_stack_t* stack) {
+int stack_is_empty(deep_stack_t* stack) {
   return stack == NULL;
 }
 
-void push_stack(deep_t* deep, deep_stack_t** stack) {
+void stack_push(deep_t* deep, deep_stack_t** stack) {
   deep_stack_t* new_head = malloc(sizeof(deep_stack_t));
   new_head->content = deep;
   new_head->next = *stack;
   *stack = new_head;
 }
 
-deep_t* pop_stack(deep_stack_t** stack) {
+deep_t* stack_pop(deep_stack_t** stack) {
   deep_t* res = (*stack)->content;
   *stack = (*stack)->next;
   return res;
+}
+
+int stack_size(deep_stack_t* stack) {
+  int i;
+  for (i=0; stack; stack=stack->next, i++);
+  return i;
+}
+
+void stack_destroy(deep_stack_t* stack) {
+  while (stack) {
+    deep_stack_t* tmp = stack->next;
+    free(stack);
+    stack = tmp;
+  }
 }

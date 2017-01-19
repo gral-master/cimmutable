@@ -12,7 +12,25 @@
 
 #include "avl.h"
 
-int compare(data_t* d1, data_t* d2) {
+struct _avl_data_t {
+  int content;
+};
+char* avl_data_as_string (avl_data_t* data) {
+  if (data) {
+    char* buf = malloc(15 * sizeof(char));
+    sprintf(buf, "%d",data->content);
+    return buf;
+  } else {
+    return NULL;
+  }
+}
+avl_data_t* make_data(int i) {
+  avl_data_t* data = malloc(sizeof *data);
+  data->content = i;
+  return data;
+}
+
+int compare(avl_data_t* d1, avl_data_t* d2) {
   if (d1->content == d2->content) return 0;
   else if (d1->content < d2->content) return -1;
   else return 1;
