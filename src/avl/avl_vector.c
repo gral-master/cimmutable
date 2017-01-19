@@ -24,6 +24,12 @@ avl_data_t* make_avl_data(vector_data_t* data, int index) {
   ret->index = index;
   return ret;
 }
+avl_data_t* clone_avl_data(avl_data_t* data) {
+    avl_data_t* ret = malloc(sizeof *ret);
+    ret->data = data->data;
+    ret->index = data->index;
+    return ret;
+}
 char* avl_data_as_string(avl_data_t* data) {
   return data_as_string(data->data);
 }
@@ -116,7 +122,27 @@ avl_vector_t* avl_vector_pop(avl_vector_t* vec, vector_data_t** data) {
 }
 
 
+void _merge_vector_internal(avl_tree* ret, avl_node* orig, int shift) {
+  if (orig != NULL) {
+    avl_data_t* data = make_avl_data(orig->data->data,
+				     shift + orig->data->index);
+    
+    avl_insert_mutable(ret, data);
+    if (orig->sons[0]) _merge_vector_internal(ret, orig->sons[0], shift);
+    if (orig->sons[1]) _merge_vector_internal(ret, orig->sons[1], shift);
+  }
+}
 
+
+avl_vector_t* avl_vector_merge (avl_vector_t* vec_front,
+				avl_vector_t* vec_tail) {
+  avl_vector_t* new = avl_vector_create();
+  _merge_vector_internal(new->vector, vec_front->vector->root, 0);
+  _merge_vector_internal(new->vector, vec_tail->vector->root,
+			 vec_front->max_index+1);
+  new->max_index = vec_front->max_index + vec_tail->max_index;
+  return new;
+}
 
 void avl_vector_dump_ignore_empty(avl_vector_t* vec) {
   avl_traverse_and_print(vec->vector);

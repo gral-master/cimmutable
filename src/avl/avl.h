@@ -16,7 +16,19 @@
 typedef struct _avl_data_t avl_data_t;
 char* avl_data_as_string (avl_data_t* data);
 
-typedef struct _avl_tree avl_tree;
+
+typedef struct _avl_node {
+  struct _avl_data_t* data;
+  int ref_count;
+  int balance;
+  struct _avl_node* sons[2];
+} avl_node;
+
+typedef struct _avl_tree {
+  avl_node* root;
+  int size;
+  int (*compare)(struct _avl_data_t*, struct _avl_data_t*);
+} avl_tree;
 
 avl_tree* avl_make_empty_tree(int (*compare)(struct _avl_data_t*, struct _avl_data_t*));
 
@@ -25,6 +37,7 @@ void avl_erase_tree(avl_tree* t);
 avl_data_t* avl_search(avl_tree* tree, avl_data_t* data);
 
 avl_tree* avl_insert(avl_tree* tree, avl_data_t* data);
+void avl_insert_mutable(avl_tree* tree, void* data); /* Careful with that one */
 
 avl_tree* avl_remove(avl_tree* tree, avl_data_t* data, avl_data_t** ret_data);
 
