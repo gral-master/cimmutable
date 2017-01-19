@@ -119,10 +119,13 @@ void ppp(const rrb_t *rrb, int tab, bool leafs, FILE *file) {
             tabulation(tab, file);
             fprintf(file, "Node %p { ", rrb);
             if (leafs == false) {
+                fprintf(file, "Size : %zu, ", rrb_size(rrb));
                 fprintf(file, "Level : %d }\n", rrb->level);
                 return;
             }
             fprintf(file, "\n");
+            tabulation(tab + 2, file);
+            fprintf(file, "Size : %zu\n", rrb_size(rrb));
             tabulation(tab + 2, file);
             fprintf(file, "Level : %d\n", rrb->level);
             if (rrb->meta != NULL) {
@@ -147,6 +150,8 @@ void ppp(const rrb_t *rrb, int tab, bool leafs, FILE *file) {
         } else {
             tabulation(tab, file);
             fprintf(file, "Node %p {\n", rrb);
+            tabulation(tab + 2, file);
+            fprintf(file, "Size : %zu\n", rrb_size(rrb));
             tabulation(tab + 2, file);
             fprintf(file, "Level : %d\n", rrb->level);
             if (rrb->meta != NULL) {

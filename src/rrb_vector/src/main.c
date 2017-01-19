@@ -115,11 +115,12 @@ int main() {
     rrb_ppp_leafs(rrb_pop(meta, &temp2));
 
     rrb_t *left, *right;
+    rrb_ppp(rrb1);
     rrb_split(rrb1, &left, &right, 50);
 
     printf("\nSplitted trees.\n\n");
 
-    rrb_ppp(left);
+    rrb_ppp_leafs(left);
     rrb_ppp(right);
 
     printf("\nSize of trees: %zu, %zu\n", rrb_size(left), rrb_size(right));

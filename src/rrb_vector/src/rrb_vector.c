@@ -18,6 +18,10 @@ void make_datas(rrb_t *rrb) {
     debug_print("make_datas, end\n");
 }
 
+int *make_meta() {
+    return calloc(32, sizeof (int *));
+}
+
 /** Creates an empty RRB-Tree. Top is used in order to determine if it contains
 * leafs or RRB-Nodes. */
 rrb_t *create(bool top) {
@@ -422,10 +426,6 @@ rrb_t *update(const rrb_t *rrb, int *index, imc_data_t *data, bool meta) {
 rrb_t *update_leaf(rrb_t *rrb, int where, imc_data_t *data) {
     debug_print("update_leaf, beginnning\n");
     rrb->nodes.leaf[where] = data;
-    if (where == 31) {
-        rrb->full = true;
-    }
-    rrb->elements += 1;
     debug_print("add_leaf, end\n");
     return rrb;
 }
@@ -436,10 +436,6 @@ rrb_t *update_node(rrb_t *rrb, int *index, imc_data_t *data, bool meta) {
     int where = place_to_look(rrb, index, meta);
     dec_ref(rrb->nodes.child[where]);
     rrb->nodes.child[where] = update(rrb->nodes.child[where], index, data, meta);
-    if (where == 31 && is_full(rrb->nodes.child[where])) {
-        rrb->full = true;
-    }
-    rrb->elements += 1;
     debug_print("update_node, end\n");
     return rrb;
 }
@@ -531,6 +527,48 @@ void init_left_right(const rrb_t *rrb, rrb_t **left, rrb_t **right, bool leafs) 
     }
 }
 
+void consolidate_tree(rrb_t **rrb) {
+    if (*rrb != NULL && contains_nodes(*rrb)) {
+        if (rrb_size(*rrb) == 1) {
+            rrb_t *temp = inc_ref((*rrb)->nodes.child[0]);
+            dec_ref(*rrb);
+            *rrb = temp;
+            return consolidate_tree(rrb);
+        }
+
+        (*rrb)->elements = 0;
+        if ((*rrb)->level > 1) {
+            bool meta = false;
+            int prec = 32 << (5 * ((*rrb)->level - 1));
+            for (int i = 0; i < 32; i ++) {
+                consolidate_tree(&((*rrb)->nodes.child[i]));
+                if ((*rrb)->nodes.child[i] != NULL) {
+                    (*rrb)->elements += rrb_size((*rrb)->nodes.child[i]);
+                    if (prec < rrb_size((*rrb)->nodes.child[i])) {
+                        meta = true;
+                    }
+                    prec = rrb_size((*rrb)->nodes.child[i]);
+                }
+            }
+
+            if (meta == true) {
+                (*rrb)->meta = make_meta();
+                (*rrb)->meta[0] = rrb_size((*rrb)->nodes.child[0]);
+                for (int i = 1; i < 32; i ++) {
+                    if ((*rrb)->nodes.child[i] != NULL) {
+                        (*rrb)->meta[i] = rrb_size((*rrb)->nodes.child[i]) + (*rrb)->meta[i - 1];
+                    }
+                }
+            }
+        }
+    }
+}
+
+void consolidate_trees(rrb_t **left, rrb_t **right) {
+    consolidate_tree(left);
+    consolidate_tree(right);
+}
+
 int split(const rrb_t *rrb, rrb_t **left, rrb_t **right, int *index, bool meta) {
     if (contains_leafs(rrb)) {
         return split_leaf(rrb, left, right, index, meta);
@@ -585,5 +623,6 @@ int rrb_split(const rrb_t *rrb, rrb_t **left, rrb_t **right, int index) {
         debug_print("rrb_split, meta\n");
         value = split(rrb, left, right, &index, true);
     }
+    consolidate_trees(left, right);
     return value;
 }
