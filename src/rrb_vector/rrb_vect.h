@@ -115,5 +115,12 @@ void imc_rrb_build_left(imc_rrb_t* vec_in, imc_rrb_t* left, int index);
 
 void imc_rrb_build_right(imc_rrb_t* vec_in, imc_rrb_t* right, int index);
 
+imc_rrb_t* imc_rrb_merge(imc_rrb_t* vec_front, imc_rrb_t* vec_tail);
+
+imc_rrb_t* imc_rrb_merge_nodes(imc_rrb_t* left, imc_rrb_t* middle,
+                               imc_rrb_t* right, int ignore1, int ignore2);
+
+imc_rrb_t* imc_rrb_merge_leaves(imc_rrb_t* vec1, imc_rrb_t* vec2);
+
 int imc_rrb_unref(imc_rrb_t* vec);
 #endif

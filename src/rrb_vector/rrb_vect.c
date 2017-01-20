@@ -340,7 +340,21 @@ void imc_rrb_build_right(imc_rrb_t* vec_in, imc_rrb_t* right,
 }
 
 imc_rrb_t* imc_rrb_merge(imc_rrb_t* vec_front, imc_rrb_t* vec_tail) {
-    
+    if(vec_front->floor == 0 && vec_tail->floor == 0){
+        return imc_rrb_merge_leaves(vec_front, vec_tail);
+    }
+    if(vec_front->floor == vec_tail->floor){
+        imc_rrb_t* left = NULL;
+        imc_rrb_t* right = NULL;
+        int i = -1, j = -1;
+        for(i = 0, j = ARRAY_SIZE;;i++,j--){
+            if(left != NULL && right != NULL) break;
+            if(vec_front->node.next[j] != NULL) left = vec_front->node.next[j];
+            if(vec_tail->node.next[i] != NULL) right = vec_tail->node.next[i];
+        }
+        return imc_rrb_merge_nodes(vec_front, imc_rrb_merge(left, right),
+                                   vec_tail, i, j);
+    }
 	return NULL;
 }
 
@@ -362,7 +376,7 @@ int imc_rrb_fill_fifo(imc_rrb_t* rrb, imc_rrb_t** fifo,
 
 imc_rrb_t* imc_rrb_merge_nodes(imc_rrb_t* left, imc_rrb_t* middle,
                                imc_rrb_t* right, int ignore1, int ignore2) {
-    int i, j = 0, index_fifo = 0;
+    int i, j = 0, index_fifo = 0, floor = middle->floor;
     int size = imc_rrb_size(left) + imc_rrb_size(middle) 
         + imc_rrb_size(right) - 2;
     imc_rrb_t* node1 = imc_rrb_create();
@@ -390,15 +404,19 @@ imc_rrb_t* imc_rrb_merge_nodes(imc_rrb_t* left, imc_rrb_t* middle,
     }
     imc_rrb_t* root = imc_rrb_new_root(node1);
     root->node.next[0]->refs = 1;
-    root->length = 1; 
+    root->node.next[0]->floor = floor;
+    root->length = 1;
+    root->floor = floor+1;
     if(size >= ARRAY_SIZE){
         root->node.next[1] = node2;
         root->node.next[1]->refs = 1;
+        root->node.next[2]->floor = floor;
         root->length = 2; 
     }
     if(size >= ARRAY_SIZE*2){
         root->node.next[2] = node2;
         root->node.next[2]->refs = 1;
+        root->node.next[2]->floor = floor;
         root->length = 3; 
     }
     imc_rrb_unref(middle);
@@ -406,7 +424,7 @@ imc_rrb_t* imc_rrb_merge_nodes(imc_rrb_t* left, imc_rrb_t* middle,
 }
 
 
-imc_rrb_t* imc_rrb_merge_leafs(imc_rrb_t* vec1, imc_rrb_t* vec2) {
+imc_rrb_t* imc_rrb_merge_leaves(imc_rrb_t* vec1, imc_rrb_t* vec2) {
     int i, size = vec1->length + vec2->length;
     imc_rrb_t* leaf1 = imc_rrb_create_leaf();
     imc_rrb_t* leaf2 = NULL;
@@ -420,10 +438,13 @@ imc_rrb_t* imc_rrb_merge_leafs(imc_rrb_t* vec1, imc_rrb_t* vec2) {
     }
     imc_rrb_t* root = imc_rrb_new_root(leaf1);
     root->node.next[0]->refs = 1;
+    root->node.next[0]->floor = 0;
     root->length = 1;
+    root->floor = 1;
     if(size >= ARRAY_SIZE){
         root->node.next[1] = leaf2;
         root->node.next[1]->refs = 1;
+        root->node.next[1]->floor = 0;
         root->length = 2;
     }
     return root;
