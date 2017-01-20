@@ -39,6 +39,6 @@ build_rrb:
 	@cd $(RRBDIR) && $(MAKE)
 
 clean:
-	@$(RM) $(LIBNAME)
+	@$(RM) -v $(LIBNAME)
 	@find ./src -type f -iname '*.o' -delete
-	@$(RM) $(OBJDIR)/*.o 
+	@$(RM) -v $(OBJDIR)/*.o 
