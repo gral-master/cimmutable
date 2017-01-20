@@ -39,7 +39,7 @@ int main() {
 
   /* push n times */
   puts("\n\nBEGIN PUSH TESTING\n\n");
-  for(int i = 0; i< 1050; i++) {
+  for(int i = 0; i< 17; i++) {
     data = malloc(sizeof(imc_data_t));
     data->id = next_rand(0, 10);
     vec = imc_rrb_push(vec, data);
@@ -81,8 +81,8 @@ int main() {
   sprintf(str, "split_before.dot");
   imc_rrb_emit(vec, str, print);
 
-  imc_rrb_t* vec_left;
-  imc_rrb_t* vec_right;
+  imc_rrb_t* vec_left = imc_rrb_create();
+  imc_rrb_t* vec_right = imc_rrb_create();
   imc_rrb_split(vec, imc_rrb_size(vec)/2, &vec_left, &vec_right);
 
   sprintf(str, "split_left.dot");
