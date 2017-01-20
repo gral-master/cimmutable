@@ -24,15 +24,14 @@
 
 /**
  * @file rrb_vect.h
- * @version 0.1
  * @author Anastasios DOUMOULAKIS
  * @author Tanguy RETAIL
- * @date 9 december 2016
+ * @date 13/01/2017
  * @brief Immutable Relaxed Radix Balanced Vectors C implementation
  * @copyright MIT Licence
  *
  * This file defines the structures and functions needed to manipulate immutable
- * RRB vectors. The implementation is made from scratch but the strucutre itself
+ * RRB vectors. The implementation is made from scratch but the strucute itself
  * comes from Nicolas Tucki's thesis.
  * @see https://github.com/nicolasstucki/scala-rrb-vector
  */
@@ -61,6 +60,14 @@ typedef struct imc_rrb {
   } node;
 } imc_rrb_t;
 
+
+/**
+ * This method return the size of the RRB whether it is a leaf or a node.
+ * @author Anastasios Doumoulakis
+ * @param vec    The pointer to the RRB vector 
+ * @return The size of the RRB (int)
+ * @date 13/01/2017
+ */
 int imc_rrb_size(imc_rrb_t* vec);
 
 imc_rrb_t* imc_rrb_update(imc_rrb_t* vec, int index, imc_data_t* data);

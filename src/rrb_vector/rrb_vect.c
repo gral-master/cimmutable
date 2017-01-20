@@ -340,16 +340,101 @@ void imc_rrb_build_right(imc_rrb_t* vec_in, imc_rrb_t* right,
 }
 
 imc_rrb_t* imc_rrb_merge(imc_rrb_t* vec_front, imc_rrb_t* vec_tail) {
-
+    
 	return NULL;
+}
+
+int imc_rrb_fill_fifo(imc_rrb_t* rrb, imc_rrb_t** fifo,
+                      int i_fifo, int ignore, int add_ref){
+    imc_rrb_t* tmp;
+    for(int i = 0; i < imc_rrb_size(rrb); i++){
+        if(i != ignore){
+            tmp = rrb->node.next[i];
+            if(tmp != NULL){
+                fifo[i_fifo] = tmp;
+                if(add_ref) tmp->refs++;
+                i_fifo++;
+            }
+        }
+    }
+    return i_fifo;
+}
+
+imc_rrb_t* imc_rrb_merge_nodes(imc_rrb_t* left, imc_rrb_t* middle,
+                               imc_rrb_t* right, int ignore1, int ignore2) {
+    int i, j = 0, index_fifo = 0;
+    int size = imc_rrb_size(left) + imc_rrb_size(middle) 
+        + imc_rrb_size(right) - 2;
+    imc_rrb_t* node1 = imc_rrb_create();
+    imc_rrb_t* node2 = NULL;
+    imc_rrb_t* node3 = NULL;
+    imc_rrb_t** fifo = malloc(sizeof(imc_rrb_t*) * size);
+    if(size >= ARRAY_SIZE) node2 = imc_rrb_create();
+    if(size >= ARRAY_SIZE*2) node3 = imc_rrb_create();
+    index_fifo = imc_rrb_fill_fifo(left, fifo, index_fifo, ignore1, 1);
+    index_fifo = imc_rrb_fill_fifo(middle, fifo, index_fifo, -1, 0);
+    index_fifo = imc_rrb_fill_fifo(right, fifo, index_fifo, ignore2, 1);
+    for(i = 0; i < size; i++){
+        if(i < ARRAY_SIZE){
+            node1->node.next[j] = fifo[i];
+        }
+        if(i >= ARRAY_SIZE && i < ARRAY_SIZE*2){
+            if(i == ARRAY_SIZE) j = 0;
+            node2->node.next[j] = fifo[i];
+        }
+        if(i >= ARRAY_SIZE*2){
+            if(i == ARRAY_SIZE*2) j = 0;
+            node3->node.next[j] = fifo[i];
+        }
+        j++;
+    }
+    imc_rrb_t* root = imc_rrb_new_root(node1);
+    root->node.next[0]->refs = 1;
+    root->length = 1; 
+    if(size >= ARRAY_SIZE){
+        root->node.next[1] = node2;
+        root->node.next[1]->refs = 1;
+        root->length = 2; 
+    }
+    if(size >= ARRAY_SIZE*2){
+        root->node.next[2] = node2;
+        root->node.next[2]->refs = 1;
+        root->length = 3; 
+    }
+    imc_rrb_unref(middle);
+    return root;
+}
+
+
+imc_rrb_t* imc_rrb_merge_leafs(imc_rrb_t* vec1, imc_rrb_t* vec2) {
+    int i, size = vec1->length + vec2->length;
+    imc_rrb_t* leaf1 = imc_rrb_create_leaf();
+    imc_rrb_t* leaf2 = NULL;
+    if(size >= ARRAY_SIZE) leaf2 = imc_rrb_create_leaf();
+    for(i = 0; i < size; i++){
+        if(i < ARRAY_SIZE){
+            if(i < vec1->length) leaf1->node.data[i] = vec1->node.data[i];
+            else leaf1->node.data[i] = vec2->node.data[i];
+        }
+        else leaf2->node.data[i] = vec2->node.data[i];
+    }
+    imc_rrb_t* root = imc_rrb_new_root(leaf1);
+    root->node.next[0]->refs = 1;
+    root->length = 1;
+    if(size >= ARRAY_SIZE){
+        root->node.next[1] = leaf2;
+        root->node.next[1]->refs = 1;
+        root->length = 2;
+    }
+    return root;
 }
 
 /* user-side memory management */
 
 int imc_rrb_unref(imc_rrb_t* vec) {
-	int i, nb_refs = vec->refs-1;
-	vec->refs = nb_refs;
-	if(nb_refs == 0){
+	int i;
+	vec->refs--;
+	if(vec->refs == 0){
 		if(vec->floor == 0){
 			/*TODO eventually : error checking*/
 			free(vec->node.data);
@@ -477,7 +562,8 @@ imc_rrb_t* imc_rrb_new_root(imc_rrb_t* vec) {
 	new_root->floor = vec->floor+1;
 	/* vec is his first child */
 	new_root->node.next[0] = vec;
-	new_root->node.next[0]->refs+=1;
+	//if(new_root->node.next[0]->refs > 1)
+        new_root->node.next[0]->refs+=1;
 
 	return new_root;
 }
