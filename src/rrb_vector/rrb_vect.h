@@ -81,11 +81,11 @@ void emit_node(imc_rrb_t* vec, char* from, char* prefix, FILE* f, char* (*print)
 
 char* concatc(char* str, char c);
 
-int imc_rrb_full(imc_rrb_t* vec);
+int imc_rrb_is_full(imc_rrb_t* vec);
 
 imc_rrb_t* imc_rrb_new_root(imc_rrb_t* vec);
 
-int imc_rrb_balanced(imc_rrb_t* vec);
+int imc_rrb_is_balanced(imc_rrb_t* vec);
 
 int imc_rrb_subindex(imc_rrb_t* vec, int index);
 
@@ -109,4 +109,17 @@ void imc_rrb_build_left(imc_rrb_t* vec_in, imc_rrb_t* left, int index);
 void imc_rrb_build_right(imc_rrb_t* vec_in, imc_rrb_t* right, int index);
 
 int imc_rrb_unref(imc_rrb_t* vec);
+
+imc_rrb_t* copy_and_add_on_new_root(imc_rrb_t* body, imc_rrb_t* root);
+
+void compress(imc_rrb_t* left, imc_rrb_t* mid, imc_rrb_t* right);
+
+int imc_rrb_is_leaf(imc_rrb_t* vec);
+
+imc_rrb_t* imc_rrb_tail(imc_rrb_t* vec);
+
+imc_rrb_t* imc_rrb_head(imc_rrb_t* vec);
+
+int imc_rrb_init(imc_rrb_t* vec);
+
 #endif

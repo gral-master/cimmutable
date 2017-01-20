@@ -7,7 +7,63 @@
 #include "./rrb_vect.h"
 #include "./rrb_checker.h"
 
+/*******************************/
+/* Creation and initialization */
+/*******************************/
+
+imc_rrb_t* imc_rrb_create() {
+    imc_rrb_t* vec = malloc(sizeof(imc_rrb_t));
+    if(vec == NULL){
+        LOG(LOG_FATAL, "Allocation failure %s", strerror(errno));
+        puts("Erreur allocation ! \n");
+        return NULL;
+    }
+    vec -> floor = 1;
+    imc_rrb_init(vec);
+    return vec;
+}
+
+imc_rrb_t* imc_rrb_create_leaf() {
+  imc_rrb_t* vec = malloc(sizeof(imc_rrb_t));
+  if(vec == NULL){
+      LOG(LOG_FATAL, "Allocation failure %s", strerror(errno));
+      return NULL;
+  }
+  vec -> floor = 0;
+  imc_rrb_init(vec);
+  return vec;
+}
+
+int imc_rrb_init(imc_rrb_t* vec) {
+  vec->refs = 1;
+  vec->length = 0;
+  vec->meta = NULL;
+
+  if(imc_rrb_is_leaf(vec)) {
+    vec->node.data = calloc(ARRAY_SIZE, sizeof(imc_data_t*));
+    if(vec->node.data == NULL){
+        LOG(1, "Allocation failure %s", strerror(errno));
+        free(vec);
+        return 0;
+    }
+  } else {
+    vec -> node.next = calloc(ARRAY_SIZE, sizeof(imc_rrb_t*));
+    if(vec -> node.next == NULL){
+        LOG(1, "Allocation failure %s", strerror(errno));
+        free(vec);
+        return 0;
+    }
+  }
+
+  return 1;
+}
+
+/*****************/
+/* rrb utilities */
+/*****************/
+
 int imc_rrb_size(imc_rrb_t* vec) {
+  /* TODO : For leaves, length = non NULL data[i] nop ?? */
   if(vec == NULL) return 0;
   if(vec->floor > 0){
     return vec->length;
@@ -20,54 +76,120 @@ int imc_rrb_size(imc_rrb_t* vec) {
   return count;
 }
 
-imc_rrb_t* imc_rrb_update(imc_rrb_t* vec, int index, imc_data_t* data) {
-  puts("\nUpdate in a vector : ");
-  /* Make a new root */
-  imc_rrb_t* new_root = imc_rrb_copy(vec);
-
-  /* Go through the tree, copying the path, until first floor */
-  vec = new_root;
-  int sub_index;
-  while(vec->floor != 1) {
-     sub_index = imc_rrb_subindex(vec, index);
-     if(vec->node.next[sub_index] != NULL) {
-       vec->node.next[sub_index]->refs -= 1; //has been up by previous copy, we need to do -1 because we don't reference it in our new copy
-       vec->node.next[sub_index] = imc_rrb_copy(vec->node.next[sub_index]); // This function updates refs to node
-     } else {
-       //Should not happen
-       //TODO : Free previous
-       printf("SHOULD NOT HAPPEN\n");
-       return vec;
-     }
-     printf("Update to the vector of %d elems of floor %d at index %d, taken path : %d\n", vec->length, vec->floor, index, sub_index);
-     vec = vec->node.next[sub_index];
-  }
-
-  /* First floor : we copy the leaf (floor 0) and also if the leaf exists */
-  printf("Update to the vector of %d elems of floor %d at index %d, taken path : %d\n", vec->length, vec->floor, index, sub_index);
-  vec->refs -= 1;
-  sub_index = imc_rrb_subindex(vec, index);
-  if(vec->node.next[sub_index]!=NULL) {
-    vec->node.next[sub_index] = imc_rrb_copy_leaf(vec->node.next[sub_index]); //This should also copy the data
+int imc_rrb_is_full(imc_rrb_t* vec) {
+  if(imc_rrb_is_balanced(vec) == 1) {
+    return (vec->length == (32*pow(ARRAY_SIZE, vec->floor))) ? 1 : 0;
   } else {
-    //Should not happen
-    //TODO : Free previous
-    return vec;
+    while(vec->floor > 1) {
+      if(vec->meta[ARRAY_SIZE-1]==0) {
+        return 0;
+      }
+    }
+    vec = vec->node.next[ARRAY_SIZE-1];
+    return (vec->node.data[ARRAY_SIZE-1]!=NULL) ? 1 : 0;
   }
-  vec = vec->node.next[sub_index];
-  printf("Update to the vector of %d elems of floor %d at index %d, taken path : %d\n", vec->length, vec->floor, index, sub_index);
+}
 
-  /* We update the data */
-  vec->refs -= 1;
-  sub_index = imc_rrb_subindex(vec, index);
-  vec->node.data[sub_index] = data;
-  printf("Updated to the data at index %d, taken path : %d\n", index, sub_index);
+int imc_rrb_is_balanced(imc_rrb_t* vec) {
+  /* /!\ Is that always true ? What if the rrb has been rebalanced ? /!\ */
+  return (vec->meta==NULL) ? 1 : 0;
+}
+
+int imc_rrb_is_leaf(imc_rrb_t* vec) {
+  return (vec->floor==0) ? 1 : 0;
+}
+
+imc_rrb_t* imc_rrb_tail(imc_rrb_t* vec) {
+  /* Rreturn last non-NULL child */
+  if(imc_rrb_is_leaf(vec)) {
+    return NULL;
+  } else {
+    imc_rrb_t* res = NULL;
+    for(int i = 0 ; i < ARRAY_SIZE ; i++) {
+      if(vec->node.next[i]!=NULL) {
+        res = vec->node.next[i];
+      }
+    }
+    return res;
+  }
+}
+
+imc_rrb_t* imc_rrb_head(imc_rrb_t* vec) {
+  /* Return first non-NULL child */
+  if(imc_rrb_is_leaf(vec)) {
+    return NULL;
+  } else {
+    for(int i = 0 ; i < ARRAY_SIZE ; i++) {
+      if(vec->node.next[i]!=NULL) {
+        return vec->node.next[i];
+      }
+    }
+  }
+}
+
+imc_rrb_t* imc_rrb_new_root(imc_rrb_t* vec) {
+  /* Add a new root to the top of a vector with vec as first child */
+  /* Create a new root */
+  imc_rrb_t* new_root = imc_rrb_create();
+  new_root->length = vec->length;
+  new_root->floor = vec->floor+1;
+  /* vec is his first child */
+  new_root->node.next[0] = vec;
+  new_root->node.next[0]->refs+=1;
 
   return new_root;
 }
 
-//-->OK
-imc_data_t* imc_rrb_lookup(imc_rrb_t* vec, int index) {
+void imc_rrb_increase_length(imc_rrb_t* vec, int index) {
+  /* increase the length, and update the meta information */
+  vec->length+=1;
+  /* If the node is balanced, or if it is a leaf, meta is null */
+  if(vec->meta != NULL) {
+    for(int i = 0; i<ARRAY_SIZE; i++) {
+      if(index <= vec->meta[i]) {
+        vec->meta[i] += 1;
+        if(i != ARRAY_SIZE-1) {
+          vec->meta[ARRAY_SIZE-1] += 1;
+        }
+        break;
+      }
+    }
+  }
+}
+
+void imc_rrb_decrease_length(imc_rrb_t* vec, int index) {
+  /* decrease the length, and update the meta information */
+  vec->length-=1;
+  /* If the node is balanced, or if it is a leaf, meta is null */
+  if(vec->meta != NULL) {
+    for(int i = 0; i<ARRAY_SIZE; i++) {
+      if(index <= vec->meta[i]) {
+        vec->meta[i] -= 1;
+        if(i != ARRAY_SIZE-1) {
+          vec->meta[ARRAY_SIZE-1] -= 1;
+        }
+        break;
+      }
+    }
+  }
+}
+
+int imc_rrb_subindex(imc_rrb_t* vec, int index) {
+  int floor_index = 0;
+  if(imc_rrb_is_balanced(vec)==1) { //Si on est balanced, on sait tout de suite où aller
+    floor_index = (index >> (int)(log2((double)ARRAY_SIZE) * vec->floor)) & (ARRAY_SIZE-1);
+  } else { //Si on est unbalanced, on doit chercher où aller
+    while(vec->meta[floor_index] <= index) {
+      floor_index++;
+      if(floor_index==ARRAY_SIZE) { //We didn't find it
+        return -1;
+      }
+    }
+  }
+  return floor_index;
+}
+
+imc_data_t* imc_rrb_get_leaf_no_copy(imc_rrb_t* vec, int index) {
   printf("lookup in a vector of size %d at index %d\n", vec->length, index);
 
   /* Go through the tree if the index is reachable, and return the data */
@@ -85,7 +207,68 @@ imc_data_t* imc_rrb_lookup(imc_rrb_t* vec, int index) {
   return vec->node.data[floor_index];
 }
 
-//-->OK
+/**************/
+/* Xtra tools */
+/**************/
+
+char* concatc(char* str, char c) {
+    /* Concat a char to a char* */
+    size_t len = strlen(str);
+    char *str2 = malloc(len + 1 + 1 );
+    strcpy(str2, str);
+    str2[len] = c;
+    str2[len + 1] = '\0';
+    return str2;
+}
+
+/*******************/
+/* Copy operations */
+/*******************/
+
+imc_rrb_t* imc_rrb_copy_leaf(imc_rrb_t* vec) {
+  imc_rrb_t* vec_copy = imc_rrb_create_leaf();
+  vec_copy -> floor = vec -> floor;
+  vec_copy -> length =  vec -> length;
+  vec_copy -> meta = vec -> meta; // A changer en allouant un nouveau tableau meta
+  if(vec -> node.data != NULL) {
+    vec_copy -> node.data = malloc(sizeof(imc_data_t*) * ARRAY_SIZE);
+    for(int i = 0; i < ARRAY_SIZE ; i++) {
+      vec_copy -> node.data[i] = vec -> node.data[i];
+    }
+  }
+  return vec_copy;
+}
+
+imc_rrb_t* imc_rrb_copy(imc_rrb_t* vec) {
+  imc_rrb_t* vec_copy = imc_rrb_create();
+  vec_copy -> floor = vec -> floor;
+  vec_copy -> length =  vec -> length;
+  vec_copy -> meta = vec -> meta; // A changer en allouant un nouveau tableau meta
+  vec_copy -> refs = 1; //It is a copy, so we have one and only one ref to it
+  if(vec -> node.next != NULL) {
+    vec_copy -> node.next = malloc(sizeof(imc_rrb_t*) * ARRAY_SIZE);
+    for(int i = 0; i < ARRAY_SIZE ; i++) {
+      vec_copy -> node.next[i] = vec -> node.next[i];
+      if(vec_copy -> node.next[i] != NULL) {
+        vec_copy -> node.next[i] -> refs += 1;
+      }
+    }
+  }
+  return vec_copy;
+}
+
+/******************/
+/* Push operation */
+/******************/
+
+imc_rrb_t* imc_rrb_push(imc_rrb_t* vec, imc_data_t* data) {
+  if(imc_rrb_is_full(vec)==1) {
+    return imc_rrb_push_full(vec, data);
+  } else {
+    return imc_rrb_push_not_full(vec, data);
+  }
+}
+
 imc_rrb_t* imc_rrb_push_full(imc_rrb_t* vec, imc_data_t* data) {
   puts("\nInsertion in full vector : ");
 
@@ -118,7 +301,6 @@ imc_rrb_t* imc_rrb_push_full(imc_rrb_t* vec, imc_data_t* data) {
   return new_root;
 }
 
-//-->OK
 imc_rrb_t* imc_rrb_push_not_full(imc_rrb_t* vec, imc_data_t* data) {
     puts("\nInsertion in not full vector : ");
     /* Make a new root */
@@ -164,14 +346,9 @@ imc_rrb_t* imc_rrb_push_not_full(imc_rrb_t* vec, imc_data_t* data) {
     return new_root;
 }
 
-//-->OK
-imc_rrb_t* imc_rrb_push(imc_rrb_t* vec, imc_data_t* data) {
-  if(imc_rrb_full(vec)==1) {
-    return imc_rrb_push_full(vec, data);
-  } else {
-    return imc_rrb_push_not_full(vec, data);
-  }
-}
+/*****************/
+/* Pop operation */
+/*****************/
 
 imc_rrb_t* imc_rrb_pop(imc_rrb_t* vec, imc_data_t** data) {
   //TODO : Si la branche devient inutile, il faut la supprimer. Idem pour un étage, ça ne coûte pas cher !
@@ -219,6 +396,82 @@ imc_rrb_t* imc_rrb_pop(imc_rrb_t* vec, imc_data_t** data) {
 
 }
 
+/********************/
+/* Update operation */
+/********************/
+
+imc_rrb_t* imc_rrb_update(imc_rrb_t* vec, int index, imc_data_t* data) {
+  puts("\nUpdate in a vector : ");
+  /* Make a new root */
+  imc_rrb_t* new_root = imc_rrb_copy(vec);
+
+  /* Go through the tree, copying the path, until first floor */
+  vec = new_root;
+  int sub_index;
+  while(vec->floor != 1) {
+     sub_index = imc_rrb_subindex(vec, index);
+     if(vec->node.next[sub_index] != NULL) {
+       vec->node.next[sub_index]->refs -= 1; //has been up by previous copy, we need to do -1 because we don't reference it in our new copy
+       vec->node.next[sub_index] = imc_rrb_copy(vec->node.next[sub_index]); // This function updates refs to node
+     } else {
+       //Should not happen
+       //TODO : Free previous
+       printf("SHOULD NOT HAPPEN\n");
+       return vec;
+     }
+     printf("Update to the vector of %d elems of floor %d at index %d, taken path : %d\n", vec->length, vec->floor, index, sub_index);
+     vec = vec->node.next[sub_index];
+  }
+
+  /* First floor : we copy the leaf (floor 0) and also if the leaf exists */
+  printf("Update to the vector of %d elems of floor %d at index %d, taken path : %d\n", vec->length, vec->floor, index, sub_index);
+  vec->refs -= 1;
+  sub_index = imc_rrb_subindex(vec, index);
+  if(vec->node.next[sub_index]!=NULL) {
+    vec->node.next[sub_index] = imc_rrb_copy_leaf(vec->node.next[sub_index]); //This should also copy the data
+  } else {
+    //Should not happen
+    //TODO : Free previous
+    return vec;
+  }
+  vec = vec->node.next[sub_index];
+  printf("Update to the vector of %d elems of floor %d at index %d, taken path : %d\n", vec->length, vec->floor, index, sub_index);
+
+  /* We update the data */
+  vec->refs -= 1;
+  sub_index = imc_rrb_subindex(vec, index);
+  vec->node.data[sub_index] = data;
+  printf("Updated to the data at index %d, taken path : %d\n", index, sub_index);
+
+  return new_root;
+}
+
+/********************/
+/* Lookup operation */
+/********************/
+
+imc_data_t* imc_rrb_lookup(imc_rrb_t* vec, int index) {
+  printf("lookup in a vector of size %d at index %d\n", vec->length, index);
+
+  /* Go through the tree if the index is reachable, and return the data */
+  int floor_index = 0;
+  while(vec->floor!=0) {
+    floor_index = imc_rrb_subindex(vec, index);
+    if(floor_index == -1) {
+      puts("index cannot be reached.\n");
+      return NULL;
+    } else {
+      vec = vec->node.next[floor_index];
+    }
+  }
+  floor_index = imc_rrb_subindex(vec, index);
+  return vec->node.data[floor_index];
+}
+
+/*******************/
+/* Split operation */
+/*******************/
+
 int imc_rrb_split(imc_rrb_t* vec_in, int index, imc_rrb_t** vec_out1,
                   imc_rrb_t** vec_out2) {
   imc_rrb_build_left(vec_in, *vec_out1, index);
@@ -238,7 +491,7 @@ void imc_rrb_build_left(imc_rrb_t* vec_in, imc_rrb_t* left,
     left->length = split_index+1;
     return;
   }
-  int is_balanced = imc_rrb_balanced(vec_in);
+  int is_balanced = imc_rrb_is_balanced(vec_in);
   if(is_balanced == 0) left->meta = malloc(sizeof(int) * ARRAY_SIZE);
 
   for(i = 0; i < split_index; i++){
@@ -324,12 +577,71 @@ void imc_rrb_build_right(imc_rrb_t* vec_in, imc_rrb_t* right,
   right->length = right->meta[ARRAY_SIZE-1];
 }
 
-imc_rrb_t* imc_rrb_merge(imc_rrb_t* vec_front, imc_rrb_t* vec_tail) {
 
+/*******************/
+/* Merge operation */
+/*******************/
+
+imc_rrb_t* imc_rrb_merge(imc_rrb_t* vec_front, imc_rrb_t* vec_tail) {
+  //S1 et S2 de la taille des 2
+  int size1 = vec_front->floor+1;
+  imc_rrb_t** path1 = malloc(size1 * sizeof(imc_rrb_t*));
+  int size2 = vec_tail->floor+1;
+  imc_rrb_t** path2 = malloc(size2 * sizeof(imc_rrb_t*));
+
+  imc_rrb_t* vec = vec_front;
+  int i = 0;
+  do {
+    path1[i] = vec;
+    vec = imc_rrb_tail(vec);
+    i++;
+  }while(i!=size1);
+
+  vec = vec_tail;
+  i = 0;
+  do {
+    path2[i] = vec;
+    vec = imc_rrb_head(vec);
+    i++;
+  }while(i!=size2);
+
+  i = 0;
+  vec = NULL;
+  while(i!=size1 && i!=size2) {
+    compress(path1[i], vec, path2[i]);
+    i++;
+  }
+
+  if(i<size1) {
+    while(i!=size1) {
+      copy_and_add_on_new_root(path1[i], vec);
+      i++;
+    }
+  }
+  if(i<size2) {
+    while(i!=size2) {
+      copy_and_add_on_new_root(path2[i], vec);
+      i++;
+    }
+  }
+
+  free(path1);
+  free(path2);
+
+  return vec;
+}
+
+void compress(imc_rrb_t* left, imc_rrb_t* mid, imc_rrb_t* right) {
+  return;
+}
+
+imc_rrb_t* copy_and_add_on_new_root(imc_rrb_t* body, imc_rrb_t* root) {
   return NULL;
 }
 
-/* user-side memory management */
+/*******************/
+/* Unref operation */
+/*******************/
 
 int imc_rrb_unref(imc_rrb_t* vec) {
   int i, nb_refs = vec->refs-1;
@@ -352,8 +664,13 @@ int imc_rrb_unref(imc_rrb_t* vec) {
   return 0;
 }
 
+/********************/
+/* Print operations */
+/********************/
+
 void imc_rrb_dump(imc_rrb_t* vec) {
-  return;
+  puts("It is a really bad idea to print a rrb in your terminal.\n");
+  puts("Please use imc_rrb_emit instead.\n");
 }
 
 /* utils */
@@ -428,181 +745,4 @@ void emit_node(imc_rrb_t* vec, char* from, char* prefix, FILE* fp,
         fprintf(fp, "%s -> \"node_%s\":i%s0;\n", from, prefix, prefix);
       }
   }
-}
-
-char* concatc(char* str, char c) {
-    size_t len = strlen(str);
-    char *str2 = malloc(len + 1 + 1 );
-    strcpy(str2, str);
-    str2[len] = c;
-    str2[len + 1] = '\0';
-    return str2;
-}
-
-/* return 1 if the vector is full */
-int imc_rrb_full(imc_rrb_t* vec) {
-  if(imc_rrb_balanced(vec) == 1) {
-    return (vec->length == (32*pow(ARRAY_SIZE, vec->floor))) ? 1 : 0;
-  } else {
-    while(vec->floor > 1) {
-      if(vec->meta[ARRAY_SIZE-1]==0) {
-        return 0;
-      }
-    }
-    vec = vec->node.next[ARRAY_SIZE-1];
-    return (vec->node.data[ARRAY_SIZE-1]!=NULL) ? 1 : 0;
-  }
-}
-
-/* Add a new root to the top of a vector */
-imc_rrb_t* imc_rrb_new_root(imc_rrb_t* vec) {
-  /* Create a new root */
-  imc_rrb_t* new_root = imc_rrb_create();
-  new_root->length = vec->length;
-  new_root->floor = vec->floor+1;
-  /* vec is his first child */
-  new_root->node.next[0] = vec;
-  new_root->node.next[0]->refs+=1;
-
-  return new_root;
-}
-
-/* return 1 if the vector is balanced */
-int imc_rrb_balanced(imc_rrb_t* vec) {
-  /* /!\ Is that always true ? What if the rrb has been rebalanced ? /!\ */
-  return (vec->meta==NULL) ? 1 : 0;
-}
-
-void imc_rrb_increase_length(imc_rrb_t* vec, int index) {
-  vec->length+=1;
-  /* If the node is balanced, or if it is a leaf, meta is null */
-  if(vec->meta != NULL) {
-    for(int i = 0; i<ARRAY_SIZE; i++) {
-      if(index <= vec->meta[i]) {
-        vec->meta[i] += 1;
-        if(i != ARRAY_SIZE-1) {
-          vec->meta[ARRAY_SIZE-1] += 1;
-        }
-        break;
-      }
-    }
-  }
-}
-
-void imc_rrb_decrease_length(imc_rrb_t* vec, int index) {
-  vec->length-=1;
-  /* If the node is balanced, or if it is a leaf, meta is null */
-  if(vec->meta != NULL) {
-    for(int i = 0; i<ARRAY_SIZE; i++) {
-      if(index <= vec->meta[i]) {
-        vec->meta[i] -= 1;
-        if(i != ARRAY_SIZE-1) {
-          vec->meta[ARRAY_SIZE-1] -= 1;
-        }
-        break;
-      }
-    }
-  }
-}
-
-/* return the subindex, i.e. the subindex you may choose at your current
-   floor to go to the vector index */
-int imc_rrb_subindex(imc_rrb_t* vec, int index) {
-  int floor_index = 0;
-  if(imc_rrb_balanced(vec)==1) { //Si on est balanced, on sait tout de suite où aller
-    floor_index = (index >> (int)(log2((double)ARRAY_SIZE) * vec->floor)) & (ARRAY_SIZE-1);
-  } else { //Si on est unbalanced, on doit chercher où aller
-    while(vec->meta[floor_index] <= index) {
-      floor_index++;
-      if(floor_index==ARRAY_SIZE) { //We didn't find it
-        return -1;
-      }
-    }
-  }
-  return floor_index;
-}
-
-imc_rrb_t* imc_rrb_copy_leaf(imc_rrb_t* vec) {
-  imc_rrb_t* vec_copy = imc_rrb_create_leaf();
-  vec_copy -> floor = vec -> floor;
-  vec_copy -> length =  vec -> length;
-  vec_copy -> meta = vec -> meta; // A changer en allouant un nouveau tableau meta
-  if(vec -> node.data != NULL) {
-    vec_copy -> node.data = malloc(sizeof(imc_data_t*) * ARRAY_SIZE);
-    for(int i = 0; i < ARRAY_SIZE ; i++) {
-      vec_copy -> node.data[i] = vec -> node.data[i];
-    }
-  }
-  return vec_copy;
-}
-
-imc_rrb_t* imc_rrb_copy(imc_rrb_t* vec) {
-  imc_rrb_t* vec_copy = imc_rrb_create();
-  vec_copy -> floor = vec -> floor;
-  vec_copy -> length =  vec -> length;
-  vec_copy -> meta = vec -> meta; // A changer en allouant un nouveau tableau meta
-  vec_copy -> refs = 1; //It is a copy, so we have one and only one ref to it
-  if(vec -> node.next != NULL) {
-    vec_copy -> node.next = malloc(sizeof(imc_rrb_t*) * ARRAY_SIZE);
-    for(int i = 0; i < ARRAY_SIZE ; i++) {
-      vec_copy -> node.next[i] = vec -> node.next[i];
-      if(vec_copy -> node.next[i] != NULL) {
-        vec_copy -> node.next[i] -> refs += 1;
-      }
-    }
-  }
-  return vec_copy;
-}
-
-imc_rrb_t* imc_rrb_create_leaf() {
-  imc_rrb_t* vec = malloc(sizeof(imc_rrb_t));
-
-  if(vec == NULL){
-      LOG(LOG_FATAL, "Allocation failure %s", strerror(errno));
-      return NULL;
-  }
-  vec -> floor = 0;
-  vec -> refs = 1;
-  vec -> length = 0;
-  vec -> meta = NULL;
-  vec -> node.data = malloc(sizeof(imc_data_t*) * ARRAY_SIZE);
-
-  if(vec -> node.data == NULL){
-      LOG(1, "Allocation failure %s", strerror(errno));
-      free(vec);
-      return NULL;
-  }
-
-  for(int i = 0; i<ARRAY_SIZE; i++) {
-    vec -> node.data[i] = NULL;
-  }
-  return vec;
-}
-
-/* --> rrb_vect.h */
-/* TODO -> invariant , pre/post cond */
-imc_rrb_t* imc_rrb_create() {
-    imc_rrb_t* vec = malloc(sizeof(imc_rrb_t));
-
-    if(vec == NULL){
-        LOG(LOG_FATAL, "Allocation failure %s", strerror(errno));
-        puts("Erreur allocation ! \n");
-        return NULL;
-    }
-    vec -> floor = 1;
-    vec -> refs = 1;
-    vec -> length = 0;
-    vec -> meta = NULL;
-    vec -> node.next = malloc(sizeof(imc_rrb_t*) * ARRAY_SIZE);
-
-    if(vec -> node.next == NULL){
-        LOG(1, "Allocation failure %s", strerror(errno));
-        free(vec);
-        return NULL;
-    }
-    for(int i = 0; i<ARRAY_SIZE; i++) {
-      vec-> node.next[i] = NULL;
-    }
-
-    return vec;
 }
