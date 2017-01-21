@@ -78,6 +78,7 @@ ft* ft_concat(ft* fin1,ft* fin2);
 void ft_display(ft* fgt);
 void* ft_lookup(ft* ft, int index); //typedef imc_data_t;
 void ft_unref(ft* ft);
+void node_unref(node* n);
 void node_display(node* node);
 view ft_delete(ft* fgt,int preorsuf);
 split ft_split(ft* fgt, int index);
