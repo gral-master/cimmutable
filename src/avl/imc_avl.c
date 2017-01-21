@@ -358,7 +358,7 @@ imc_avl_node_t* imc_avl_insert_rec( imc_avl_node_t* tree,
     return new_node;
 }
 
-void imc_avl_keys(imc_avl_node_t* tree, imc_key_t** tab, int* indice){
+/*void imc_avl_keys(imc_avl_node_t* tree, imc_key_t** tab, int* indice){
     if (tree != NULL) {
         imc_avl_keys(tree->left, tab, indice);
         tab[*indice] = tree->key;
@@ -366,7 +366,7 @@ void imc_avl_keys(imc_avl_node_t* tree, imc_key_t** tab, int* indice){
         imc_avl_keys(tree->right, tab, indice);
     }
 
-}
+}*/
 
 imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
                                 imc_data_t* data, imc_key_t* key,
@@ -376,11 +376,12 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
 
     imc_avl_node_t* result;
     int k;
-    int indice = 0;
+    /*int indice = 0;
 
 
     imc_avl_node_t tree_condi = imc_avl_copy(tree);
     imc_key_t** tab_pre = malloc(sizeof(imc_key_t*) * imc_avl_size(tree_condi));
+    imc_avl_keys*/
     
     k = check_invariant(tree, comparator);
     if (k == -1) printf("INSERT_ERROR_AV\n");
