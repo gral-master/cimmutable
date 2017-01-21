@@ -8,6 +8,12 @@ MKDIR=mkdir -p
 
 all: clean cfingertree
 
+run: all
+	./bin/test
+	
+memtest: all
+	valgrind --leak-check=yes --show-reachable=yes --tool=memcheck ./bin/test
+
 cfingertree: $(ODIR)/main.o $(ODIR)/fingertree.o ../debug.o $(ODIR)/list.o $(ODIR)/invariants.o $(ODIR)/reflist.o
 	$(MKDIR) $(BDIR)
 	$(CC) -o $(BDIR)/test $(ODIR)/main.o $(ODIR)/fingertree.o $(ODIR)/list.o $(ODIR)/invariants.o $(ODIR)/reflist.o

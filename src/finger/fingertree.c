@@ -521,7 +521,7 @@ void node_display(node* node) {
                     printf(",");
                 }
             }
-            printf(")");
+            printf("rc=%d)", node->ref_count);
             break;
         default:
             printf("_");
@@ -664,7 +664,6 @@ void node_unref(node* n) {
             for (int i = 0; i < 3; i++) {
                 if (n->true_node->internal_node[i] == NULL)
                     continue;
-                
                 node_unref(n->true_node->internal_node[i]);
             }
             free(n->true_node);
@@ -943,7 +942,54 @@ view ft_delete(ft* fgt,int preorsuf){
 
 
 // Split and its helper functions
-// Size and ref_count are not yet managed
+// conversion functions leave the ref_count untouched.
+void copy_affix(affix* src, affix* dest, int incr){
+    for(int i = 0; i < 4; i++){
+      dest->nodes[i] = src->nodes[i];
+      if(incr == 1 && src->nodes[i] != NULL) {
+	      src->nodes[i]->ref_count++;
+      }
+    }
+    
+    dest->size = src->size;
+}
+
+ft* create_deep_withprefix() {
+    ft* fgt = malloc(sizeof(ft));
+    fgt->type = DEEP_TYPE;
+    fgt->true_ft = malloc(sizeof(true_ft_t));
+    fgt->true_ft->d = malloc(sizeof(deep));
+    
+    fgt->true_ft->d->prefix = malloc(sizeof(affix));
+    for(int i=0;i<4;i++){
+        fgt->true_ft->d->prefix->nodes[i] = NULL;
+    }
+    fgt->true_ft->d->prefix->size = 0;
+    
+    fgt->ref_count = 1;
+    fgt->size = 0; // The caller of this function should put the right size.
+    
+    return fgt;
+}
+
+ft* create_deep_withsuffix() {
+    ft* fgt = malloc(sizeof(ft));
+    fgt->type = DEEP_TYPE;
+    fgt->true_ft = malloc(sizeof(true_ft_t));
+    fgt->true_ft->d = malloc(sizeof(deep));
+    
+    fgt->true_ft->d->suffix = malloc(sizeof(affix));
+    for(int i=0;i<4;i++){
+        fgt->true_ft->d->suffix->nodes[i] = NULL;
+    }
+    fgt->true_ft->d->suffix->size = 0;
+    
+    fgt->ref_count = 1;
+    fgt->size = 0; // The caller of this function should put the right size.
+    
+    return fgt;
+}
+
 ft* create_deep_withoutaffix() {
     ft* fgt = malloc(sizeof(ft));
     fgt->type = DEEP_TYPE;
@@ -965,7 +1011,7 @@ ft* nodearray_to_ft(node* arr[], int size) {
     switch (size) {
         case 1:
             res = create_single(arr[0]);
-            arr[0]->ref_count++;
+            //arr[0]->ref_count++;
             break;
         case 2:
             res = create_deep();
@@ -975,8 +1021,8 @@ ft* nodearray_to_ft(node* arr[], int size) {
             d->suffix->nodes[3] = arr[1];
             d->suffix->size = arr[1]->size;
             res->size = d->prefix->size + d->suffix->size;
-            arr[0]->ref_count++;
-            arr[1]->ref_count++;
+            /*arr[0]->ref_count++;
+            arr[1]->ref_count++;*/
             break;
         case 3: // case 3
             res = create_deep();
@@ -987,9 +1033,9 @@ ft* nodearray_to_ft(node* arr[], int size) {
             d->suffix->nodes[3] = arr[2];
             d->suffix->size = arr[1]->size + arr[2]->size;
             res->size = d->prefix->size + d->suffix->size;
-            arr[0]->ref_count++;
+            /*arr[0]->ref_count++;
             arr[1]->ref_count++;
-            arr[2]->ref_count++;
+            arr[2]->ref_count++;*/
             break;
         default: // case 4
             res = create_deep();
@@ -1001,10 +1047,10 @@ ft* nodearray_to_ft(node* arr[], int size) {
             d->suffix->nodes[3] = arr[3];
             d->suffix->size = arr[1]->size + arr[2]->size + arr[3]->size;
             res->size = d->prefix->size + d->suffix->size;;
-            arr[0]->ref_count++;
+            /*arr[0]->ref_count++;
             arr[1]->ref_count++;
             arr[2]->ref_count++;
-            arr[3]->ref_count++;
+            arr[3]->ref_count++;*/
             break;
     }
     
@@ -1015,6 +1061,7 @@ void affix_to_nodearray(affix* a, node** nodes) {
     for (int i = 0, j = 0; i < 4; i++) {
         if (a->nodes[i] != NULL) {
             nodes[j] = a->nodes[i];
+            //a->nodes[i]->ref_count++;
             j++;
         }
     }
@@ -1031,6 +1078,7 @@ affix* node_to_affix(node* n, int preorsuf) {
         for (i = 0, j = 0; i < 3; i++) {
             if (n->true_node->internal_node[i] != NULL) {
                 res->nodes[j++] = nodes[i];
+                nodes[i]->ref_count++;
                 res->size += nodes[i]->size;
             }
         }
@@ -1042,6 +1090,7 @@ affix* node_to_affix(node* n, int preorsuf) {
         for (i = 2, j = 3; i >= 0; i--) {
             if (n->true_node->internal_node[i] != NULL) {
                 res->nodes[j--] = nodes[i];
+                nodes[i]->ref_count++;
                 res->size += nodes[i]->size;
             }
         }
@@ -1059,8 +1108,10 @@ ft* borrowL(ft* deeper, affix* su) {
     int node_count = 0;
     
     for (int i = 0; i < 4; i++) {
-        if (su->nodes[i] != NULL)
+        if (su->nodes[i] != NULL) {
             node_count++;
+            su->nodes[i]->ref_count++;
+        }
     }
     
     affix_to_nodearray(su, nodes);
@@ -1069,11 +1120,11 @@ ft* borrowL(ft* deeper, affix* su) {
         res = nodearray_to_ft(nodes, node_count);
     }
     else {
-        view v = ft_delete(deeper, 0);
-        res = create_deep_withoutaffix();
+        view v = ft_delete_rec(deeper, 0);
+        res = create_deep_withsuffix();
         res->true_ft->d->prefix = node_to_affix(v.elem, 0);
         res->true_ft->d->deeper = v.fg;
-        res->true_ft->d->suffix = su;
+        copy_affix(su, res->true_ft->d->suffix, 0);
         deep* d = res->true_ft->d;
         res->size = d->prefix->size + d->deeper->size + d->suffix->size;
     }
@@ -1086,11 +1137,13 @@ ft* create_deepL(affix* left, ft* deeper, affix* right) {
     if (left == NULL)
         return borrowL(deeper, right);
     
-    ft* res = create_deep();
+    ft* res;
     
-    res->true_ft->d->prefix = left;
+    res = create_deep_withoutdeeper();
+    copy_affix(left, res->true_ft->d->prefix, 1);
+    deeper->ref_count++;
     res->true_ft->d->deeper = deeper;
-    res->true_ft->d->suffix = right;
+    copy_affix(right, res->true_ft->d->suffix, 1);
     deep* d = res->true_ft->d;
     res->size = d->prefix->size + d->deeper->size + d->suffix->size;
     
@@ -1102,8 +1155,10 @@ ft* borrowR(affix* pr, ft* deeper) {
     node* nodes[4];
     int node_count = 0;
     for (int i = 0; i < 4; i++) {
-        if (pr->nodes[i] != NULL)
+        if (pr->nodes[i] != NULL) {
             node_count++;
+            pr->nodes[i]->ref_count++;   
+        }
     }
     affix_to_nodearray(pr, nodes);
     
@@ -1112,8 +1167,8 @@ ft* borrowR(affix* pr, ft* deeper) {
     }
     else {
         view v = ft_delete_rec(deeper, 1);
-        res = create_deep_withoutaffix();
-        res->true_ft->d->prefix = pr;
+        res = create_deep_withprefix();
+        copy_affix(pr, res->true_ft->d->prefix, 0);
         res->true_ft->d->deeper = v.fg;
         res->true_ft->d->suffix = node_to_affix(v.elem, 1);
         deep* d = res->true_ft->d;
@@ -1128,11 +1183,12 @@ ft* create_deepR(affix* left, ft* deeper, affix* right) {
     if (right == NULL)
         return borrowR(left, deeper);
     
-    ft* res = create_deep();
+    ft* res = create_deep_withoutdeeper();
     
-    res->true_ft->d->prefix = left;
+    copy_affix(left, res->true_ft->d->prefix, 1);
+    deeper->ref_count++;
     res->true_ft->d->deeper = deeper;
-    res->true_ft->d->suffix = right;
+    copy_affix(right, res->true_ft->d->suffix, 1);
     deep* d = res->true_ft->d;
     res->size = d->prefix->size + d->deeper->size + d->suffix->size;
     
@@ -1154,6 +1210,7 @@ affix* ft_to_affix(ft* fgt, int preorsuf) {
         // We make a prefix
         if (fgt->type == SINGLE_TYPE) {
             res->nodes[0] = fgt->true_ft->single;
+            res->nodes[0]->ref_count++;
             for (int i = 1; i < 4; i++) {
                 res->nodes[i] = NULL;
             }
@@ -1166,6 +1223,8 @@ affix* ft_to_affix(ft* fgt, int preorsuf) {
                 res->size += fgt->true_ft->d->prefix->nodes[0]->size;
                 res->nodes[1] = fgt->true_ft->d->suffix->nodes[3];
                 res->size += fgt->true_ft->d->suffix->nodes[3]->size;
+                res->nodes[0]->ref_count++;
+                res->nodes[1]->ref_count++;
                 for (int i = 2; i < 4; i++) {
                     res->nodes[i] = NULL;
                 }
@@ -1178,6 +1237,9 @@ affix* ft_to_affix(ft* fgt, int preorsuf) {
                 res->size += fgt->true_ft->d->suffix->nodes[2]->size;
                 res->nodes[2] = fgt->true_ft->d->suffix->nodes[3];
                 res->size += fgt->true_ft->d->suffix->nodes[3]->size;
+                res->nodes[0]->ref_count++;
+                res->nodes[1]->ref_count++;
+                res->nodes[2]->ref_count++;
                 res->nodes[3] = NULL;
             }
         }
@@ -1187,6 +1249,7 @@ affix* ft_to_affix(ft* fgt, int preorsuf) {
         if (fgt->type == SINGLE_TYPE) {
             res->nodes[3] = fgt->true_ft->single;
             res->size = fgt->true_ft->single->size;
+            res->nodes[3]->ref_count++;
             for (int i = 0; i < 3; i++) {
                 res->nodes[i] = NULL;
             }
@@ -1198,6 +1261,8 @@ affix* ft_to_affix(ft* fgt, int preorsuf) {
                 res->size += fgt->true_ft->d->prefix->nodes[0]->size;
                 res->nodes[3] = fgt->true_ft->d->suffix->nodes[3];
                 res->size += fgt->true_ft->d->suffix->nodes[3]->size;
+                res->nodes[2]->ref_count++;
+                res->nodes[3]->ref_count++;
                 for (int i = 0; i < 2; i++) {
                     res->nodes[i] = NULL;
                 }
@@ -1210,6 +1275,9 @@ affix* ft_to_affix(ft* fgt, int preorsuf) {
                 res->size += fgt->true_ft->d->suffix->nodes[2]->size;
                 res->nodes[3] = fgt->true_ft->d->suffix->nodes[3];
                 res->size += fgt->true_ft->d->suffix->nodes[3]->size;
+                res->nodes[1]->ref_count++;
+                res->nodes[2]->ref_count++;
+                res->nodes[3]->ref_count++;
                 res->nodes[0] = NULL;
             }
         }
@@ -1237,8 +1305,8 @@ split affix_split(affix* a, int index) {
             s.ft1 = create_empty();
             s.node = nodes[0];
             s.ft2 = create_empty();
+            nodes[0]->ref_count++;
             break;
-            
         case 2:
             if (index < nodes[0]->size) {
                 s.ft1 = create_empty();
@@ -1250,6 +1318,8 @@ split affix_split(affix* a, int index) {
                 s.node = nodes[1];
                 s.ft2 = create_empty();
             }
+            nodes[0]->ref_count++;
+            nodes[1]->ref_count++;
             break;
         case 3:
             if (index < nodes[0]->size) {
@@ -1267,6 +1337,9 @@ split affix_split(affix* a, int index) {
                 s.node = nodes[2];
                 s.ft2 = create_empty();
             }
+            nodes[0]->ref_count++;
+            nodes[1]->ref_count++;
+            nodes[2]->ref_count++;
             break;
         default: // case 4
             if (index < nodes[0]->size) {
@@ -1289,6 +1362,10 @@ split affix_split(affix* a, int index) {
                 s.node = nodes[3];
                 s.ft2 = create_empty();
             }
+            nodes[0]->ref_count++;
+            nodes[1]->ref_count++;
+            nodes[2]->ref_count++;
+            nodes[3]->ref_count++;
             break;
     }
     
@@ -1333,6 +1410,7 @@ splitnode node_split(node* n, int index) {
         }
         sn.right->nodes[2] = NULL;
         sn.right->nodes[3] = NULL;
+        
     }
     else if (index < nodes[0]->size+nodes[1]->size) {
         sn.left = malloc(sizeof(affix));
@@ -1375,34 +1453,44 @@ split ft_split_rec(ft* fgt, int index) {
         s.ft1 = create_empty();
         s.ft2 = create_empty();
         s.node = fgt->true_ft->single;
+        fgt->true_ft->single->ref_count++;
     }
     else {
         deep *d = fgt->true_ft->d;
         split recs;
-        if (index <= d->prefix->size) {
+        if (index < d->prefix->size) {
             // The node is in the prefix
             recs = affix_split(d->prefix, index);
             
             s.ft1 = recs.ft1;
             s.node = recs.node;
-            s.ft2 = create_deepL(ft_to_affix(recs.ft2, 0), d->deeper, d->suffix);
+            s.ft2 = create_deepL(ft_to_affix(recs.ft2, 1), d->deeper, d->suffix);
+            ft_unref(recs.ft2);
         }
-        else if (index > d->prefix->size + d->deeper->size) {
+        else if (index >= d->prefix->size + d->deeper->size) {
             // The node is in the suffix
             recs = affix_split(d->suffix, index-(d->prefix->size+d->deeper->size));
-            
             s.ft1 = create_deepR(d->prefix, d->deeper, ft_to_affix(recs.ft1, 1));
             s.node = recs.node;
             s.ft2 = recs.ft2;
+            
+            ft_unref(recs.ft1);
         }
         else {
             // The node is in the deeper
             recs = ft_split_rec(d->deeper, index - d->prefix->size);
             splitnode recsn = node_split(recs.node, index - d->prefix->size - recs.ft1->size);
-            
             s.ft1 = create_deepR(d->prefix, recs.ft1, recsn.left);
             s.node = recsn.node;
+            s.node->ref_count++;
             s.ft2 = create_deepL(recsn.right, recs.ft2, d->suffix);
+            ft_unref(recs.ft1);
+            node_unref(recs.node);
+            if (recsn.left != NULL)
+              free(recsn.left);
+            if (recsn.right != NULL)
+              free(recsn.right);
+            ft_unref(recs.ft2);
         }
     }
     
@@ -1413,9 +1501,7 @@ split ft_split(ft* fgt, int index) {
     // Preconditions & Invariants
     checkInvariants(fgt);
     assert(fgt->type != EMPTY_TYPE);
-    
     split s = ft_split_rec(fgt, index);
-    
     checkInvariants(s.ft1);
     checkInvariants(s.ft2);
     

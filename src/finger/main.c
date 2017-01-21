@@ -7,12 +7,12 @@
 
 #include "fingertree.h"
 
-#define MAX_ADD 5
+#define MAX_ADD 6
 #define MAX_DELETE 2
 
 int main(int argc, char **argv)
 {
-
+    int sindex = 5;//MAX_ADD*1/2;
   
     // ft_add
     int data[2*MAX_ADD];
@@ -27,11 +27,8 @@ int main(int argc, char **argv)
     fingerTreeArray[0] = create_empty();
     for (int i = 1; i < MAX_ADD+1; i++) {
         fingerTreeArray[i] = ft_add((void*)&data[i-1],fingerTreeArray[i-1],1);
-
-
-	
-        ft_display(fingerTreeArray[i]);
-        puts("\n****************************");
+        //ft_display(fingerTreeArray[i]);
+        //puts("\n****************************");
     }
 
     /* ft* fingerTreeArray2[MAX_ADD+1]; */
@@ -50,6 +47,7 @@ int main(int argc, char **argv)
     /*   ft_display(res); */
 
      // ft_delete
+    /*
     puts("");
     puts("delete/////////////");
      view tmp;
@@ -67,20 +65,23 @@ int main(int argc, char **argv)
      
       //      free(tmp.elem);
      }
-    
-    /* ft_display(fingerTreeArray1[MAX_ADD]); */
-    /* printf("\n"); */
+     */
+    printf("===============================\n");
+    ft_display(fingerTreeArray[MAX_ADD]);
+    printf("\n=============================\n");
     
     // ft_split
-    /* int sindex = MAX_ADD*1/3; */
-    /* split sres = ft_split(fingerTreeArray[MAX_ADD], sindex); */
     
-    /* printf("Split: content of node at index %d: %d\n", sindex, *((int*)sres.node->true_node->data)); */
-    /* printf("left finger tree for %d:\n", sindex); */
-    /* ft_display(sres.ft1); */
-    /* printf("\nright finger tree for %d:\n", sindex); */
-    /* ft_display(sres.ft2); */
-    /* printf("\n"); */
+    
+    split sres = ft_split(fingerTreeArray[MAX_ADD], sindex);
+    
+    printf("Split: content of node at index %d: %d | ref_count : %d\n", sindex, *((int*)sres.node->true_node->data), sres.node->ref_count);
+    printf("===left finger tree for %d:===\n", sindex);
+    ft_display(sres.ft1);
+    printf("\n===right finger tree for %d:===\n", sindex);
+    ft_display(sres.ft2);
+    printf("\n=======================\n");
+    
     
     // ft_lookup
     /*
@@ -109,17 +110,26 @@ int main(int argc, char **argv)
     /* } */
     
     // ft_unref
-     puts("start unref add");
+    puts("start unref add");
     for (int i = 0; i < MAX_ADD+1; i++) 
         ft_unref(fingerTreeArray[i]);
-    	
+        
+        
     
-     puts("start unref delete");
-
-        for (int i = 1; i < MAX_ADD+1; i++) 
-             	 ft_unref(fingerTreeArray1[i]);
+    printf("===left finger tree for %d:===\n", sindex);
+    ft_display(sres.ft1);
+    printf("\n===right finger tree for %d:===\n", sindex);
+    ft_display(sres.ft2);
+    printf("\n===node for %d:===\n", sindex);
+    node_display(sres.node);
+    printf("\n=======================\n");  
+    puts("start unref ft1");
+    ft_unref(sres.ft1);
+    puts("start unref ft2");
+    ft_unref(sres.ft2);
+    node_unref(sres.node);
+    puts("end unref");
     
-
     
     // ft_concat
    //   TODO
