@@ -3,6 +3,7 @@
 #include "list.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 imc_vector_t* imc_vector_create() {
     return create_empty();
@@ -18,10 +19,13 @@ imc_vector_t* imc_vector_update(imc_vector_t* vec,
     assert (index < vec->size);
     
     split s = ft_split(vec, index);
+    
     list* l = create_lempty();
     l = add(create_data_node(data), l);
+    ft*tmp=concat_w_middle(s.ft1, l, s.ft2);
+    ft_display(tmp);
     node_unref(s.node);
-    return concat_w_middle(s.ft1, l, s.ft2);
+    return tmp;
 }
 
 imc_data_t* imc_vector_lookup(imc_vector_t* vec,
@@ -57,6 +61,7 @@ int imc_vector_split(imc_vector_t* vec_in,
 
 imc_vector_t* imc_vector_merge(imc_vector_t* vec_front,
                                imc_vector_t* vec_tail) {
+  
     return ft_concat(vec_front, vec_tail);
 }
 

@@ -362,9 +362,9 @@ ft* ft_concat(ft* ft1,ft* ft2){
     checkInvariants(ft2);
      ft* res= NULL;
     list* l=NULL;
+   
     res = concat_w_middle(ft1,l,ft2);
-    
-    // Postconditions & Invariants
+           // Postconditions & Invariants
     checkInvariants(res);
     return res;
 }
@@ -498,14 +498,20 @@ list* affix_to_list(ft* fg,int preorsuf){
     affix* new_affix;
     list*tmp=NULL;
     if(preorsuf) {
-        new_affix=fg->true_ft->d->suffix;
+      new_affix=fg->true_ft->d->suffix;
+      int i;
+      for(i=3;i>=0;i--){
+	if(new_affix->nodes[i]!=NULL)
+	  tmp = add(new_affix->nodes[i],tmp);
+      }
+
     } else {
-        new_affix=fg->true_ft->d->prefix;
-    }
-    int i;
-    for(i=0;i<4;i++){
-      if(new_affix->nodes[i]!=NULL)
-	   tmp = add(new_affix->nodes[i],tmp);
+      new_affix=fg->true_ft->d->prefix;
+      int i;
+      for(i=0;i<4;i++){
+	if(new_affix->nodes[i]!=NULL)
+	  tmp = add(new_affix->nodes[i],tmp);
+      }
     }
     return tmp;
 }
@@ -1534,7 +1540,7 @@ split ft_split(ft* fgt, int index) {
 ft* concat_w_middle(ft* ft1, list* l,ft* ft2){
     ft* res=NULL;
     node* x=NULL;
-    /*we treat the different base cases first*/
+        /*we treat the different base cases first*/
     if(ft1->type==EMPTY_TYPE && l==NULL){
       res = ft2;
       ft2->ref_count++;

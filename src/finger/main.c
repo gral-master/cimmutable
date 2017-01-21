@@ -168,6 +168,8 @@ void vector_test() {
     
     // update
     imc_vector_t* v_updated = imc_vector_update(max_vector, MAX_ADD/2, &data_u);
+       printf("\n===updated===\n");
+       imc_vector_dump(v_updated);
     
     // lookup
     assert(*imc_vector_lookup(v_updated, MAX_ADD/2) == data_u);
