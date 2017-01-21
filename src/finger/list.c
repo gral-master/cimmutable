@@ -17,23 +17,19 @@ list* create_lelem(){
 }
 
 list* add(node* x, list* l){
-
-  if(x==NULL)
+   if(x==NULL)
     return l;
   list* res = create_lelem();
   res->elem = x;
-  res->next=NULL;
-
-  if(l==NULL)
-    return res;
   res->next=l;
   return res;
+
 }
 
 list* removel(list* l){
-  list* iter = l;
+   list* iter = l;
   if(l==NULL)
-    return NULL;
+    exit(-1);
   iter=l->next;
   free(l);
   return iter;
@@ -41,9 +37,9 @@ list* removel(list* l){
 }
 
 list* remove_last(list* l){
-  list* iter =l;
+   list* iter =l;
   if(iter==NULL)
-    return NULL;
+    exit(-1);
   if(iter->next==NULL){
     free(iter);
     return NULL;
@@ -58,7 +54,7 @@ list* remove_last(list* l){
 
 node* first(list* l){
    if(l==NULL)
-    return NULL;
+     exit(-1);
   return l->elem;
 
 }
@@ -84,12 +80,14 @@ node* last(list* l){
 
 void list_display(list*l){
   if(l==NULL){
-    printf("fin");
+    printf("liste_vide\n");
     return;
   }
+  list*tmp=l;
+  printf("list : ");
   node_display(l->elem);
   printf(",");
-  l=l->next;
-  list_display(l);
-
+  tmp=tmp->next;
+  list_display(tmp);
+  
 }

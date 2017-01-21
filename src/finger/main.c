@@ -7,30 +7,38 @@
 
 #include "fingertree.h"
 
-#define MAX_ADD 5
+#define MAX_ADD 10
 #define MAX_DELETE 2
 
-int main(int argc, char **argv)
-{
+void procedure(){
 
-  
-    // ft_add
-    int data[2*MAX_ADD];
-    for (int i = 0; i < 2*MAX_ADD; i++) {
-        data[i] = i * 5;
+ // ft_add
+    int data[MAX_ADD];
+    int data2[MAX_ADD];
+    for (int i = 0; i < MAX_ADD; i++) {
+        data[i] = i*2;
+	data2[i] =i*2 +1; 
     }
     
     //simulation_add(200,5,800,1000);
     
     ft* fingerTreeArray[MAX_ADD+1];
+    ft* fingerTreeArray2[MAX_ADD+1];
     
     fingerTreeArray[0] = create_empty();
     for (int i = 1; i < MAX_ADD+1; i++) {
-        fingerTreeArray[i] = ft_add((void*)&data[i-1],fingerTreeArray[i-1],1);
-
-
-	
+      printf("add i:%d\n",i);
+        fingerTreeArray[i] = ft_add((void*)&data[i-1],fingerTreeArray[i-1],0);
         ft_display(fingerTreeArray[i]);
+        puts("\n****************************");
+    }
+    puts("////////////////////////////////////////////");
+
+    fingerTreeArray2[0] = create_empty();
+    for (int i = 1; i < MAX_ADD+1; i++) {
+      printf("add2 i:%d\n",i);
+        fingerTreeArray2[i] = ft_add((void*)&data2[i-1],fingerTreeArray2[i-1],1);
+        ft_display(fingerTreeArray2[i]);
         puts("\n****************************");
     }
 
@@ -41,32 +49,32 @@ int main(int argc, char **argv)
     /* 	 ft_display(fingerTreeArray2[i]); */
     /* 	 puts("\n****************************"); */
     /* } */
-        /* puts("concat"); */
-    /* ft_display(fingerTreeArray[MAX_ADD-1]); */
-    /* puts("2"); */
-    /*    ft_display(fingerTreeArray[MAX_ADD]); */
-    /* puts("concat"); */
-    /* ft* res = ft_concat(fingerTreeArray[MAX_ADD-1],fingerTreeArray[MAX_ADD]); */
-    /*   ft_display(res); */
+      /*   puts("\nconcat\n"); */
+    puts("\nconcat");
+    ft* res = ft_concat(fingerTreeArray[MAX_ADD],fingerTreeArray2[MAX_ADD]);
+      ft_display(res);
+      
+      ft_unref(res);
 
+     
      // ft_delete
     puts("");
-    puts("delete/////////////");
-     view tmp;
-     ft* fingerTreeArray1[MAX_ADD+1];
-     fingerTreeArray1[0]= fingerTreeArray[MAX_ADD];
-     ft_display(fingerTreeArray[MAX_ADD]);
-     for(int i = 1; i< MAX_ADD+1;i++){
-      tmp= ft_delete(fingerTreeArray1[i-1],1);
-      fingerTreeArray1[i] = tmp.fg;
-      printf("\nelem: ");
-      node_display(tmp.elem);
-      printf("\ntree: ");
-      ft_display(fingerTreeArray1[i]);
-      printf("\n");
+    /* puts("delete/////////////"); */
+    /*  view tmp; */
+    /*  ft* fingerTreeArray1[MAX_ADD+1]; */
+    /*  fingerTreeArray1[0]= fingerTreeArray[MAX_ADD]; */
+    /*  ft_display(fingerTreeArray[MAX_ADD]); */
+    /*  for(int i = 1; i< MAX_ADD+1;i++){ */
+    /*   tmp= ft_delete(fingerTreeArray1[i-1],1); */
+    /*   fingerTreeArray1[i] = tmp.fg; */
+    /*   printf("\nelem: "); */
+    /*   node_display(tmp.elem); */
+    /*   printf("\ntree: "); */
+    /*   ft_display(fingerTreeArray1[i]); */
+    /*   printf("\n"); */
      
       //      free(tmp.elem);
-     }
+      /*}*/
     
     /* ft_display(fingerTreeArray1[MAX_ADD]); */
     /* printf("\n"); */
@@ -107,17 +115,22 @@ int main(int argc, char **argv)
     /*     ft_display(viewArray[i].fg); */
     /*     printf("\n"); */
     /* } */
-    
+   
     // ft_unref
-     puts("start unref add");
-    for (int i = 0; i < MAX_ADD+1; i++) 
+     puts("\nstart unref add");
+     for (int i = 0; i < MAX_ADD+1; i++) {
+       printf("\nboucle unref %d\n",i);
+        ft_display(fingerTreeArray[i]);
+	ft_display(fingerTreeArray2[i]);
         ft_unref(fingerTreeArray[i]);
-    	
+	ft_unref(fingerTreeArray2[i]);
+	
+     }	
     
-     puts("start unref delete");
+     /* puts("start unref delete"); */
 
-        for (int i = 1; i < MAX_ADD+1; i++) 
-             	 ft_unref(fingerTreeArray1[i]);
+     /*    for (int i = 1; i < MAX_ADD+1; i++)  */
+     /*         	 ft_unref(fingerTreeArray1[i]); */
     
 
     
@@ -131,5 +144,17 @@ int main(int argc, char **argv)
     /* ft* concat_res = ft_concat(fingerTreeArray[MAX_ADD], fingerTreeArray[MAX_ADD-1]); */
     /* ft_display(concat_res); */
     /* printf("\n");     */
+
+
+}
+
+
+int main(int argc, char **argv)
+{
+
+  
+   
     return 0;
 }
+
+

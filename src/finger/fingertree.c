@@ -71,6 +71,7 @@ ft* create_deep_withoutdeeper() {
 }
 
 node* create_data_node(void* data) {
+  //printf("create_data_node: %d\n",*(int*)data);
     node* n = malloc(sizeof(node));
     n->type = DATA_TYPE;
     n->true_node = malloc(sizeof(true_node_t));
@@ -150,10 +151,30 @@ void add_elems_node(node* new_node,affix* old_affix,int preorsuf ){
 
 }
 
-list* nodes(list*l){
-    node *tmp, *tmp2;
-    list* res;
+void incr_affix(ft* fg,int preorsuf){
+  affix* new_affix;
+    if(preorsuf) {
+        new_affix=fg->true_ft->d->suffix;
+    } else {
+        new_affix=fg->true_ft->d->prefix;
+    }
+    int i;
+    for(i=0;i<4;i++){
+      if(new_affix->nodes[i]!=NULL)
+	new_affix->nodes[i]->ref_count++;
+	    }
+   
 
+
+}
+
+list* nodes(list*l){
+  node* tmp=NULL;
+  node* tmp2=NULL;
+  list*res;
+
+
+      
     if(l==NULL){
         printf("nodes: error list NULL\n");
         exit(-1);
@@ -172,7 +193,7 @@ list* nodes(list*l){
 
         l=removel(l);
         l=removel(l);
-        res = add(tmp,l);
+        res=add(tmp,l);
 
     }
     else if(l->next->next->next==NULL){
@@ -185,7 +206,7 @@ list* nodes(list*l){
         l=removel(l);
         l=removel(l);
         l=removel(l);
-        res = add(tmp,l);
+        res=add(tmp,l);
     }
     else if (l->next->next->next->next == NULL) {
         // List of 4 -> 2 Node2
@@ -206,17 +227,16 @@ list* nodes(list*l){
         res=add(tmp,res);
     } else {
         // Default -> Node3, recursive call
-        res = create_lempty();
         tmp = create_node_node();
         tmp->true_node->internal_node[0]= l->elem;
         tmp->true_node->internal_node[1]= l->next->elem;
         tmp->true_node->internal_node[2]= l->next->next->elem;
-	tmp->size = l->elem->size + l->next->elem->size+ l->next->next->elem->size;
+    	tmp->size = l->elem->size + l->next->elem->size+ l->next->next->elem->size;
         l=removel(l);
         l=removel(l);
         l=removel(l);
-        res = nodes(l);
-        res = add(tmp,res);
+        res=nodes(l);
+        res=add(tmp,res);
     }
     return res;
 }
@@ -340,7 +360,7 @@ ft* ft_concat(ft* ft1,ft* ft2){
     
     checkInvariants(ft1);
     checkInvariants(ft2);
-     ft* res;
+     ft* res= NULL;
     list* l=NULL;
     res = concat_w_middle(ft1,l,ft2);
     
@@ -476,7 +496,7 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data_node){
 */
 list* affix_to_list(ft* fg,int preorsuf){
     affix* new_affix;
-    list*l=NULL;
+    list*tmp=NULL;
     if(preorsuf) {
         new_affix=fg->true_ft->d->suffix;
     } else {
@@ -484,9 +504,10 @@ list* affix_to_list(ft* fg,int preorsuf){
     }
     int i;
     for(i=0;i<4;i++){
-        l=add(new_affix->nodes[i],l);
+      if(new_affix->nodes[i]!=NULL)
+	   tmp = add(new_affix->nodes[i],tmp);
     }
-    return l;
+    return tmp;
 }
 
 
@@ -521,7 +542,7 @@ void node_display(node* node) {
                     printf(",");
                 }
             }
-            printf(")");
+            printf("rc:%d)",node->ref_count);
             break;
         default:
             printf("_");
@@ -529,8 +550,9 @@ void node_display(node* node) {
 }
 
 void ft_display(ft* fgt) {
-  printf("ft ref_count : %d\n",fgt->ref_count);
-    if(fgt==NULL)
+  
+  printf("ft ref_count %d\n",fgt->ref_count);
+      if(fgt==NULL)
     {
         puts("NULL!!!");
         exit(-1);
@@ -657,6 +679,8 @@ void node_unref(node* n) {
     
     if (n->ref_count == 0) {
         if (n->type == DATA_TYPE) {
+	  puts("data removed");
+	  node_display(n);
             free(n->true_node);
             free(n);
         }
@@ -715,8 +739,8 @@ void ft_unref_rec(ft* ft) {
 
 void ft_unref(ft* ft) {
     // Preconditions & Invariants
-    checkInvariants(ft);
-       ft_unref_rec(ft);
+  checkInvariants(ft);
+  ft_unref_rec(ft);
    
     // Postconditions & Invariants
     
@@ -1424,44 +1448,66 @@ split ft_split(ft* fgt, int index) {
 
 
 ft* concat_w_middle(ft* ft1, list* l,ft* ft2){
-    ft* res;
-    node* x;
+    ft* res=NULL;
+    node* x=NULL;
     /*we treat the different base cases first*/
-    if(ft1->type==EMPTY_TYPE && l==NULL)
-        return ft2;
+    if(ft1->type==EMPTY_TYPE && l==NULL){
+      res = ft2;
+      ft2->ref_count++;
+     
+    }
     else if(ft1->type==EMPTY_TYPE){
         x = first(l);
-        res = concat_w_middle(ft1,removel(l),ft2);
-        res =  add_elem_deep_recur(res,0,x);
+	ft* tmp2;
+	l=removel(l);
+        tmp2 = concat_w_middle(ft1,l,ft2);
+        res =  add_elem_deep_recur(tmp2,0,x);
+	ft_unref_rec(tmp2);
+	
     }
     else if(ft1->type==SINGLE_TYPE){
         ft* tmp = create_empty();
-        res = concat_w_middle(tmp,l,ft2);
-        res =  add_elem_deep_recur(res,0,ft1->true_ft->single);
+	ft* tmp2;
+        tmp2 = concat_w_middle(tmp,l,ft2);
+	ft1->true_ft->single->ref_count++;
+        res =  add_elem_deep_recur(tmp2,0,ft1->true_ft->single);
+	ft_unref_rec(tmp2);
+	ft_unref_rec(tmp);
+	
 
     }
     else if(l==NULL && ft2->type==EMPTY_TYPE){
-        return ft1;
+        res = ft1;
+      ft1->ref_count++;
+  
     }
     else if(ft2->type==EMPTY_TYPE){
         node* x = last(l);
-        res = concat_w_middle(ft1,remove_last(l),ft2);
-        res =  add_elem_deep_recur(res,1,x);
+	ft* tmp2;
+	l=remove_last(l);
+        tmp2 = concat_w_middle(ft1,l,ft2);
+        res =  add_elem_deep_recur(tmp2,1,x);
+	ft_unref_rec(tmp2);
     }
     else if(ft2->type==SINGLE_TYPE){
         ft* tmp = create_empty();
-        res = concat_w_middle(ft1,l,tmp);
-        res =  add_elem_deep_recur(res,1,ft2->true_ft->single);
+	ft*tmp2;
+        tmp2 = concat_w_middle(ft1,l,tmp);
+	ft1->true_ft->single->ref_count++;
+        res =  add_elem_deep_recur(tmp2,1,ft2->true_ft->single);
+	ft_unref_rec(tmp2);
+	ft_unref_rec(tmp);
     } else{
-        res = create_deep();
+        res = create_deep_withoutdeeper();
         /*copy prefix*/
         copy_pref(res,ft1);
+	incr_affix(ft1,1);
         /*copy suffix*/
         copy_suff(res,ft2);
-
-        ft*deeper_tmp=create_empty();
+	incr_affix(ft2,0);
+        ft*deeper_tmp=NULL;
         /* nodes on list*/
-        list* l1 = affix_to_list(ft1,1);
+        list* l1= affix_to_list(ft1,1);
         list* l2 = affix_to_list(ft2,0);
         l = concat(l1,l);
         l = concat(l,l2);
