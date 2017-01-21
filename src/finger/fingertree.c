@@ -511,7 +511,7 @@ list* affix_to_list(ft* fg,int preorsuf){
 }
 
 
-ft* ft_add(void* data, ft* fgt,int preorsuf) {
+ft* ft_add(imc_data_t* data, ft* fgt,int preorsuf) {
     // Preconditions & Invariants
     checkInvariants(fgt);
 
@@ -632,10 +632,7 @@ void* affix_lookup(affix* a, int index) {
     return NULL;
 }
 
-void* ft_lookup(ft* ft, int index) {
-    // Preconditions & Invariants
-    checkInvariants(ft);
-    
+imc_data_t* ft_lookup(ft* ft, int index) {
     if (ft->type == EMPTY_TYPE) {
         return NULL;
     }

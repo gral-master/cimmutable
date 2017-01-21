@@ -1,6 +1,10 @@
 #ifndef FINGER_H
 #define FINGER_H
+
 // Nodes
+typedef imc_data_t;
+typedef imc_key_t;
+
 enum node_type {NODE_TYPE, DATA_TYPE};
 
 typedef union true_node_t true_node_t;
@@ -8,12 +12,13 @@ typedef union true_node_t true_node_t;
 typedef struct {
     true_node_t* true_node;
     enum node_type type;
+    imc_key_t key;
     int size;
     int ref_count;
 } node;
 
 union true_node_t {
-    void* data;  //typedef imc_data_t;
+    imc_data_t* data;
     node* internal_node[3];
 };
 
@@ -33,17 +38,19 @@ typedef struct {
     true_ft_t* true_ft;
     enum ft_type type;
     int ref_count;
+    imc_key_t key;
     int size;
 } ft;
 
 typedef struct {
     node* nodes[4];
+    imc_key_t key;
     int size;
 } affix;
 
 typedef struct {
-    affix* prefix; // node* prefix[4];
-    affix* suffix; // node* suffix[4];
+    affix* prefix;
+    affix* suffix;
     ft* deeper;
 } deep;
 
@@ -71,12 +78,13 @@ typedef struct {
     affix* right;
 } splitnode;
 
+node* create_data_node(void* data);
 ft* create_empty();
-ft* ft_add(void* data,ft* fgt,int preorsuf);
+ft* ft_add(imc_data_t* data,ft* fgt,int preorsuf);
 view ft_delete(ft*fgt,int preorsuf);
 ft* ft_concat(ft* fin1,ft* fin2);
 void ft_display(ft* fgt);
-void* ft_lookup(ft* ft, int index); //typedef imc_data_t;
+imc_data_t* ft_lookup(ft* ft, int index);
 void ft_unref(ft* ft);
 void node_unref(node* n);
 void node_display(node* node);

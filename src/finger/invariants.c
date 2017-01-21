@@ -30,8 +30,6 @@ void checkNode(node* n, int level) {
     }
     
     assert(n->type == NODE_TYPE || n->type == DATA_TYPE);
-    
-    
 }
 
 void checkAffix(affix* a, int preorsuf, int level) {
