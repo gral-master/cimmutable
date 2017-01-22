@@ -8,7 +8,7 @@
 
 #define NODE_MAX_SIZE 4
 
-#define FINGER_DEBUG
+//#define FINGER_DEBUG
 
 #ifdef FINGER_DEBUG
 #define finger_debug(str) fprintf(stdout, "%s\n", str);
@@ -50,10 +50,90 @@ fingernode_t* copy_node(fingernode_t* node){
     break;
   case TREE_NODE:
     memcpy(res->content.children, node->content.children, node->arity * sizeof(fingernode_t*));
+    increment_children_refs(res);
     break;
   default:
     break;
   }
+  return res;
+}
+
+/**
+ * Update a fingernode's lookup index
+ */
+void update_lookup_idx(fingernode_t* node) {
+  switch (node->node_type) {
+  case TREE_NODE:
+    node->lookup_idx = 0;
+    for (int i=0; i<node->arity; i++) {
+      node->lookup_idx += node->content.children[i]->arity;
+    }
+    break;
+  case DATA_NODE:
+    node->lookup_idx = node->arity;
+    break;
+  default:
+    break;
+  }
+}
+
+/**
+ * Increment a node's children's refs
+ */
+void increment_children_refs(fingernode_t* node) {
+  if (node->node_type == TREE_NODE) {
+    for (int i=0; i<node->arity; i++) {
+      node->content.children[i]->ref_counter++;
+    }
+  }
+}
+
+/**
+ * Split a fingernode into 2 fingernodes, according to leftcount
+ *   - Return the left side of the split
+ *   - Put the pointer to the right side in rem
+ */
+fingernode_t* split_fingernode_content(int leftcount, fingernode_t* originals, fingernode_t** rem) {
+  finger_debug("split_fingernode_content");
+  int rightcount = originals->arity - leftcount;
+  fingernode_t* res = make_fingernode(leftcount, originals->node_type);
+  fingernode_t* remainder = make_fingernode(rightcount, originals->node_type);
+  switch (originals->node_type) {
+  case TREE_NODE:
+    memcpy(res->content.children, originals->content.children, leftcount * sizeof(fingernode_t*));
+    memcpy(remainder->content.children, originals->content.children + leftcount, rightcount * sizeof(fingernode_t*));
+    increment_children_refs(res);
+    increment_children_refs(remainder);
+    break;
+  case DATA_NODE:
+    memcpy(res->content.data, originals->content.data, leftcount * sizeof(finger_data_t*));
+    memcpy(remainder->content.data, originals->content.data + leftcount, rightcount * sizeof(finger_data_t*));
+    break;
+  }
+  update_lookup_idx(res);
+  update_lookup_idx(remainder);
+  *rem = remainder;
+  return res;
+}
+
+/**
+ * Copy fingernode node, with a single element removed from the tail
+ * of its content.
+ */
+fingernode_t* copy_remove_tail(fingernode_t* node) {
+  finger_debug("copy_remove_tail");
+  fingernode_t* res = make_fingernode(node->arity - 1, node->node_type);
+  int size = node->arity * node->node_type == TREE_NODE ? sizeof(fingernode_t*) : sizeof(finger_data_t*);
+  switch (node->node_type) {
+  case TREE_NODE:
+    memcpy(res->content.children, node->content.children, size * res->arity);
+    break;
+  case DATA_NODE:
+    memcpy(res->content.data, node->content.data, size * res->arity);
+    break;
+  }
+  update_lookup_idx(res);
+  increment_children_refs(res);
   return res;
 }
 
@@ -139,15 +219,10 @@ fingernode_t* split_append_treenode (fingernode_t* new_node, fingernode_t* old_n
   append->content.children[0] = append_child;
 
   // Index updates
-  res_node->lookup_idx = 0;
-  for (int i=0; i<res_node->arity; i++) {
-    res_node->lookup_idx += res_node->content.children[i]->lookup_idx;
-  }
-  append_child->lookup_idx = 0;
-  for (int i=0; i<append_child->arity; i++) {
-    append_child->lookup_idx += append_child->content.children[i]->lookup_idx;
-  }
-  append->lookup_idx = append_child->lookup_idx;
+  update_lookup_idx(res_node);
+  update_lookup_idx(append_child);
+  update_lookup_idx(append);
+
   *to_append = append;
   return res_node;
 }
@@ -179,9 +254,10 @@ fingernode_t* split_append_datanode (finger_data_t* new_value, fingernode_t* old
   append->content.children[0] = append_child;
 
   // Index updates
-  res_node->lookup_idx = res_node->arity;
-  append_child->lookup_idx = append_child->arity;
-  append->lookup_idx = append_child->lookup_idx;
+  update_lookup_idx(res_node);
+  update_lookup_idx(append_child);
+  update_lookup_idx(append);
+
   *to_append = append;
   return res_node;
 }
@@ -537,6 +613,140 @@ deep_t* append(deep_t* tree, finger_data_t* value, side_t side) {
 }
 
 /**
+ * Given a finger tree and a reference to a pointer, do the recursive work for
+ * balancing the finger tree after deletion of the last value
+ * data is wrapped inside a fingernode for type issues
+ */
+deep_t* pop_deep(deep_t* tree, fingernode_t** data) {
+  finger_debug("pop_deep");
+  if (tree->deep_type == EMPTY_NODE) {
+    *data = NULL;
+    return NULL;
+  }
+  else if (tree->deep_type == SINGLE_NODE) {
+    fingernode_t* single = tree->content.single;
+    *data = tree->content.single->content.children[single->arity - 1];
+    if (single->arity == 1) {
+      return make_empty_node();
+    }
+    else {
+      return make_single_node(copy_remove_tail(single));
+    }
+  }
+  else if (tree->deep_type == DEEP_NODE) {
+    fingernode_t* cur_node = tree->right;
+    *data = cur_node->content.children[cur_node->arity - 1];
+    deep_t* new_deep;
+    if (cur_node->arity > 1) { // Just chop from the suffix
+      fingernode_t* new_suffix = copy_remove_tail(cur_node);
+      tree->left->ref_counter++;
+      tree->content.deeper->ref_counter++;
+      new_deep = make_deep_node(tree->left, tree->content.deeper, new_suffix);
+    }
+    else if (cur_node->arity == 1) {                 // We recursive boyz
+      fingernode_t* promo_node;
+      deep_t* pop_deeper = pop_deep(tree->content.deeper, &promo_node);
+      if (!pop_deeper) {   // We're splitting the prefix/suffix and making a deep->empty
+        if (tree->left->arity == 1) {
+          tree->left->ref_counter++;
+          new_deep = make_single_node(tree->left);
+        }
+        else {
+          fingernode_t* prefix;
+          fingernode_t* suffix;
+          prefix = split_fingernode_content(1, tree->left, &suffix);
+          new_deep = make_deep_node(prefix, make_empty_node(), suffix);
+        }
+      }
+      else {               // Just append node to the prefix/suffix
+        promo_node->ref_counter++;
+        new_deep = make_deep_node(tree->left, pop_deeper, promo_node);
+      }
+    }
+    return new_deep;
+  }
+  else {
+    return NULL;
+  }
+}
+
+/**
+ * Given a finger tree and a reference to a pointer, store the last
+ * value of the finger tree into the pointer, and return finger tree created by
+ * removing that value from the end of the vector
+ */
+deep_t* pop(deep_t* tree, finger_data_t** data) {
+  finger_debug("pop");
+  if (tree->deep_type == EMPTY_NODE) {
+    *data = NULL;
+    return NULL;
+  }
+  else if (tree->deep_type == SINGLE_NODE) {
+    fingernode_t* single = tree->content.single;
+    *data = tree->content.single->content.data[single->arity - 1];
+    if (single->arity == 1) {
+      return make_empty_node();
+    }
+    else {
+      return make_single_node(copy_remove_tail(single));
+    }
+  }
+  else if (tree->deep_type == DEEP_NODE) {
+    fingernode_t* cur_node = tree->right;
+    *data = cur_node->content.data[cur_node->arity - 1];
+    deep_t* new_deep;
+    if (cur_node->arity > 1) { // Just chop from the suffix
+      fingernode_t* new_suffix = copy_remove_tail(cur_node);
+      tree->left->ref_counter++;
+      tree->content.deeper->ref_counter++;
+      new_deep = make_deep_node(tree->left, tree->content.deeper, new_suffix);
+    }
+    else if (cur_node->arity == 1) {                 // We recursive boyz
+      fingernode_t* promo_node;
+      deep_t* pop_deeper = pop_deep(tree->content.deeper, &promo_node);
+      if (!pop_deeper) {   // We're splitting the prefix/suffix and making a deep->empty
+        if (tree->left->arity == 1) {
+          tree->left->ref_counter++;
+          new_deep = make_single_node(tree->left);
+        }
+        else {
+          fingernode_t* prefix;
+          fingernode_t* suffix;
+          prefix = split_fingernode_content(1, tree->left, &suffix);
+          new_deep = make_deep_node(prefix, make_empty_node(), suffix);
+        }
+      }
+      else {               // We're promoting the node lower node, so suffix should actually be empty rn
+        promo_node->ref_counter++;
+        new_deep = make_deep_node(tree->left, pop_deeper, promo_node);
+      }
+    }
+    return new_deep;
+  }
+  else {
+    return NULL;
+  }
+}
+
+/**
+ * Get a vector's number of elements
+ */
+int vector_size(deep_t* tree) {
+  finger_debug("size");
+  deep_t* deep_cur = tree;
+  int size = 0;
+  while (deep_cur->deep_type == DEEP_NODE) {
+    size += deep_cur->left->lookup_idx;
+    size += deep_cur->right->lookup_idx;
+    deep_cur = deep_cur->content.deeper;
+  }
+  if (deep_cur->deep_type == SINGLE_NODE) {
+    size += deep_cur->content.single->lookup_idx;
+  }
+  return size;
+}
+
+/**
  * Given an index and a starting index, find the corresponding value in a fingernode
  */
 finger_data_t* lookup_fingernodes(fingernode_t* node, int idx, int idx_cur) {
@@ -721,17 +931,19 @@ void display(finger_data_t* data) {
 int main(int argc, char** argv) {
   deep_t* tree = make_empty_node();
 
+  int size = 32;
+
   fprintf(stdout, "Append\n");
-  for (int i=0; i<33; i++) {
+  for (int i=0; i<size; i++) {
     fprintf(stderr, "%d, \n", i);
     int* data = malloc(sizeof(int));
     *data = i;
     tree = append(tree, data, FINGER_RIGHT);
   }
+  fprintf(stdout, "Size: %d (should be %d)\n", vector_size(tree), size);
 
   fprintf(stdout, "Lookup\n");
   fprintf(stdout, "%d\n", *lookup(tree, 2));
-  node_type(tree);
 
   dump_deep(tree, &display);
 
@@ -740,6 +952,12 @@ int main(int argc, char** argv) {
   *upd = 589420;
   tree = update_deep(tree, 0, upd);
 
-  node_type(tree);
+  dump_deep(tree, &display);
+
+  fprintf(stdout, "pop \n");
+  int* pop_val;
+  tree = pop(tree, &pop_val);
+  fprintf(stdout, "Last value: %d\n", *pop_val);
+  fprintf(stdout, "Remaining values:\n");
   dump_deep(tree, &display);
 }
