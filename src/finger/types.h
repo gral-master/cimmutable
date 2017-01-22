@@ -70,6 +70,10 @@ void dump_deep(deep_t* deep, void (*display)(finger_data_t*));
 deep_t* append_node(deep_t* deep, fingernode_t* node, side_t side);
 deep_t* append(deep_t* tree, finger_data_t* value, side_t side);
 
+/* Queue pop */
+deep_t* pop_deep(deep_t* tree, fingernode_t** data);
+deep_t* pop(deep_t* tree, finger_data_t** data);
+
 /* Index-based lookup */
 finger_data_t* lookup_fingernodes(fingernode_t* node, int idx, int idx_cur);
 finger_data_t* lookup(deep_t* tree, int idx);
