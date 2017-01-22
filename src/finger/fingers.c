@@ -8,7 +8,7 @@
 
 #define NODE_MAX_SIZE 4
 
-#define FINGER_DEBUG
+//#define FINGER_DEBUG
 
 #ifdef FINGER_DEBUG
 #define finger_debug(str) fprintf(stdout, "%s\n", str);
@@ -50,10 +50,90 @@ fingernode_t* copy_node(fingernode_t* node){
     break;
   case TREE_NODE:
     memcpy(res->content.children, node->content.children, node->arity * sizeof(fingernode_t*));
+    increment_children_refs(res);
     break;
   default:
     break;
   }
+  return res;
+}
+
+/**
+ * Update a fingernode's lookup index
+ */
+void update_lookup_idx(fingernode_t* node) {
+  switch (node->node_type) {
+  case TREE_NODE:
+    node->lookup_idx = 0;
+    for (int i=0; i<node->arity; i++) {
+      node->lookup_idx += node->content.children[i]->arity;
+    }
+    break;
+  case DATA_NODE:
+    node->lookup_idx = node->arity;
+    break;
+  default:
+    break;
+  }
+}
+
+/**
+ * Increment a node's children's refs
+ */
+void increment_children_refs(fingernode_t* node) {
+  if (node->node_type == TREE_NODE) {
+    for (int i=0; i<node->arity; i++) {
+      node->content.children[i]->ref_counter++;
+    }
+  }
+}
+
+/**
+ * Split a fingernode into 2 fingernodes, according to leftcount
+ *   - Return the left side of the split
+ *   - Put the pointer to the right side in rem
+ */
+fingernode_t* split_fingernode_content(int leftcount, fingernode_t* originals, fingernode_t** rem) {
+  finger_debug("split_fingernode_content");
+  int rightcount = originals->arity - leftcount;
+  fingernode_t* res = make_fingernode(leftcount, originals->node_type);
+  fingernode_t* remainder = make_fingernode(rightcount, originals->node_type);
+  switch (originals->node_type) {
+  case TREE_NODE:
+    memcpy(res->content.children, originals->content.children, leftcount * sizeof(fingernode_t*));
+    memcpy(remainder->content.children, originals->content.children + leftcount, rightcount * sizeof(fingernode_t*));
+    increment_children_refs(res);
+    increment_children_refs(remainder);
+    break;
+  case DATA_NODE:
+    memcpy(res->content.data, originals->content.data, leftcount * sizeof(finger_data_t*));
+    memcpy(remainder->content.data, originals->content.data + leftcount, rightcount * sizeof(finger_data_t*));
+    break;
+  }
+  update_lookup_idx(res);
+  update_lookup_idx(remainder);
+  *rem = remainder;
+  return res;
+}
+
+/**
+ * Copy fingernode node, with a single element removed from the tail
+ * of its content.
+ */
+fingernode_t* copy_remove_tail(fingernode_t* node) {
+  finger_debug("copy_remove_tail");
+  fingernode_t* res = make_fingernode(node->arity - 1, node->node_type);
+  int size = node->arity * node->node_type == TREE_NODE ? sizeof(fingernode_t*) : sizeof(finger_data_t*);
+  switch (node->node_type) {
+  case TREE_NODE:
+    memcpy(res->content.children, node->content.children, size * res->arity);
+    break;
+  case DATA_NODE:
+    memcpy(res->content.data, node->content.data, size * res->arity);
+    break;
+  }
+  update_lookup_idx(res);
+  increment_children_refs(res);
   return res;
 }
 
@@ -139,15 +219,10 @@ fingernode_t* split_append_treenode (fingernode_t* new_node, fingernode_t* old_n
   append->content.children[0] = append_child;
 
   // Index updates
-  res_node->lookup_idx = 0;
-  for (int i=0; i<res_node->arity; i++) {
-    res_node->lookup_idx += res_node->content.children[i]->lookup_idx;
-  }
-  append_child->lookup_idx = 0;
-  for (int i=0; i<append_child->arity; i++) {
-    append_child->lookup_idx += append_child->content.children[i]->lookup_idx;
-  }
-  append->lookup_idx = append_child->lookup_idx;
+  update_lookup_idx(res_node);
+  update_lookup_idx(append_child);
+  update_lookup_idx(append);
+
   *to_append = append;
   return res_node;
 }
@@ -179,9 +254,10 @@ fingernode_t* split_append_datanode (finger_data_t* new_value, fingernode_t* old
   append->content.children[0] = append_child;
 
   // Index updates
-  res_node->lookup_idx = res_node->arity;
-  append_child->lookup_idx = append_child->arity;
-  append->lookup_idx = append_child->lookup_idx;
+  update_lookup_idx(res_node);
+  update_lookup_idx(append_child);
+  update_lookup_idx(append);
+
   *to_append = append;
   return res_node;
 }
