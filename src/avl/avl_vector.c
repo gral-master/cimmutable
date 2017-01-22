@@ -9,7 +9,6 @@
 #define MAX(x,y) x < y ? y : x
 
 
-
 /*******************
  *   Boxing & co   *
  *******************/
@@ -50,8 +49,7 @@ avl_vector_t* avl_vector_create() {
 
 
 int avl_vector_size (avl_vector_t* vec) {
-  if (vec) return vec->max_index + 1; /* +1 because the array is 0-indexed */
-  else return -1 ;
+  return vec->max_index + 1; /* +1 because the array is 0-indexed */
 }
 
 
@@ -139,7 +137,7 @@ avl_vector_t* avl_vector_merge (avl_vector_t* vec_front,
   _merge_vector_internal(new->vector, vec_front->vector->root, 0);
   _merge_vector_internal(new->vector, vec_tail->vector->root,
 			 vec_front->max_index+1);
-  new->max_index = vec_front->max_index + vec_tail->max_index;
+  new->max_index = vec_front->max_index + vec_tail->max_index + 1;
   return new;
 }
 
@@ -181,7 +179,7 @@ int avl_vector_split(avl_vector_t* vec_in, int index,
 int avl_vector_unref(avl_vector_t* vec) {
   if (vec) {
     avl_erase_tree(vec->vector);
-    //free(vec);
+    free(vec);
   }
   return 1;
 }

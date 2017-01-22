@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "avl_vector.h"
 
@@ -12,7 +13,7 @@ vector_data_t* make_data(int i) {
   return data;
 }
 char* data_as_string(vector_data_t* data) {
-  char* buf = malloc(15 * sizeof(char)); /* 15? because. */
+  char* buf = malloc(20 * sizeof(char)); /* 20 char is enough to old 2**64. */
   sprintf(buf, "%d", data->content);
   return buf;
 }
@@ -109,7 +110,7 @@ void test_unref(int size) {
   for (int i = 0; i < size; i++) {
     avl_vector_t* t = avl_vector_push(v, make_data(i));
     avl_vector_unref(v);
-    *v = *t;
+    v = t;
   }
   printf("After successive insertions (with unref of previous versions):\nv = ");
   avl_vector_dump(v);
