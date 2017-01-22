@@ -368,6 +368,131 @@ imc_avl_node_t* imc_avl_insert_rec( imc_avl_node_t* tree,
 
 }*/
 
+imc_key_t* get_lowest_key(imc_avl_node_t* tree) {
+    if (tree == NULL) return NULL;
+    if (tree->left == NULL) return tree->key;
+    else return get_lowest_key(tree->left);
+}
+
+int imc_avl_post_check_insert(imc_avl_node_t* pre_tree, imc_avl_node_t* post_tree, imc_key_t* key, imc_data_t* data, imc_key_t** old_key, int (*comparator)(imc_key_t*, imc_key_t*)) {
+    int result = 0;
+    if (post_tree == NULL && pre_tree != NULL) {
+        printf("Error Insert : post null when pre isn't\n");
+        result += -1;
+    }
+    else if (post_tree == NULL) result += 0;
+    else if (pre_tree == NULL) {
+         imc_avl_post_check_insert(pre_tree, post_tree->left, key, data, old_key, comparator);
+         if (post_tree->key == key) {
+            if (post_tree->data != data) {
+                printf("Error Insert : the new data value is wrong\n");
+                result += -1;
+            }
+        }
+        result += imc_avl_post_check_insert(pre_tree, post_tree->right, key, data, old_key, comparator);
+    }
+    else {
+        imc_avl_post_check_insert(pre_tree->left, post_tree->left, key, data, old_key, comparator);
+        // verify order
+        if (comparator(post_tree>key, *old_key) < 0) {
+            printf("Error Insert : key order not respected\n");
+            result += -1;
+        }
+        *old_key = post_tree->key;
+
+        if (post_tree->key == key) {
+            if (post_tree->data != data) {
+                printf("Error Insert : the new data value is wrong\n");
+                result += -1;
+            }
+        }
+        else if (post_tree->key == pre_tree->key) {
+            if (post_tree->data != pre_tree->data) {
+                printf("Error Insert : key correspond but not value\n");
+                result += -1;
+            }
+        }
+        else {
+            printf("Error Insert : uncorresponding key\n");
+            result += -1;
+        }
+
+        result += imc_avl_post_check_insert(pre_tree->right, post_tree->right, key, data, old_key, comparator);
+    }
+    return result;
+}
+
+
+void imc_avl_get_key_values(imc_avl_node_t* tree, imc_key_t** tab_key, imc_data_t** tab_data, int* indice){
+    if (tree != NULL) {
+        imc_avl_get_key_values(tree->left, tab_key, tab_data, indice);
+        tab_key[*indice] = tree->key;
+        tab_data[*indice] = tree->data;
+        *indice = *indice + 1;
+        imc_avl_get_key_values(tree->right, tab_key, tab_data, indice);
+    }
+
+}
+
+int imc_avl_post_check_insert2(imc_avl_node_t* pre_tree, imc_avl_node_t* post_tree, imc_key_t* key, imc_data_t* data) {
+    int size_pre_tree = imc_avl_size(pre_tree);
+    int size_post_tree = imc_avl_size(post_tree);
+
+    int is_valid = 0;
+
+    imc_key_t** tab_key_pre_tree = malloc(sizeof(imc_key_t*) * size_pre_tree);
+    imc_key_t** tab_key_post_tree = malloc(sizeof(imc_key_t*) * size_post_tree);
+
+    imc_key_t** tab_data_pre_tree = malloc(sizeof(imc_data_t*) * size_pre_tree);
+    imc_key_t** tab_data_post_tree = malloc(sizeof(imc_data_t*) * size_post_tree);
+
+    int indice_pre_tree = 0;
+    int indice_post_tree = 0;
+
+    imc_avl_get_key_values(pre_tree, tab_key_pre_tree, tab_data_pre_tree, &indice_pre_tree);
+    imc_avl_get_key_values(post_tree, tab_key_post_tree, tab_data_post_tree, &indice_post_tree);
+
+    indice_pre_tree = 0;
+    indice_post_tree = 0;
+
+    while ((indice_post_tree < size_post_tree || indice_pre_tree < size_pre_tree || val_abs(size_pre_tree- size_post_tree) > 1) && is_valid == 0) {
+        if (tab_key_post_tree[indice_post_tree] == key) {
+            if (tab_data_post_tree[indice_post_tree] != data) {
+                printf("Error Insert : the new data value is wrong\n");
+                is_valid = -1;
+            }
+            indice_post_tree++;
+        }
+        else if (tab_key_post_tree[indice_post_tree] == tab_key_pre_tree[indice_pre_tree]) {
+            if (tab_data_post_tree[indice_post_tree] != tab_data_pre_tree[indice_pre_tree]) {
+                printf("Error Insert : key correspond but not value\n");
+                is_valid = -1;
+            }
+            indice_pre_tree++;
+            indice_post_tree++;
+        }
+        else {
+            printf("Error Insert : uncorresponding key\n");
+            is_valid = -1;
+        }
+    }
+
+    free(tab_data_pre_tree);
+    free(tab_data_post_tree);
+    free(tab_key_post_tree);
+    free(tab_key_pre_tree);
+
+    if (val_abs(size_pre_tree- size_post_tree) > 1) {
+        printf("Error Insert : problem size\n");
+            return -1;
+    } else if (is_valid == 0) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+
 imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
                                 imc_data_t* data, imc_key_t* key,
                                 int (*comparator)(imc_key_t*, imc_key_t*),
@@ -375,27 +500,24 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
                                 imc_data_t** prev_data) {
 
     imc_avl_node_t* result;
+
+    imc_avl_node_t* copy_tree = imc_avl_copy(tree);
     int k;
-    /*int indice = 0;
-
-
-    imc_avl_node_t tree_condi = imc_avl_copy(tree);
-    imc_key_t** tab_pre = malloc(sizeof(imc_key_t*) * imc_avl_size(tree_condi));
-    imc_avl_keys*/
     
     k = check_invariant(tree, comparator);
     if (k == -1) printf("INSERT_ERROR_AV\n");
     else printf("INSERT_OK_AV\n");
 
     result = imc_avl_insert_rec(tree, data, key, comparator, prev_data);
-
-
-
-
+    
     k = check_invariant(result, comparator);
     if (k == -1) printf("INSERT_ERROR_AP\n");
     else printf("INSERT_OK_AP\n");
 
+    k = imc_avl_post_check_insert2(copy_tree, result, key, data);
+    free(copy_tree);
+    if (k < 0) printf("INSERT_POSTCONDIPB : %d\n", k);
+    else printf("INSERT_POSTCONDI_OK\n");
     //imc_avl_dump(result, print4);
 
     return result;
@@ -623,6 +745,64 @@ imc_avl_node_t* imc_avl_remove_rec( imc_avl_node_t* tree,
     return new_node;
 }
 
+int imc_avl_post_check_delete(imc_avl_node_t* pre_tree, imc_avl_node_t* post_tree, imc_key_t* key, imc_data_t* data) {
+    int size_pre_tree = imc_avl_size(pre_tree);
+    int size_post_tree = imc_avl_size(post_tree);
+
+    int is_valid = 0;
+
+    imc_key_t** tab_key_pre_tree = malloc(sizeof(imc_key_t*) * size_pre_tree);
+    imc_key_t** tab_key_post_tree = malloc(sizeof(imc_key_t*) * size_post_tree);
+
+    imc_key_t** tab_data_pre_tree = malloc(sizeof(imc_data_t*) * size_pre_tree);
+    imc_key_t** tab_data_post_tree = malloc(sizeof(imc_data_t*) * size_post_tree);
+
+    int indice_pre_tree = 0;
+    int indice_post_tree = 0;
+
+    imc_avl_get_key_values(pre_tree, tab_key_pre_tree, tab_data_pre_tree, &indice_pre_tree);
+    imc_avl_get_key_values(post_tree, tab_key_post_tree, tab_data_post_tree, &indice_post_tree);
+
+    indice_pre_tree = 0;
+    indice_post_tree = 0;
+
+    while ((indice_post_tree < size_post_tree || indice_pre_tree < size_pre_tree || val_abs(size_pre_tree - size_post_tree) > 1) && is_valid == 0) {
+        if (tab_key_pre_tree[indice_pre_tree] == key) {
+            if (tab_data_pre_tree[indice_pre_tree] != data) {
+                printf("Error Delete : the new data value is wrong\n");
+                is_valid = -1;
+            }
+            indice_pre_tree++;
+        }
+        else if (tab_key_post_tree[indice_post_tree] == tab_key_pre_tree[indice_pre_tree]) {
+            if (tab_data_post_tree[indice_post_tree] != tab_data_pre_tree[indice_pre_tree]) {
+                printf("Error Delete : key correspond but not value\n");
+                is_valid = -1;
+            }
+            indice_pre_tree++;
+            indice_post_tree++;
+        }
+        else {
+            printf("Error Delete : uncorresponding key\n");
+            is_valid = -1;
+        }
+    }
+
+    free(tab_data_pre_tree);
+    free(tab_data_post_tree);
+    free(tab_key_post_tree);
+    free(tab_key_pre_tree);
+
+    if (val_abs(size_pre_tree - size_post_tree) > 1) {
+        printf("Error Delete : problem size\n");
+            return -1;
+    } else if (is_valid == 0) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
 
 imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
                                 imc_key_t* key,
@@ -631,6 +811,8 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
 
     imc_avl_node_t* result;
     int k;
+
+    imc_avl_node_t* copy_tree = imc_avl_copy(tree);
 
     k = check_invariant(tree, comparator);
     if (k == -1) printf("DELETE_ERROR_AV\n");
@@ -641,6 +823,12 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
     k = check_invariant(result, comparator);
     if (k == -1) printf("DELETE_ERROR_AP\n");
     else printf("DELETE_OK_AP\n");
+
+    k = imc_avl_post_check_delete(copy_tree, result, key, *removed_data);
+    free(copy_tree);
+
+    if (k < 0) printf("DELETE_POSTCONDIPB : %d\n", k);
+    else printf("DELETE_POSTCONDI_OK\n");
 
     return result;
 
