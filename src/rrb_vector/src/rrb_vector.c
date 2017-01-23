@@ -36,11 +36,11 @@ int *make_meta() {
 rrb_t *create(bool top) {
     debug_print("create, beginning\n");
     rrb_t *rrb = malloc(sizeof *rrb);
-    rrb->level = 1;
     rrb->ref = 1;
-    rrb->elements = 0;
+    rrb->level = 1;
     rrb->full = false;
     rrb->meta = NULL;
+    rrb->elements = 0;
     if (top == true) {
         make_nodes(rrb);
     } else {
@@ -129,9 +129,9 @@ bool is_full(const rrb_t *rrb) {
 /** Easily clone the informations. */
 void clone_info(rrb_t *clone, const rrb_t *src) {
     debug_print("clone_info, beginning\n");
+    clone->full = src->full;
     clone->level = src->level;
     clone->elements = src->elements;
-    clone->full = src->full;
     debug_print("clone_info, end\n");
 }
 
@@ -391,7 +391,7 @@ imc_data_t *lookup(const rrb_t* rrb, int* index, bool meta) {
 /** Checks if the index is correct then looks for a data into the tree. */
 imc_data_t *rrb_lookup(const rrb_t *rrb, int index) {
     debug_print("rrb_lookup, beginning\n");
-    if (index >= rrb->elements) {
+    if (index >= rrb_size(rrb)) {
         debug_print("rrb_lookup, no index\n");
         return NULL;
     } else {
@@ -445,7 +445,7 @@ rrb_t *update_node(rrb_t *rrb, int *index, imc_data_t *data, bool meta) {
 /** Checks if index is inside the tree, and update the data at index by data. */
 rrb_t *rrb_update(const rrb_t *rrb, int index, imc_data_t *data) {
     debug_print("rrb_update, beginning\n");
-    if (index >= rrb->elements) {
+    if (index >= rrb_size(rrb)) {
         debug_print("rrb_lookup, no index\n");
         return NULL;
     } else {
@@ -512,14 +512,14 @@ rrb_t *rrb_pop(rrb_t *rrb, imc_data_t **data) {
 /** Inits both left and right trees, according to the RRB-Tree provided. */
 void init_left_right(const rrb_t *rrb, rrb_t **left, rrb_t **right, bool leafs) {
     if (leafs == false) {
-        *left = create_w_nodes();
+        *left  = create_w_nodes();
         *right = create_w_nodes();
-        (*left)->level = rrb->level;
+        (*left )->level = rrb->level;
         (*right)->level = rrb->level;
-        (*left)->elements += 1;
+        (*left )->elements += 1;
         (*right)->elements += 1;
     } else {
-        *left = create_w_leafs();
+        *left  = create_w_leafs();
         *right = create_w_leafs();
     }
 }
@@ -580,7 +580,7 @@ void consolidate_tree(rrb_t **rrb, bool top) {
         }
 
         (*rrb)->elements = 0;
-        if ((*rrb)->level > 1) {
+        if (contains_nodes(*rrb)) {
             set_proper_size(*rrb);
             set_proper_meta(*rrb);
         }
@@ -651,7 +651,9 @@ int split_node(const rrb_t *rrb, rrb_t **left, rrb_t **right,
 int rrb_split(const rrb_t *rrb, rrb_t **left, rrb_t **right, int index) {
     debug_print("rrb_split, beginning\n");
     int value = 0;
-    if (index > rrb->elements) {
+    if ((size_t) index > rrb_size(rrb)) {
+        *left  = NULL;
+        *right = NULL;
         return value;
     }
 
@@ -664,4 +666,8 @@ int rrb_split(const rrb_t *rrb, rrb_t **left, rrb_t **right, int index) {
     }
     consolidate_trees(left, right);
     return value;
+}
+
+rrb_t *rrb_merge(const rrb_t *left, const rrb_t *right) {
+    return NULL;
 }
