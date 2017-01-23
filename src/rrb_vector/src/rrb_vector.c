@@ -391,7 +391,7 @@ imc_data_t *lookup(const rrb_t* rrb, int* index, bool meta) {
 /** Checks if the index is correct then looks for a data into the tree. */
 imc_data_t *rrb_lookup(const rrb_t *rrb, int index) {
     debug_print("rrb_lookup, beginning\n");
-    if (index >= rrb_size(rrb)) {
+    if ((size_t) index >= rrb_size(rrb)) {
         debug_print("rrb_lookup, no index\n");
         return NULL;
     } else {
@@ -445,7 +445,7 @@ rrb_t *update_node(rrb_t *rrb, int *index, imc_data_t *data, bool meta) {
 /** Checks if index is inside the tree, and update the data at index by data. */
 rrb_t *rrb_update(const rrb_t *rrb, int index, imc_data_t *data) {
     debug_print("rrb_update, beginning\n");
-    if (index >= rrb_size(rrb)) {
+    if ((size_t) index >= rrb_size(rrb)) {
         debug_print("rrb_lookup, no index\n");
         return NULL;
     } else {
