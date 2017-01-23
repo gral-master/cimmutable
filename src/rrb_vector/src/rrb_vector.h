@@ -13,7 +13,6 @@ typedef struct _rrb {
     int elements; // Number of elements contained.
     int *meta;    // Indicates if relaxed tree.
     bool full;    // Indicates if the node is full.
-    bool leafs;   // Indicates if terminal node.
     union {
         struct _rrb **child;
         imc_data_t **leaf;

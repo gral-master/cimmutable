@@ -9,7 +9,7 @@ void tabulation(int number, FILE *file) {
 void dump_nodes(rrb_t *rrb, FILE *file, int tab) {
     tabulation(tab, file);
     fprintf(file, "node%p[label = \"", rrb);
-    if (rrb->leafs == true) {
+    if (rrb->level == 1) {
         for (int i = 0; i < 32; i++) {
             if (rrb->nodes.leaf[i] != NULL) {
                 if (i == 0) fprintf(file, "<f%p> %d", rrb->nodes.leaf[i], i);
@@ -36,7 +36,7 @@ void dump_nodes(rrb_t *rrb, FILE *file, int tab) {
 /** Dump the edges into the dotfile. */
 void dump_edges(rrb_t *rrb, FILE *file, int tab) {
     tabulation(tab, file);
-    if (rrb->leafs == true) {
+    if (rrb->level == 1) {
         return;
     }
     for (int i = 0; i < 32; i++) {
@@ -70,7 +70,7 @@ void rrb_to_dotfile(rrb_t *rrb, char *path) {
 /** Pretty print the structure into the file. */
 void pp(const rrb_t *rrb, int tab, FILE *file) {
     if (rrb != NULL) {
-        if (rrb->leafs == true) {
+        if (rrb->level == 1) {
             tabulation(tab, file);
             fprintf(file, "Node {\n");
             for (int i = 0; i < 32; i++) {
@@ -115,7 +115,7 @@ void rrb_pp_file(const rrb_t *rrb, char *path) {
 /** Pretty print the structure with pointers to the file, w/ or w/o leafs. */
 void ppp(const rrb_t *rrb, int tab, bool leafs, FILE *file) {
     if (rrb != NULL) {
-        if (rrb->leafs == true) {
+        if (rrb->level == 1) {
             tabulation(tab, file);
             fprintf(file, "Node %p { ", rrb);
             if (leafs == false) {

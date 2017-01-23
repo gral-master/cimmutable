@@ -16,7 +16,6 @@ void consolidate_tree(rrb_t **rrb, bool top);
 /** Creates an empty array of nodes into rrb. */
 void make_nodes(rrb_t *rrb) {
     debug_print("make_nodes, beginning\n");
-    rrb->leafs = false;
     rrb->nodes.child = calloc(32, sizeof *rrb->nodes.child);
     debug_print("make_nodes, end\n");
 }
@@ -24,7 +23,6 @@ void make_nodes(rrb_t *rrb) {
 /** Creates an empty array of leafs into rrb. */
 void make_datas(rrb_t *rrb) {
     debug_print("make_datas, beginning\n");
-    rrb->leafs = true;
     rrb->nodes.leaf = calloc(32, sizeof *rrb->nodes.leaf);
     debug_print("make_datas, end\n");
 }
@@ -67,13 +65,13 @@ rrb_t *create_w_nodes() {
 /** Checks if rrb contains data. */
 bool contains_leafs(const rrb_t *rrb) {
     debug_print("contains_leafs\n");
-    return rrb->leafs == true;
+    return rrb->level == 1;
 }
 
 /** Checks if rrb contains nodes. */
 bool contains_nodes(const rrb_t *rrb) {
     debug_print("contains_nodes\n");
-    return rrb->leafs == false;
+    return rrb->level > 1;
 }
 
 /** Creates an empty RRB-Vector. */
@@ -134,7 +132,6 @@ void clone_info(rrb_t *clone, const rrb_t *src) {
     clone->level = src->level;
     clone->elements = src->elements;
     clone->full = src->full;
-    clone->leafs = src->leafs;
     debug_print("clone_info, end\n");
 }
 
