@@ -668,6 +668,179 @@ int rrb_split(const rrb_t *rrb, rrb_t **left, rrb_t **right, int index) {
     return value;
 }
 
-rrb_t *rrb_merge(const rrb_t *left, const rrb_t *right) {
-    return NULL;
+/** Convenient way to init merge leaves. */
+rrb_t *init_merge_leaves(rrb_t *left, rrb_t *right) {
+    rrb_t *parent = create_w_nodes();
+    parent->level = 2;
+    parent->nodes.child[0] = left;
+    parent->nodes.child[1] = right;
+    parent->elements = rrb_size(left) + rrb_size(right);
+    return parent;
+}
+
+/** Finds last index used in the nodes array. */
+int find_last_index(const rrb_t *rrb) {
+    for (int i = 0; i < 32; i++) {
+        if (rrb->nodes.child[i] == NULL) {
+            return i - 1;
+        }
+    }
+    return 31;
+}
+
+/** Balances a data tree. */
+void move_datas(rrb_t *left, rrb_t *right) {
+    int i, j;
+    for (i = rrb_size(left), j = 0; i < 32 && (size_t) j < rrb_size(right); i++, j++) {
+        left->nodes.leaf[i] = right->nodes.leaf[j];
+        left->elements  += 1;
+        right->elements -= 1;
+    }
+
+    for (i = 0; j < 32; i++, j++) {
+        right->nodes.leaf[i] = right->nodes.leaf[j];
+        right->nodes.leaf[j] = NULL;
+    }
+}
+
+/** Merges leaves nodes. */
+rrb_t *merge_leaves(rrb_t *left, rrb_t *right) {
+    rrb_t *parent = init_merge_leaves(left, right);
+    rrb_t *n_left  = parent->nodes.child[0];
+    rrb_t *n_right = parent->nodes.child[1];
+    if (!is_full(n_left)) {
+        move_datas(n_left, n_right);
+        if (n_right->elements == 0) {
+            dec_ref(n_right);
+            parent->nodes.child[1] = NULL;
+        }
+    }
+    return parent;
+}
+
+/** Deletes first elem from right, and last elem in left. */
+void delete_first_n_last(rrb_t *left, rrb_t *right, int last) {
+    dec_ref(left->nodes.child[last]);
+    dec_ref(right->nodes.child[0]);
+    left->nodes.child[last] = NULL;
+    for (int i = 0; i < 31; i++) {
+        right->nodes.child[i] = right->nodes.child[i + 1];
+    }
+    right->nodes.child[31] = NULL;
+}
+
+/** Balances a child tree. */
+void move_nodes(rrb_t *left, rrb_t *right) {
+    int i, j;
+    for (i = rrb_size(left), j = 0; i < 32 && (size_t) j < rrb_size(right); i++, j++) {
+        left->nodes.child[i] = right->nodes.child[j];
+        left->elements  += rrb_size(left->nodes.child[i]);
+        right->elements -= rrb_size(left->nodes.child[i]);
+    }
+
+    for (i = 0; j < 32; i++, j++) {
+        right->nodes.child[i] = right->nodes.child[j];
+        right->nodes.child[j] = NULL;
+    }
+}
+
+/** Merges three RRB-Tree and balances the result. */
+rrb_t *merge_balance(rrb_t *left, rrb_t *merged, rrb_t *right) {
+    int last = find_last_index(left);
+    if (last < 31) {
+        move_nodes(left, merged);
+    }
+    move_nodes(merged, right);
+    rrb_t *parent = create_w_nodes();
+    parent->level = left->level + 1;
+    parent->nodes.child[0] = left;
+    parent->nodes.child[1] = merged;
+    if (right->nodes.child[0] != NULL) {
+        parent->nodes.child[2] = right;
+        parent->elements = rrb_size(left) + rrb_size(merged) + rrb_size(right);
+    } else {
+        dec_ref(right);
+        parent->elements = rrb_size(left) + rrb_size(merged);
+    }
+    return parent;
+}
+
+/** Merges two RRB-Tree into one. */
+rrb_t *merge(const rrb_t *left, const rrb_t *right) {
+    rrb_t *n_left  = copy_node(left);
+    rrb_t *n_right = copy_node(right);
+    if (contains_leafs(n_left)) {
+        return merge_leaves(n_left, n_right);
+    } else {
+        int last = find_last_index(n_left);
+        rrb_t *merged = merge(n_left->nodes.child[last], n_right->nodes.child[0]);
+        delete_first_n_last(n_left, n_right, last);
+        return merge_balance(n_left, merged, n_right);
+    }
+}
+
+/** Creates a parent for a node. */
+rrb_t *create_parent(const rrb_t *child) {
+    rrb_t *n_child = copy_node(child);
+    rrb_t *parent = create_w_nodes();
+    parent->level = n_child->level + 1;
+    parent->nodes.child[0] = n_child;
+    parent->elements = rrb_size(n_child);
+    n_child->full = true;
+    return parent;
+}
+
+/** Adds a child to a node. */
+void add_child(rrb_t *parent, rrb_t *child, bool first) {
+    int index = first == false ? 1 : 0;
+    if (child->level == parent->level - 1) {
+        inc_ref(child);
+        parent->nodes.child[index] = child;
+    } else {
+        parent->nodes.child[index] = create_w_nodes();
+        parent->nodes.child[index]->level = parent->level - 1;
+        add_child(parent->nodes.child[index], child, true);
+    }
+    parent->elements += rrb_size(child);
+}
+
+/** Adds child as a node. */
+rrb_t *add_as_child(const rrb_t *parent, rrb_t *child) {
+    int last = find_last_index(parent);
+    if (last == 31) {
+        rrb_t *n_parent = create_parent(parent);
+        add_child(n_parent, child, false);
+        return n_parent;
+    }
+
+    rrb_t *n_parent = copy_node(parent);
+    n_parent->nodes.child[last]->full = true;
+    n_parent->elements += rrb_size(child);
+    if (child->level == parent->level - 1) {
+        n_parent->nodes.child[last + 1] = child;
+        inc_ref(child);
+    } else {
+        n_parent->nodes.child[last + 1] = create_w_nodes();
+        n_parent->nodes.child[last + 1]->level = parent->level - 1;
+        add_child(parent->nodes.child[last + 1], child, true);
+    }
+    return n_parent;
+}
+
+/** Merges two RRB-Tree into one, and returns it. */
+rrb_t *rrb_merge(rrb_t *left, rrb_t *right) {
+    if (left->level > right->level) {
+        return add_as_child(left, right);
+    } else if (left->level < right->level) {
+        return add_as_child(right, left);
+    }
+
+    rrb_t *merged = merge(left, right);
+    if (merged->nodes.child[1] == NULL) {
+        rrb_t *temp = merged->nodes.child[0];
+        dec_ref(merged);
+        merged = temp;
+    }
+    consolidate_tree(&merged, true);
+    return merged;
 }

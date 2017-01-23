@@ -102,7 +102,7 @@ int rrb_split(const rrb_t *rrb, rrb_t **left, rrb_t **right, int index);
  * @param  right Second RRB-Tree to merge.
  * @return       Resulting RRB-Tree.
  */
-rrb_t *rrb_merge(const rrb_t *left, const rrb_t *right);
+rrb_t *rrb_merge(rrb_t *left, rrb_t *right);
 
 /**
  * Returns the size of an RRB-Tree.
