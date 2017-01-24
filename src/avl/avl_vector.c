@@ -125,8 +125,8 @@ void _merge_vector_internal(avl_tree* ret, avl_node* orig, int shift) {
 				     shift + orig->data->index);
     
     avl_insert_mutable(ret, data);
-    if (orig->sons[0]) _merge_vector_internal(ret, orig->sons[0], shift);
-    if (orig->sons[1]) _merge_vector_internal(ret, orig->sons[1], shift);
+    _merge_vector_internal(ret, orig->sons[0], shift);
+    _merge_vector_internal(ret, orig->sons[1], shift);
   }
 }
 
@@ -154,12 +154,8 @@ void _split_vector_internal(avl_node* node, int index,
       avl_insert_mutable(vec_out2->vector, data);
       vec_out2->max_index = MAX(vec_out2->max_index, data->index);
     }
-    if (node->sons[0]) {
-      _split_vector_internal(node->sons[0], index, vec_out1, vec_out2);
-    }
-    if (node->sons[1]) {
-      _split_vector_internal(node->sons[1], index, vec_out1, vec_out2);
-    }
+    _split_vector_internal(node->sons[0], index, vec_out1, vec_out2);
+    _split_vector_internal(node->sons[1], index, vec_out1, vec_out2);
   }
 }
 

@@ -39,6 +39,7 @@ int main () {
 
   srand(10);
 
+  avl_map_t* map = avl_map_create();
   
   printf("First version:\n");
   map = avl_map_update(map, make_key("First"), make_data(1));
@@ -47,20 +48,40 @@ int main () {
   map = avl_map_update(map, make_key("Fifth"), make_data(4));
   map = avl_map_update(map, make_key("Sixth"), make_data(5));
   avl_map_dump(map);
-  printf("Now updating First, Second and Sixth:\n");
+  
+  printf("\nNow updating First, Second and Sixth:\n");
   map = avl_map_update(map, make_key("First"), make_data(19));
   map = avl_map_update(map, make_key("Second"), make_data(41));
   map = avl_map_update(map, make_key("Sixth"), make_data(25));
   avl_map_dump(map);
   avl_map_t* backup = map;
-  printf("Now removing First, Fifth and Second\n");
+  
+  printf("\nNow removing First, Fifth and Second\n");
   map_data_t* data = NULL;
   map = avl_map_remove(map, make_key("First"), &data);
   map = avl_map_remove(map, make_key("Fifth"), &data);
   map = avl_map_remove(map, make_key("Second"), &data);
   avl_map_dump(map);
-  printf("Verification of immutability: The old map is now:\n");
-  avl_map_dump(backup);
+  
+  printf("\nVerification of immutability: Restauring the old map:\n");
+  map = backup;
+  avl_map_dump(map);
+  
+  printf("\nGetting the list of keys :\n");
+  map_key_t** keys = avl_map_keys(map);
+  printf("Keys = [ ");
+  for (int i = 0; i < avl_map_size(map); i++) {
+    printf("%s, ", keys[i]->content);
+  }
+  printf("\b\b ]\n");
+
+  printf("\nNow testing the iterator :\n");
+  map_iterator_t* iterator = avl_map_create_iterator(map);
+  map_key_t* key = NULL;
+  data = NULL;
+  while ( avl_map_iterator_next(&iterator, &key, &data) != 0 ) {
+    printf(" -> map{%s} = %d\n", key->content, data->content);
+  }
 
   printf("\n\n");
   

@@ -430,8 +430,8 @@ void avl_update(avl_tree* tree, avl_data_t* data) {
 void merge_r(avl_tree* ret, avl_node* orig) {
   if (orig != NULL) {
     avl_insert_mutable(ret, orig->data);
-    if (orig->sons[0]) merge_r(ret, orig->sons[0]);
-    if (orig->sons[1]) merge_r(ret, orig->sons[1]);
+    merge_r(ret, orig->sons[0]);
+    merge_r(ret, orig->sons[1]);
   }
 }
 

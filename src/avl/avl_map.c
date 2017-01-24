@@ -98,6 +98,58 @@ avl_map_t* avl_map_remove(avl_map_t* map, map_key_t* key,
   return new;
 }
 
+void _map_keys_aux(avl_node* node, map_key_t** keys, int* index) {
+  if (node) {
+    keys[(*index)++] = node->data->key;
+    _map_keys_aux(node->sons[0], keys, index);
+    _map_keys_aux(node->sons[1], keys, index);
+  }
+}
+
+map_key_t** avl_map_keys(avl_map_t* map) {
+  map_key_t** keys = malloc(map->map->size * sizeof(*keys));
+
+  int index = 0;
+  _map_keys_aux(map->map->root, keys, &index);
+
+  return keys;
+}
+
+
+map_iterator_t* avl_map_create_iterator(avl_map_t* map) {
+  map_iterator_t* iterator = malloc(sizeof *iterator);
+  iterator->current = map->map->root;
+  iterator->next    = NULL;
+
+  return iterator;
+}
+
+
+int avl_map_iterator_next(map_iterator_t** iterator,
+			  map_key_t** key, map_data_t** data) {
+  map_iterator_t* deref_iter = *iterator;
+  if (deref_iter) {
+    avl_node* current = deref_iter->current;
+    *key  = current->data->key;
+    *data = current->data->data;
+    map_iterator_t* next = deref_iter->next;
+    for (int i = 0; i <= 1; i++) {
+      if (current->sons[i]) {
+	map_iterator_t* tmp = malloc(sizeof *tmp);
+	tmp->current = current->sons[i];
+	tmp->next = next;
+	next = tmp;
+      }
+    }
+    free(deref_iter);
+    *iterator = next;
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+
 int avl_map_unref(avl_map_t* map) {
   if (map) {
     avl_erase_tree(map->map);
