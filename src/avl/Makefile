@@ -1,14 +1,11 @@
 CC=gcc
-CFLAGS=-W -Wall -std=c99 -pedantic -O0 -g
+CFLAGS=-W -Wall -std=gnu11 -pedantic -O0 -g
 LDFLAGS=
-EXEC= avl vector map
+EXEC= vector map
 SRC= $(wildcard *.c)
 OBJ= $(SRC:.c=.o)
 
 all: $(EXEC)
-
-avl: main.o avl.o
-	@$(CC) -o $@ $^ $(LDFLAGS)
 
 vector: vector_main.o avl.o avl_vector.o
 	@$(CC) -o $@ $^ $(LDFLAGS)

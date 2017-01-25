@@ -37,7 +37,7 @@ char* avl_data_as_string_data(avl_data_t* data) {
 int _map_compare (avl_data_t* d1, avl_data_t* d2) {
   return key_compare(d1->key, d2->key);
 }
-char* avl_data_as_string (avl_data_t* data) {
+char* _avl_data_as_string (avl_data_t* data) {
   char* key_string = key_as_string(data->key);
   char* data_string = data_as_string(data->data);
   int size = strlen(key_string) + strlen(data_string) + 4 + 1;

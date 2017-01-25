@@ -44,7 +44,7 @@ avl_node* make_node(avl_data_t* data) {
  * root is set to NULL
  * size is set to 0.
  * compare function is taken from parameters. */
-avl_tree* avl_make_empty_tree(int (*compare)(struct _avl_data_t*, struct _avl_data_t*)) {
+avl_tree* avl_make_empty_tree(int (*compare)(avl_data_t*, avl_data_t*)) {
   avl_tree* r = malloc(sizeof(*r));
   r->root = NULL;
   r->compare = compare;
@@ -115,7 +115,7 @@ void avl_erase_tree(avl_tree* tree) {
  *******************/
 
 avl_data_t* search_r(avl_node* root, avl_data_t* data,
-		 int (*compare)(struct _avl_data_t*, struct _avl_data_t*)) {
+		 int (*compare)(avl_data_t*, avl_data_t*)) {
   if (root == NULL) {
     return NULL;
   } else { 
@@ -228,7 +228,7 @@ avl_node* insert_balance(avl_node* root, int dir) {
 }
 
 avl_node* insert_node(avl_node* root, avl_data_t* data,
-		      int (*compare)(struct _avl_data_t*, struct _avl_data_t*),
+		      int (*compare)(avl_data_t*, avl_data_t*),
 		      int* node_inserted) {
   /* Empty tree case */
   if (root == NULL) {
@@ -337,7 +337,7 @@ avl_node* remove_balance(avl_node* root, int dir, int *done) {
 
 avl_node* remove_node(avl_node* root, avl_data_t* data, int* done,
 		      avl_data_t** ret_data,
-		      int (*compare)(struct _avl_data_t*, struct _avl_data_t*)){
+		      int (*compare)(avl_data_t*, avl_data_t*)){
   if (root != NULL) {
     int dir;
     root = avl_copy_node(root);
@@ -408,7 +408,7 @@ avl_tree* avl_remove(avl_tree* tree, avl_data_t* data, avl_data_t** ret_data) {
  *      Update         *
  ***********************/
 void update_r(avl_node* root, avl_data_t* data,
-	      int (*compare)(struct _avl_data_t*, struct _avl_data_t*)) {
+	      int (*compare)(avl_data_t*, avl_data_t*)) {
   int comp = (*compare)(root->data, data);
   if (comp == 0) {
     root->data = data;
@@ -464,34 +464,12 @@ int depth (avl_tree* tree) {
 /*******************
  *      Debug       *
  *******************/
+char* (*avl_data_as_string)(avl_data_t*);
 
-void traverse(avl_node* root) {
-  if(root != NULL) {
-    traverse(root->sons[0]);
-    if (root->data) {
-      char* data_string = avl_data_as_string(root->data);
-      printf("%s, ", data_string);
-      free(data_string);
-    } else {
-      printf("\\, ");
-    }
-    traverse(root->sons[1]);
-  }
-}
-
-void avl_traverse_and_print(avl_tree* tree) {
-  printf("[ ");
-  traverse(tree->root);
-  if (tree->size > 0) {
-    printf("\b\b ");
-  }
-  printf("]\n");
-}
-
-void avl_print_aux(avl_node* node, int tab){
+void avl_print_aux(avl_node* node, int tab) {
   if(node){
     if (node->data) {
-      char* data_string = avl_data_as_string(node->data);
+      char* data_string = (*avl_data_as_string)(node->data);
       printf("%*s\n", tab*4, data_string);
       free(data_string);
     } else {
@@ -504,7 +482,8 @@ void avl_print_aux(avl_node* node, int tab){
   }
 }
 
-void avl_print(avl_tree* tree){
+void avl_print(avl_tree* tree, char* (*data_to_string)(avl_data_t*)) {
+  avl_data_as_string = data_to_string;
   avl_print_aux(tree->root, 0);
 }
 
@@ -514,7 +493,7 @@ void avl_print(avl_tree* tree){
  **************************/
 
 avl_node* insert_node_mutable( avl_node* root, void* data,
-			      int (*compare)(struct _avl_data_t*, struct _avl_data_t*) ) {
+			      int (*compare)(avl_data_t*, avl_data_t*) ) {
   /* Empty tree case */
   if (root == NULL) {
     root = make_node(data);
