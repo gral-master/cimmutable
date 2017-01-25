@@ -10,19 +10,13 @@ int int_comparator(imc_key_t *first_key, imc_key_t* second_key){
     return first_key < second_key ? -1 : 0 ;
 }
 
-void print3 (int* nb, char* b)
+/*void print3 (int* nb, char* b)
 {
-
     sprintf(b, "(%03d)", nb);
-}
+}*/
 
 
 /* stack operations */
-int key_comparator(int *first_key, int* second_key){
-    return *first_key - *second_key;
-}
-
-
 imc_vector_avl_t* imc_vector_avl_create(){
     imc_vector_avl_t * vect = malloc(sizeof(imc_vector_avl_t));
     vect->tree = NULL;
@@ -41,7 +35,7 @@ imc_vector_avl_t* imc_vector_avl_update(imc_vector_avl_t* vec, int index,
     new_version->tree = imc_avl_insert(vec->tree, data, index,
                                        &int_comparator, &prev_data);
     new_version->last_value = index > vec->last_value ? index : vec->last_value;
-    
+
     return new_version;
 }
 
@@ -57,8 +51,8 @@ imc_vector_avl_t* imc_vector_avl_push(imc_vector_avl_t* vec,
     new_version->tree = imc_avl_insert(vec->tree, data, vec->last_value+1,
                                        &int_comparator, &prev_data);
     new_version->last_value = vec->last_value+1;
-    
-    imc_avl_dump(new_version->tree, print3);
+
+    //imc_avl_dump(new_version->tree, print3);
     return new_version;
 }
 
@@ -75,12 +69,46 @@ int imc_vector_avl_split(imc_vector_avl_t* vec_in,
             		     int index,
             		     imc_vector_avl_t** vec_out1,
             		     imc_vector_avl_t** vec_out2){
-return 0;
+
+    if(index<0 || vec_in == NULL || index >= vec_in->last_value){
+        return 1;
+    }
+
+    imc_avl_node_t* head_tree,* tail_tree;
+
+    if(imc_avl_split(vec_in->tree,index,&head_tree,&tail_tree, &int_comparator) == 1)
+        return 1;
+
+    (*vec_out1) = imc_vector_avl_create();
+    (*vec_out1)->last_value = index;
+    (*vec_out1)->tree = head_tree;
+
+    (*vec_out2) = imc_vector_avl_create();
+    (*vec_out2)->last_value = vec_in->last_value - index-1;
+    (*vec_out2)->tree = tail_tree;
+
+    return 0;
+}
+
+void incr_keys(imc_avl_node_t *tree, int incr_value){
+    if(tree == NULL)
+        return;
+    tree->key += incr_value;
+    incr_keys(tree->left,incr_value);
+    incr_keys(tree->right,incr_value);
 }
 
 imc_vector_avl_t* imc_vector_avl_merge(imc_vector_avl_t* vec_front,
-			       imc_vector_avl_t* vec_tail){
-return NULL;
+			                           imc_vector_avl_t* vec_tail){
+    imc_avl_node_t *copy_tail = imc_avl_copy(vec_tail->tree);
+    incr_keys(copy_tail,vec_front->last_value+1);
+
+    imc_vector_avl_t *new_version = imc_vector_avl_create();
+    new_version->tree = imc_avl_merge(vec_front->tree,copy_tail,&int_comparator);
+    new_version->last_value = vec_front->last_value + vec_tail->last_value +1;
+
+    imc_avl_unref(copy_tail);
+    return new_version;
 }
 
 /* user-side memory management */
