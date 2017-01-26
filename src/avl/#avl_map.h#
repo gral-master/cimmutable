@@ -12,7 +12,6 @@
  * For genericity reasons, the type of the keys and data are void*. It means
  * that you can use anything as a key or a value, but you'll have to explicitly
  * cast the data you retrieve from the map. 
- *
  * This API provides functions and typedef to use int and char* as either keys
  * or data. You can use other types, but you'll have to define them yourself.
  *

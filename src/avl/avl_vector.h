@@ -11,6 +11,8 @@
  * For genericity reasons, the type of data are void*. It means that you can use
  * avl_vectors to store data of any type, but you'll have to explicitly  cast
  * the data you retrieve from the map. 
+ * This API provides functions and typedef to use int and char* as data. You can
+ * use other types, but you'll have to define them yourself.
  *
  * @example vector_main.c
  */
@@ -18,6 +20,31 @@
 
 /** avl vectors will all have the type avl_vector_t */
 typedef struct _avl_vector_t avl_vector_t;
+
+
+#ifndef _INT_BOX_H
+#define _INT_BOX_H
+/** Boxing functions for integers. */
+typedef int int_box_t;
+/** returns a box holding an integer. */
+int_box_t* make_int_box(int i);
+/** returns the string representation of a boxed integer. */
+char* int_box_as_string(void* data);
+/** compares two integers. */
+int compare_int_keys(void* key1, void* key2);
+#endif
+
+#ifndef _STRING_BOX_H
+#define _STRING_BOX_H
+/** Boxing functions for strings (ie. char* ). */
+typedef char* string_box_t;
+/** returns a box holding a string. */
+string_box_t* make_string_box(char* str);
+/** returns the string representation of a boxed string. */
+char* string_box_as_string(void* data);
+/** compares two strings. */
+int compare_string_keys(void* key1, void* key2);
+#endif
 
 /**
  * Creates a new vector.

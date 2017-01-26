@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "avl.h"
 #include "avl_vector.h"
@@ -39,6 +40,45 @@ int _vector_compare (void* d1, void* d2) {
   if (((_avl_vector_data_t*)d1)->index < (((_avl_vector_data_t*)d2)->index)) return -1;
   return 1;
 }
+
+/************************
+ *   User side boxing   *
+ ************************/
+#ifndef _INT_BOX_C
+#define _INT_BOX_C
+/* int box */
+int_box_t* make_int_box(int i) {
+  int_box_t* box = malloc(sizeof(*box));
+  *box = i;
+  return box;
+}
+char* int_box_as_string(void* data) {
+  char* buf = malloc(20 * sizeof(char)); /* 20 char is enough to hold 2**64. */
+  sprintf(buf, "%d", *((int_box_t*)data));
+  return buf;
+}
+int compare_int_keys(void* key1, void* key2) {
+  if (*((int_box_t*)key1) == *((int_box_t*)key2)) return 0;
+  else if (*((int_box_t*)key1) < *((int_box_t*)key2)) return -1;
+  return 1;
+}
+#endif
+
+#ifndef _STRING_BOX_C
+#define _STRING_BOX_C
+/* char* box */
+string_box_t* make_string_box(char* str) {
+  string_box_t* ret = malloc(sizeof *ret);
+  *ret = str;
+  return ret;
+}
+char* string_box_as_string(void* box) {
+  return strdup(*((string_box_t*)box));
+}
+int compare_string_keys(void* key1, void* key2) {
+  return strcmp(*((string_box_t*)key1), *((string_box_t*)key2));
+}
+#endif
 
 /*********************************
  * Vector manipulation functions *
