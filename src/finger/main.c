@@ -8,13 +8,11 @@
 #include "fingertree.h"
 #include "imc_ft_vector.h"
 
-#define MAX_ADD 6
+#define MAX_ADD 10
 #define MAX_DELETE 2
 
 void ft_test() {
-    int sindex = 5;//MAX_ADD*1/2;
-    
-    // ft_add
+    // === ft_add ===
     int data[2*MAX_ADD];
     for (int i = 0; i < 2*MAX_ADD; i++) {
         data[i] = i * 5;
@@ -31,6 +29,7 @@ void ft_test() {
         //puts("\n****************************");
     }
     
+    // === ft_concat ===
     /* ft* fingerTreeArray2[MAX_ADD+1]; */
     /* fingerTreeArray2[0] = create_empty(); */
     /* for (int i = 1; i < MAX_ADD+1; i++) { */
@@ -46,7 +45,7 @@ void ft_test() {
     /* ft* res = ft_concat(fingerTreeArray[MAX_ADD-1],fingerTreeArray[MAX_ADD]); */
     /*   ft_display(res); */
     
-    // ft_delete
+    // === ft_delete ===
     /*
      puts("");
      puts("delete/////////////");
@@ -66,24 +65,43 @@ void ft_test() {
      //      free(tmp.elem);
      }
      */
+     
+    // === ft_delete (with loop) ===
+    /* view viewArray[MAX_DELETE+1]; */
+    /* viewArray[0].fg = fingerTreeArray[MAX_ADD]; */
+    
+    /* for (int i = 1; i < MAX_DELETE+1; i++) { */
+    /*     viewArray[i] = ft_delete(viewArray[i-1].fg, 1); */
+    /*     printf("removed: %d rest:\n",*((int*)viewArray[i].elem->true_node->data)); */
+    /*     ft_display(viewArray[i].fg); */
+    /*     printf("\n"); */
+    /* } */
     printf("===============================\n");
     ft_display(fingerTreeArray[MAX_ADD]);
     printf("\n=============================\n");
     
-    // ft_split
-    
+    // === ft_split ===
+    int sindex = MAX_ADD*1/3;
     
     split sres = ft_split(fingerTreeArray[MAX_ADD], sindex);
     
-    printf("Split: content of node at index %d: %d | ref_count : %d\n", sindex, *((int*)sres.node->true_node->data), sres.node->ref_count);
+    printf("Split:\n");
     printf("===left finger tree for %d:===\n", sindex);
     ft_display(sres.ft1);
     printf("\n===right finger tree for %d:===\n", sindex);
     ft_display(sres.ft2);
+    printf("\n===node for %d:===\n", sindex);
+    node_display(sres.node);
     printf("\n=======================\n");
+    puts("start unref sres.ft1");
+    ft_unref(sres.ft1);
+    puts("start unref sres.ft2");
+    ft_unref(sres.ft2);
+    puts("start unref sres.node");
+    node_unref(sres.node);
     
     
-    // ft_lookup
+    // === ft_lookup ===
     /*
      int index = MAX_ADD/2;
      int* lookup_res = (int*)ft_lookup(fingerTreeArray[MAX_ADD], index);
@@ -98,49 +116,13 @@ void ft_test() {
      lookup_res = (int*)ft_lookup(fingerTreeArray[MAX_ADD], index);
      printf("Lookup result for %d: %d\n", index, *lookup_res);
      */
-    /* // ft_delete */
-    /* view viewArray[MAX_DELETE+1]; */
-    /* viewArray[0].fg = fingerTreeArray[MAX_ADD]; */
     
-    /* for (int i = 1; i < MAX_DELETE+1; i++) { */
-    /*     viewArray[i] = ft_delete(viewArray[i-1].fg, 1); */
-    /*     printf("removed: %d rest:\n",*((int*)viewArray[i].elem->true_node->data)); */
-    /*     ft_display(viewArray[i].fg); */
-    /*     printf("\n"); */
-    /* } */
-    
-    // ft_unref
+    // === ft_unref ===
     puts("start unref add");
     for (int i = 0; i < MAX_ADD+1; i++)
         ft_unref(fingerTreeArray[i]);
-    
-    
-    
-    printf("===left finger tree for %d:===\n", sindex);
-    ft_display(sres.ft1);
-    printf("\n===right finger tree for %d:===\n", sindex);
-    ft_display(sres.ft2);
-    printf("\n===node for %d:===\n", sindex);
-    node_display(sres.node);
-    printf("\n=======================\n");
-    puts("start unref ft1");
-    ft_unref(sres.ft1);
-    puts("start unref ft2");
-    ft_unref(sres.ft2);
-    node_unref(sres.node);
+  
     puts("end unref");
-    
-    
-    // ft_concat
-    //   TODO
-    /* puts("////////////////////////////////"); */
-    /* ft_display(fingerTreeArray[MAX_ADD]); */
-    /* puts("////////////////////////////////"); */
-    /* ft_display(fingerTreeArray[MAX_ADD-1]); */
-    /* puts("************************************"); */
-    /* ft* concat_res = ft_concat(fingerTreeArray[MAX_ADD], fingerTreeArray[MAX_ADD-1]); */
-    /* ft_display(concat_res); */
-    /* printf("\n");     */
 }
 
 void vector_test() {
@@ -214,8 +196,8 @@ void vector_test() {
 
 int main(int argc, char **argv)
 {
-    //ft_test();
-    vector_test();
+    ft_test();
+    //vector_test();
     
     return 0;
 }

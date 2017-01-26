@@ -1160,15 +1160,20 @@ ft* borrowL(ft* deeper, affix* su) {
     return res;
 }
 
-ft* create_deepL(affix* left, ft* deeper, affix* right) {
+ft* create_deepL(affix* left, ft* deeper, affix* right, int alloc_left) {
     // Creates a deep with the given elements. left can be NULL.
     if (left == NULL)
         return borrowL(deeper, right);
     
     ft* res;
     
-    res = create_deep_withoutdeeper();
-    copy_affix(left, res->true_ft->d->prefix, 1);
+    if (alloc_left == 0) {
+      res = create_deep_withsuffix();
+      res->true_ft->d->prefix = left;
+    } else {
+      res = create_deep_withoutdeeper();
+      copy_affix(left, res->true_ft->d->prefix, 1);
+    }
     deeper->ref_count++;
     res->true_ft->d->deeper = deeper;
     copy_affix(right, res->true_ft->d->suffix, 1);
@@ -1206,17 +1211,25 @@ ft* borrowR(affix* pr, ft* deeper) {
     return res;
 }
 
-ft* create_deepR(affix* left, ft* deeper, affix* right) {
+ft* create_deepR(affix* left, ft* deeper, affix* right, int alloc_right) {
     // Creates a deep with the given elements. right can be NULL.
     if (right == NULL)
         return borrowR(left, deeper);
+    // TODO
+    ft* res;
     
-    ft* res = create_deep_withoutdeeper();
+    if (alloc_right == 0)
+      res = create_deep_withprefix();
+    else
+      res = create_deep_withoutdeeper();
     
     copy_affix(left, res->true_ft->d->prefix, 1);
     deeper->ref_count++;
     res->true_ft->d->deeper = deeper;
-    copy_affix(right, res->true_ft->d->suffix, 1);
+    if (alloc_right == 0)
+      res->true_ft->d->suffix = right;
+    else
+      copy_affix(right, res->true_ft->d->suffix, 1);
     deep* d = res->true_ft->d;
     res->size = d->prefix->size + d->deeper->size + d->suffix->size;
     
@@ -1492,33 +1505,33 @@ split ft_split_rec(ft* fgt, int index) {
             
             s.ft1 = recs.ft1;
             s.node = recs.node;
-            s.ft2 = create_deepL(ft_to_affix(recs.ft2, 1), d->deeper, d->suffix);
-            ft_unref(recs.ft2);
+            s.ft2 = create_deepL(ft_to_affix(recs.ft2, 1), d->deeper, d->suffix, 0);
+            ft_unref_rec(recs.ft2);
         }
         else if (index >= d->prefix->size + d->deeper->size) {
             // The node is in the suffix
             recs = affix_split(d->suffix, index-(d->prefix->size+d->deeper->size));
-            s.ft1 = create_deepR(d->prefix, d->deeper, ft_to_affix(recs.ft1, 1));
+            s.ft1 = create_deepR(d->prefix, d->deeper, ft_to_affix(recs.ft1, 1), 0);
             s.node = recs.node;
             s.ft2 = recs.ft2;
             
-            ft_unref(recs.ft1);
+            ft_unref_rec(recs.ft1);
         }
         else {
             // The node is in the deeper
             recs = ft_split_rec(d->deeper, index - d->prefix->size);
             splitnode recsn = node_split(recs.node, index - d->prefix->size - recs.ft1->size);
-            s.ft1 = create_deepR(d->prefix, recs.ft1, recsn.left);
+            s.ft1 = create_deepR(d->prefix, recs.ft1, recsn.left, 1);
             s.node = recsn.node;
             s.node->ref_count++;
-            s.ft2 = create_deepL(recsn.right, recs.ft2, d->suffix);
-            ft_unref(recs.ft1);
+            s.ft2 = create_deepL(recsn.right, recs.ft2, d->suffix, 1);
+            ft_unref_rec(recs.ft1);
             node_unref(recs.node);
             if (recsn.left != NULL)
               free(recsn.left);
             if (recsn.right != NULL)
               free(recsn.right);
-            ft_unref(recs.ft2);
+            ft_unref_rec(recs.ft2);
         }
     }
     
