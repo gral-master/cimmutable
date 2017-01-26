@@ -8,6 +8,11 @@
 
 #define MAX(x,y) x < y ? y : x
 
+struct _avl_vector_t {
+  avl_tree* vector;
+  int max_index;
+  char* (*data_as_string)(void* data);
+};
 
 /*******************
  *   Boxing & co   *
@@ -47,12 +52,12 @@ avl_vector_t* avl_vector_create(char* (*data_as_string)(void* data)) {
 }
 
 
-int avl_vector_size (avl_vector_t* vec) {
+int avl_vector_size (const avl_vector_t* vec) {
   return vec->max_index + 1; /* +1 because the array is 0-indexed */
 }
 
 
-avl_vector_t* avl_vector_update(avl_vector_t* vec, int index,
+avl_vector_t* avl_vector_update(const avl_vector_t* vec, int index,
 				void* data) {
   avl_vector_t* new = malloc(sizeof *new);
   if (index > vec->max_index) {
@@ -69,7 +74,7 @@ avl_vector_t* avl_vector_update(avl_vector_t* vec, int index,
   return new;
 }
 
-void* avl_vector_lookup(avl_vector_t* vec, int index) {
+void* avl_vector_lookup(const avl_vector_t* vec, int index) {
   _avl_vector_data_t* tmp = make_avl_data(NULL, index);
   _avl_vector_data_t* data = avl_search(vec->vector, tmp);
   free(tmp);
@@ -80,7 +85,7 @@ void* avl_vector_lookup(avl_vector_t* vec, int index) {
   }
 }
 
-avl_vector_t* avl_vector_push(avl_vector_t* vec, void* data) {
+avl_vector_t* avl_vector_push(const avl_vector_t* vec, void* data) {
   int index = vec->max_index + 1;
   _avl_vector_data_t* boxed_data = make_avl_data(data, index);
 
@@ -92,7 +97,7 @@ avl_vector_t* avl_vector_push(avl_vector_t* vec, void* data) {
   return new;
 }
 
-avl_vector_t* avl_vector_pop(avl_vector_t* vec, void** data) {
+avl_vector_t* avl_vector_pop(const avl_vector_t* vec, void** data) {
   int index = vec->max_index;
   if (index >= 0) {
     _avl_vector_data_t* tmp = make_avl_data(NULL, index);
@@ -134,8 +139,8 @@ void _merge_vector_internal(avl_tree* ret, avl_node* orig, int shift) {
 }
 
 
-avl_vector_t* avl_vector_merge (avl_vector_t* vec_front,
-				avl_vector_t* vec_tail) {
+avl_vector_t* avl_vector_merge (const avl_vector_t* vec_front,
+				const avl_vector_t* vec_tail) {
   avl_vector_t* new = avl_vector_create(vec_front->data_as_string);
   new->data_as_string = vec_front->data_as_string;
   _merge_vector_internal(new->vector, vec_front->vector->root, 0);
@@ -164,7 +169,7 @@ void _split_vector_internal(avl_node* node, int index,
 }
 
 /* split ==> [0..index] [index+1..end] */
-int avl_vector_split(avl_vector_t* vec_in, int index,
+int avl_vector_split(const avl_vector_t* vec_in, int index,
 		     avl_vector_t** vec_out1, avl_vector_t** vec_out2) {
   *vec_out1 = avl_vector_create(vec_in->data_as_string);
   *vec_out2 = avl_vector_create(vec_in->data_as_string);
@@ -176,15 +181,14 @@ int avl_vector_split(avl_vector_t* vec_in, int index,
   }
 }
 
-int avl_vector_unref(avl_vector_t* vec) {
+void avl_vector_unref(avl_vector_t* vec) {
   if (vec) {
     avl_erase_tree(vec->vector);
     free(vec);
   }
-  return 1;
 }
 
-void avl_vector_dump(avl_vector_t* vec) {
+void avl_vector_dump(const avl_vector_t* vec) {
   printf("[ ");
   for (int i = 0; i <= vec->max_index; i++) {
     void* data = avl_vector_lookup(vec, i);

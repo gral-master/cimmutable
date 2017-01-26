@@ -8,6 +8,15 @@
 #include "avl_map.h"
 
 #define MAX(x,y) x < y ? y : x
+struct _avl_map_t{
+  avl_tree* map;
+  char* (*key_as_string)(void*);
+  char* (*data_as_string)(void*);
+};
+struct _map_iterator_t{
+  avl_node* current;
+  struct _map_iterator_t* next;
+};
 
 /*******************
  *   Boxing & co   *
@@ -29,6 +38,39 @@ _avl_map_data_t* clone_avl_data(_avl_map_data_t* data) {
     return ret;
 }
 
+/************************
+ *   User side boxing   *
+ ************************/
+/* int box */
+int_box_t* make_int_box(int i) {
+  int_box_t* box = malloc(sizeof(*box));
+  *box = i;
+  return box;
+}
+char* int_box_as_string(void* data) {
+  char* buf = malloc(20 * sizeof(char)); /* 20 char is enough to hold 2**64. */
+  sprintf(buf, "%d", *((int_box_t*)data));
+  return buf;
+}
+int compare_int_keys(void* key1, void* key2) {
+  if (*((int_box_t*)key1) == *((int_box_t*)key2)) return 0;
+  else if (*((int_box_t*)key1) < *((int_box_t*)key2)) return -1;
+  return 1;
+}
+
+/* char* box */
+string_box_t* make_string_box(char* str) {
+  string_box_t* ret = malloc(sizeof *ret);
+  *ret = str;
+  return ret;
+}
+char* string_box_as_string(void* box) {
+  return strdup(*((string_box_t*)box));
+}
+int compare_string_keys(void* key1, void* key2) {
+  return strcmp(*((string_box_t*)key1), *((string_box_t*)key2));
+}
+
 /*********************************
  *   Map manipulation functions  *
  *********************************/
@@ -42,11 +84,11 @@ avl_map_t* avl_map_create(char* (*key_as_string)(void*),
   return ret;
 }
 
-int avl_map_size (avl_map_t* map) {
+int avl_map_size (const avl_map_t* map) {
   return map->map->size;
 }
 
-avl_map_t* avl_map_update(avl_map_t* map, void* key, void* data) {
+avl_map_t* avl_map_update(const avl_map_t* map, void* key, void* data) {
   avl_map_t* new = malloc(sizeof *new);
   _avl_map_data_t* boxed_data = make_avl_data(key, data);
 
@@ -57,7 +99,7 @@ avl_map_t* avl_map_update(avl_map_t* map, void* key, void* data) {
   return new;
 }
 
-void* avl_map_lookup(avl_map_t* map, void* key) {
+void* avl_map_lookup(const avl_map_t* map, void* key) {
   _avl_map_data_t* tmp = make_avl_data(key, NULL);
   _avl_map_data_t* data = avl_search(map->map, tmp);
   free(tmp);
@@ -68,7 +110,7 @@ void* avl_map_lookup(avl_map_t* map, void* key) {
   }
 }
 
-avl_map_t* avl_map_remove(avl_map_t* map, void* key,
+avl_map_t* avl_map_remove(const avl_map_t* map, void* key,
 			  void** data) {
   _avl_map_data_t* tmp = make_avl_data(key, NULL);
   void* return_data = NULL;
@@ -96,7 +138,7 @@ void _map_keys_aux(avl_node* node, void** keys, int* index) {
   }
 }
 
-void** avl_map_keys(avl_map_t* map) {
+void** avl_map_keys(const avl_map_t* map) {
   void** keys = malloc(map->map->size * sizeof(*keys));
 
   int index = 0;
@@ -106,7 +148,7 @@ void** avl_map_keys(avl_map_t* map) {
 }
 
 
-map_iterator_t* avl_map_create_iterator(avl_map_t* map) {
+map_iterator_t* avl_map_create_iterator(const avl_map_t* map) {
   map_iterator_t* iterator = malloc(sizeof *iterator);
   iterator->current = map->map->root;
   iterator->next    = NULL;
@@ -140,12 +182,11 @@ int avl_map_iterator_next(map_iterator_t** iterator,
 }
 
 
-int avl_map_unref(avl_map_t* map) {
+void avl_map_unref(avl_map_t* map) {
   if (map) {
     avl_erase_tree(map->map);
     free(map);
   }
-  return 1;
 }
 
 int _max_key_size(avl_node* node, char* (*key_as_string)(void*)) {
@@ -175,10 +216,17 @@ void _map_dump_aux(avl_node* node, int padding,
   }
 }
 
-void avl_map_dump(avl_map_t* map) {
+void avl_map_dump(const avl_map_t* map) {
   printf("{ ");
   int padding = _max_key_size(map->map->root, map->key_as_string);
   _map_dump_aux(map->map->root, padding,
+		map->key_as_string, map->data_as_string);
+  printf("\b \n}\n");
+}
+
+void avl_map_dump_fast(const avl_map_t* map) {
+  printf("{ ");
+  _map_dump_aux(map->map->root, 0,
 		map->key_as_string, map->data_as_string);
   printf("\b \n}\n");
 }
