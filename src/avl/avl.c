@@ -28,8 +28,7 @@ void avl_insert_mutable(avl_tree* tree, void* data);
  * Return an empty node.
  * balance is initialized with 0 (no sons = balances)
  * sons are empty.
- * ref_count is set to one.
- * data is taken from parameters. */
+ * ref_count is set to one. */
 avl_node* make_node(avl_data_t* data) {
   avl_node* r = malloc(sizeof(*r));
   r->data = data;
@@ -94,10 +93,9 @@ avl_tree* avl_copy_tree(avl_tree* tree) {
 
 void erase_node(avl_node* root) {
 
-  if (root && --root->ref_count == 0) {
+  if (root && __sync_sub_and_fetch(&root->ref_count, 1) == 0) {
     avl_node* l = root->sons[0], *r = root->sons[1];
 
-    //free(root->data); /* A corriger */
     free(root);
     erase_node(l);
     erase_node(r);

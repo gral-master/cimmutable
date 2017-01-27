@@ -14,6 +14,14 @@
  * cast the data you retrieve from the map. 
  * This API provides functions and typedef to use int and char* as either keys
  * or data. You can use other types, but you'll have to define them yourself.
+ * 
+ * Because a common idiom when you won't require immutibality will be:
+ *   avl_map_t* tmp = avl_map_update(map, key, data);
+ *   avl_map_unref(map);
+ *   map = tmp;
+ * Every function can be called in a mutable way by using the _mutable suffixe.
+ * This will do the same as the immutable version, but also unref the map
+ * that are given as parameters.
  *
  * @example map_main.c
  */
@@ -90,6 +98,7 @@ int avl_map_size (const avl_map_t* map);
  * @return        The newly created map.
  */
 avl_map_t* avl_map_update(const avl_map_t* map, void* key, void* data);
+avl_map_t* avl_map_update_mutable(avl_map_t* map, void* key, void* data);
 
 /**
  * Get the value associated to a key of a map.
@@ -111,6 +120,7 @@ void* avl_map_lookup(const avl_map_t* map, void* key);
  * @return           The newly created map.
  */
 avl_map_t* avl_map_remove(const avl_map_t* map, void* key, void** data);
+avl_map_t* avl_map_remove_mutable(avl_map_t* map, void* key, void** data);
 
 /**
  * Returns the list (more precisely an array) of the keys of a map.

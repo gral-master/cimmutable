@@ -104,6 +104,11 @@ avl_map_t* avl_map_update(const avl_map_t* map, void* key, void* data) {
   
   return new;
 }
+avl_map_t* avl_map_update_mutable(avl_map_t* map, void* key, void* data) {
+  avl_map_t* tmp = avl_map_update(map, key, data);
+  avl_map_unref(map);
+  return tmp;
+}
 
 void* avl_map_lookup(const avl_map_t* map, void* key) {
   _avl_map_data_t* tmp = make_avl_data(key, NULL);
@@ -116,8 +121,7 @@ void* avl_map_lookup(const avl_map_t* map, void* key) {
   }
 }
 
-avl_map_t* avl_map_remove(const avl_map_t* map, void* key,
-			  void** data) {
+avl_map_t* avl_map_remove(const avl_map_t* map, void* key, void** data) {
   _avl_map_data_t* tmp = make_avl_data(key, NULL);
   void* return_data = NULL;
 
@@ -134,6 +138,11 @@ avl_map_t* avl_map_remove(const avl_map_t* map, void* key,
     *data = NULL;
   }
   return new;
+}
+avl_map_t* avl_map_remove_mutable(avl_map_t* map, void* key, void** data) {
+  avl_map_t* tmp = avl_map_remove(map, key, data);
+  avl_map_unref(map);
+  return tmp;
 }
 
 void _map_keys_aux(avl_node* node, void** keys, int* index) {

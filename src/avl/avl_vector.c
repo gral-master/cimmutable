@@ -113,6 +113,12 @@ avl_vector_t* avl_vector_update(const avl_vector_t* vec, int index,
   
   return new;
 }
+avl_vector_t* avl_vector_update_mutable(avl_vector_t* vec, int index,
+					void* data) {
+  avl_vector_t* tmp = avl_vector_update(vec,index,data);
+  avl_vector_unref(vec);
+  return tmp;
+}
 
 void* avl_vector_lookup(const avl_vector_t* vec, int index) {
   _avl_vector_data_t* tmp = make_avl_data(NULL, index);
@@ -135,6 +141,11 @@ avl_vector_t* avl_vector_push(const avl_vector_t* vec, void* data) {
   new->data_as_string = vec->data_as_string;
 
   return new;
+}
+avl_vector_t* avl_vector_push_mutable(avl_vector_t* vec, void* data) {
+  avl_vector_t* tmp = avl_vector_push(vec,data);
+  avl_vector_unref(vec);
+  return tmp;
 }
 
 avl_vector_t* avl_vector_pop(const avl_vector_t* vec, void** data) {
@@ -164,6 +175,11 @@ avl_vector_t* avl_vector_pop(const avl_vector_t* vec, void** data) {
     return new;
   }
 }
+avl_vector_t* avl_vector_pop_mutable(avl_vector_t* vec, void** data) {
+  avl_vector_t* tmp = avl_vector_pop(vec, data);
+  avl_vector_unref(vec);
+  return tmp;
+}
 
 
 void _merge_vector_internal(avl_tree* ret, avl_node* orig, int shift) {
@@ -188,6 +204,13 @@ avl_vector_t* avl_vector_merge (const avl_vector_t* vec_front,
 			 vec_front->max_index+1);
   new->max_index = vec_front->max_index + vec_tail->max_index + 1;
   return new;
+}
+avl_vector_t* avl_vector_merge_mutable(avl_vector_t* vec_front,
+				       avl_vector_t* vec_tail) {
+  avl_vector_t* tmp = avl_vector_merge(vec_front, vec_tail);
+  avl_vector_unref(vec_front);
+  avl_vector_unref(vec_tail);
+  return tmp;
 }
 
 
@@ -219,6 +242,12 @@ int avl_vector_split(const avl_vector_t* vec_in, int index,
   } else {
     return 0;
   }
+}
+int avl_vector_split_mutable(avl_vector_t* vec_in, int index,
+			     avl_vector_t** vec_out1, avl_vector_t** vec_out2) {
+  int ret = avl_vector_split(vec_in, index, vec_out1, vec_out2);
+  avl_vector_unref(vec_in);
+  return ret;
 }
 
 void avl_vector_unref(avl_vector_t* vec) {

@@ -14,6 +14,14 @@
  * This API provides functions and typedef to use int and char* as data. You can
  * use other types, but you'll have to define them yourself.
  *
+ * Because a common idiom when you won't require immutibality will be:
+ *   avl_vector_t* tmp = avl_vector_push(vector, data);
+ *   avl_vector_unref(vector);
+ *   vector = tmp;
+ * Every function can be called in a mutable way by using the _mutable suffixe.
+ * This will do the same as the immutable version, but also unref the vector(s)
+ * that are given as parameters.
+ *
  * @example vector_main.c
  */
 
@@ -45,6 +53,7 @@ char* string_box_as_string(void* data);
 /** compares two strings. */
 int compare_string_keys(void* key1, void* key2);
 #endif
+
 
 /**
  * Creates a new vector.
@@ -78,6 +87,8 @@ int avl_vector_size (const avl_vector_t* vec);
  */
 avl_vector_t* avl_vector_update(const avl_vector_t* vec, int index,
 				void* data);
+avl_vector_t* avl_vector_update_mutable(avl_vector_t* vec, int index,
+					void* data);
 
 /**
  * Get the element at a given index of a vector.
@@ -100,6 +111,7 @@ void* avl_vector_lookup(const avl_vector_t* vec, int index);
  * @return       The newly created vector.
  */
 avl_vector_t* avl_vector_push(const avl_vector_t* vec, void* data);
+avl_vector_t* avl_vector_push_mutable(avl_vector_t* vec, void* data);
 
 /**
  * Removes the last element from a vector.
@@ -110,6 +122,7 @@ avl_vector_t* avl_vector_push(const avl_vector_t* vec, void* data);
  * @return              The newly created vector.
  */
 avl_vector_t* avl_vector_pop(const avl_vector_t* vec, void** data);
+avl_vector_t* avl_vector_pop_mutable(avl_vector_t* vec, void** data);
 
 /**
  * Merges two vectors.
@@ -121,6 +134,8 @@ avl_vector_t* avl_vector_pop(const avl_vector_t* vec, void** data);
  * */
 avl_vector_t* avl_vector_merge(const avl_vector_t* vec_front,
 			       const avl_vector_t* vec_tail);
+avl_vector_t* avl_vector_merge_mutable(avl_vector_t* vec_front,
+				       avl_vector_t* vec_tail);
 
 /**
  * Splits a vector in two parts.
@@ -134,6 +149,8 @@ avl_vector_t* avl_vector_merge(const avl_vector_t* vec_front,
  */
 int avl_vector_split(const avl_vector_t* vec_in, int index,
 		     avl_vector_t** vec_out1, avl_vector_t** vec_out2);
+int avl_vector_split_mutable(avl_vector_t* vec_in, int index,
+			     avl_vector_t** vec_out1, avl_vector_t** vec_out2);
 
 /**
  * Destroys a vector. 
