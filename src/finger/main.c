@@ -126,7 +126,7 @@ void ft_test() {
 }
 
 void vector_test() {
-    int data[MAX_ADD], data2[MAX_ADD], data_u = 127, *data_p = malloc(sizeof(int));
+    int data[MAX_ADD], data2[MAX_ADD], data_u = 127, *data_p = NULL;
     for (int i = 0; i < MAX_ADD; i++) {
         data[i] = i * 5;
         data2[i] = i * 3;
@@ -150,8 +150,8 @@ void vector_test() {
     
     // update
     imc_vector_t* v_updated = imc_vector_update(max_vector, MAX_ADD/2, &data_u);
-       printf("\n===updated===\n");
-       imc_vector_dump(v_updated);
+    printf("\n===updated===\n");
+    imc_vector_dump(v_updated);
     
     // lookup
     assert(*imc_vector_lookup(v_updated, MAX_ADD/2) == data_u);
@@ -162,7 +162,7 @@ void vector_test() {
     assert(*data_p == (MAX_ADD-1)*5);
     
     // split
-    imc_vector_t *vec_out1 = malloc(sizeof(imc_vector_t)), *vec_out2 = malloc(sizeof(imc_vector_t));
+    imc_vector_t *vec_out1 = NULL, *vec_out2 = NULL;
     imc_vector_split(max_vector, MAX_ADD/2, &vec_out1, &vec_out2);
     
     // dump
@@ -186,7 +186,6 @@ void vector_test() {
         imc_vector_unref(vectorArray[i]);
         imc_vector_unref(vectorArray2[i]);
     }
-    
     imc_vector_unref(v_updated);
     imc_vector_unref(v_popped);
     imc_vector_unref(vec_out1);
@@ -197,7 +196,7 @@ void vector_test() {
 int main(int argc, char **argv)
 {
     ft_test();
-    //vector_test();
+    vector_test();
     
     return 0;
 }

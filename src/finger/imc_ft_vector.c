@@ -23,7 +23,9 @@ imc_vector_t* imc_vector_update(imc_vector_t* vec,
     list* l = create_lempty();
     l = add(create_data_node(data), l);
     ft*tmp=concat_w_middle(s.ft1, l, s.ft2);
-    ft_display(tmp);
+    
+    ft_unref(s.ft1);
+    ft_unref(s.ft2);
     node_unref(s.node);
     return tmp;
 }
@@ -50,10 +52,21 @@ int imc_vector_split(imc_vector_t* vec_in,
                      int index,
                      imc_vector_t** vec_out1,
                      imc_vector_t** vec_out2) {
+    if (vec_in->type == EMPTY_TYPE) {
+      *vec_out1 = imc_vector_create();
+      *vec_out2 = imc_vector_create();
+      return EXIT_SUCCESS;
+    }
+    
     split s = ft_split(vec_in, index);
+    ft* empty_tree = create_empty();
+    list* l = create_lempty();
+    l = add(s.node, l);
     
     *vec_out1 = s.ft1;
-    *vec_out2 = s.ft2;
+    *vec_out2 = concat_w_middle(empty_tree, l, s.ft2);
+    ft_unref(empty_tree);
+    ft_unref(s.ft2);
     node_unref(s.node);
     
     return EXIT_SUCCESS;
