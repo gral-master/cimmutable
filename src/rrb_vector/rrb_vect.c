@@ -65,15 +65,15 @@ int imc_rrb_init(imc_rrb_t* vec) {
 int imc_rrb_size(imc_rrb_t* vec) {
   /* TODO : For leaves, length = non NULL data[i] nop ?? */
   if(vec == NULL) return 0;
-  if(vec->floor > 0){
+  //if(vec->floor > 0){
     return vec->length;
-  }
+  /*}
   int i, count = 0;
   imc_data_t** data = vec->node.data;
   for(i = 0; i < ARRAY_SIZE; i++){
     if(data[i] != NULL) count++;
   }
-  return count;
+  return count;*/
 }
 
 int imc_rrb_is_full(imc_rrb_t* vec) {
@@ -99,8 +99,8 @@ int imc_rrb_is_leaf(imc_rrb_t* vec) {
   return (vec->floor==0) ? 1 : 0;
 }
 
-imc_rrb_t* imc_rrb_tail(imc_rrb_t* vec) {
-  /* Rreturn last non-NULL child */
+imc_rrb_t* imc_rrb_tail(imc_rrb_t* vec, int* res_index) {
+  /* Return last non-NULL child and set res_index if not null */
   if(imc_rrb_is_leaf(vec)) {
     return NULL;
   } else {
@@ -108,19 +108,25 @@ imc_rrb_t* imc_rrb_tail(imc_rrb_t* vec) {
     for(int i = 0 ; i < ARRAY_SIZE ; i++) {
       if(vec->node.next[i]!=NULL) {
         res = vec->node.next[i];
+        if(res_index != NULL) {
+          res_index = i;
+        }
       }
     }
     return res;
   }
 }
 
-imc_rrb_t* imc_rrb_head(imc_rrb_t* vec) {
-  /* Return first non-NULL child */
+imc_rrb_t* imc_rrb_head(imc_rrb_t* vec, int* res_index) {
+  /* Return first non-NULL child and set res_index if not null */
   if(imc_rrb_is_leaf(vec)) {
     return NULL;
   } else {
     for(int i = 0 ; i < ARRAY_SIZE ; i++) {
       if(vec->node.next[i]!=NULL) {
+        if(res_index != NULL) {
+          res_index = i;
+        }
         return vec->node.next[i];
       }
     }
@@ -205,6 +211,22 @@ imc_data_t* imc_rrb_get_leaf_no_copy(imc_rrb_t* vec, int index) {
   }
   floor_index = imc_rrb_subindex(vec, index);
   return vec->node.data[floor_index];
+}
+
+int imc_rrb_fill_fifo(imc_rrb_t* rrb, imc_rrb_t** fifo,
+                      int i_fifo, int ignore, int add_ref){
+    imc_rrb_t* tmp;
+    for(int i = 0; i < imc_rrb_size(rrb); i++){
+        if(i != ignore){
+            tmp = rrb->node.next[i];
+            if(tmp != NULL){
+                fifo[i_fifo] = tmp;
+                if(add_ref) tmp->refs++;
+                i_fifo++;
+            }
+        }
+    }
+    return i_fifo;
 }
 
 /**************/
@@ -474,6 +496,7 @@ imc_data_t* imc_rrb_lookup(imc_rrb_t* vec, int index) {
 
 int imc_rrb_split(imc_rrb_t* vec_in, int index, imc_rrb_t** vec_out1,
                   imc_rrb_t** vec_out2) {
+  printf("Split tree of size %d\n", vec_in->floor);
   imc_rrb_build_left(vec_in, *vec_out1, index);
   imc_rrb_build_right(vec_in, *vec_out2, index);
   return 0;
@@ -525,14 +548,17 @@ void imc_rrb_build_left(imc_rrb_t* vec_in, imc_rrb_t* left,
 
 void imc_rrb_build_right(imc_rrb_t* vec_in, imc_rrb_t* right,
                         int index){
+  /* Looking where we need to split in the node */
   int i, j, split_index = imc_rrb_subindex(vec_in, index);
   right->floor = vec_in->floor;
+  /* If vec_in is a leaf, and we try to split at the end, we don't need it */
   if(vec_in->floor == 0){
     if(split_index == ARRAY_SIZE-1){
       right->length = -1;
       return;
     }
-    for(j = 0, i = split_index+1; i > ARRAY_SIZE; i++, j++){
+    /* Else, we copy the data in the leaf */
+    for(j = 0, i = split_index+1; i < ARRAY_SIZE; i++, j++){
       right->node.data[j] = vec_in->node.data[i];
     }
     right->length = j+1;
@@ -585,54 +611,162 @@ void imc_rrb_build_right(imc_rrb_t* vec_in, imc_rrb_t* right,
 imc_rrb_t* imc_rrb_merge(imc_rrb_t* vec_front, imc_rrb_t* vec_tail) {
   //S1 et S2 de la taille des 2
   int size1 = vec_front->floor+1;
+
   imc_rrb_t** path1 = malloc(size1 * sizeof(imc_rrb_t*));
+  int* path_id1 = malloc(size1 * sizeof(int));
   int size2 = vec_tail->floor+1;
   imc_rrb_t** path2 = malloc(size2 * sizeof(imc_rrb_t*));
-
+  int* path_id2 = malloc(size2 * sizeof(int));
+  printf("Try merge trees of size %d and %d together\n", (size1-1), (size2-1));
+  puts("rrb_merge step 1\n");
   imc_rrb_t* vec = vec_front;
   int i = 0;
+  int ind;
+
+  /* On remplit les tableaux pour les chemins */
   do {
     path1[i] = vec;
-    vec = imc_rrb_tail(vec);
+    vec = imc_rrb_tail(vec, &ind);
+    path_id1[i] = ind;
     i++;
   }while(i!=size1);
-
+  puts("rrb_merge step 2\n");
   vec = vec_tail;
   i = 0;
   do {
     path2[i] = vec;
-    vec = imc_rrb_head(vec);
+    vec = imc_rrb_head(vec, &ind);
+    path_id2[i] = ind;
     i++;
   }while(i!=size2);
+  puts("rrb_merge step 3\n");
 
-  i = 0;
+  /* On merge à partir des feuilles */
+  i = size1-1;
+  int j = size2-1;
   vec = NULL;
-  while(i!=size1 && i!=size2) {
-    compress(path1[i], vec, path2[i]);
-    i++;
+  while(i>=0 && j>=0) {
+    printf("Compress path1[%d] (floor%d) with path2[%d] (floor%d) ; paths are %d and %d\n", i, path1[i]->floor, j, path2[j]->floor, path_id1[i], path_id2[j]);
+    vec = compress(path1[i], vec, path2[j], path_id1[i], path_id2[j]);
+    printf("vec is now of floor %d\n", vec->floor);
+    i--; j--;
   }
-
-  if(i<size1) {
-    while(i!=size1) {
+  puts("rrb_merge step 4\n");
+  if(i>=0) {
+    while(i>=0) {
       copy_and_add_on_new_root(path1[i], vec);
-      i++;
+      i--;
     }
   }
-  if(i<size2) {
-    while(i!=size2) {
-      copy_and_add_on_new_root(path2[i], vec);
-      i++;
+  puts("rrb_merge step 5\n");
+  if(j>=0) {
+    while(j>=0) {
+      copy_and_add_on_new_root(path2[j], vec);
+      j--;
     }
   }
-
+  puts("rrb_merge step 6\n");
   free(path1);
   free(path2);
-
+  puts("rrb_merge step 7\n");
+  if(vec==NULL) puts("Something got WRONG !\n");
   return vec;
 }
 
-void compress(imc_rrb_t* left, imc_rrb_t* mid, imc_rrb_t* right) {
-  return;
+imc_rrb_t* compress(imc_rrb_t* left, imc_rrb_t* mid, imc_rrb_t* right, int ignore1, int ignore2) {
+  if(left->floor == 0) {
+    return imc_rrb_merge_leaves(left, right);
+  } else {
+    return imc_rrb_merge_nodes(left, mid, right, ignore1, ignore2);
+  }
+}
+
+imc_rrb_t* imc_rrb_merge_nodes(imc_rrb_t* left, imc_rrb_t* middle,
+                               imc_rrb_t* right, int ignore1, int ignore2) {
+    puts("rrb_merge nodes step 1\n");
+    int i, j = 0, index_fifo = 0;
+    int size = imc_rrb_size(left) + imc_rrb_size(middle)
+        + imc_rrb_size(right) - 2;
+    imc_rrb_t* node1 = imc_rrb_create();
+    imc_rrb_t* node2 = NULL;
+    imc_rrb_t* node3 = NULL;
+    imc_rrb_t** fifo = malloc(sizeof(imc_rrb_t*) * size);
+    if(size >= ARRAY_SIZE) node2 = imc_rrb_create();
+    if(size >= ARRAY_SIZE*2) node3 = imc_rrb_create();
+    index_fifo = imc_rrb_fill_fifo(left, fifo, index_fifo, ignore1, 1);
+    index_fifo = imc_rrb_fill_fifo(middle, fifo, index_fifo, -1, 0);
+    index_fifo = imc_rrb_fill_fifo(right, fifo, index_fifo, ignore2, 1);
+    puts("rrb_merge nodes step 2\n");
+    for(i = 0; i < size; i++){
+        if(i < ARRAY_SIZE){
+            node1->node.next[j] = fifo[i];
+        }
+        if(i >= ARRAY_SIZE && i < ARRAY_SIZE*2){
+            if(i == ARRAY_SIZE) j = 0;
+            node2->node.next[j] = fifo[i];
+        }
+        if(i >= ARRAY_SIZE*2){
+            if(i == ARRAY_SIZE*2) j = 0;
+            node3->node.next[j] = fifo[i];
+        }
+        j++;
+    }
+    puts("rrb_merge nodes step 3\n");
+    imc_rrb_t* root = imc_rrb_new_root(node1);
+    if(root == NULL) puts("root is null (merge_nodes1)\n");
+    root->node.next[0]->refs = 1;
+    root->length = 1;
+    if(size >= ARRAY_SIZE){
+        root->node.next[1] = node2;
+        root->node.next[1]->refs = 1;
+        root->length = 2;
+    }
+    puts("rrb_merge nodes step 4\n");
+    if(size >= ARRAY_SIZE*2){
+        root->node.next[2] = node2;
+        root->node.next[2]->refs = 1;
+        root->length = 3;
+    }
+    puts("rrb_merge nodes step 5\n");
+    imc_rrb_unref(middle);
+    puts("rrb_merge nodes step 6\n");
+    if(root == NULL) puts("root is null (merge_nodes2)\n");
+    return root;
+}
+
+imc_rrb_t* imc_rrb_merge_leaves(imc_rrb_t* vec1, imc_rrb_t* vec2) {
+    printf("Try to merge leaves of size %d and %d\n", vec1->length, vec2->length);
+    int i, j, k, size = vec1->length + vec2->length;
+    imc_rrb_t* leaf1 = imc_rrb_create_leaf();
+    imc_rrb_t* leaf2 = NULL;
+    if(size > ARRAY_SIZE) leaf2 = imc_rrb_create_leaf();
+    /* Data merging */
+    for(i = 0, j = 0, k = 0; i < size; ){
+        if(i < ARRAY_SIZE){
+            if(i < vec1->length) leaf1->node.data[i] = vec1->node.data[i];
+            else {
+              leaf1->node.data[i] = vec2->node.data[j];
+              j++; //Iterateur sur vec2
+            }
+        }
+        else {
+          leaf2->node.data[k] = vec2->node.data[j];
+          j++; //Iterateur sur vec2
+          k++; //Iterateur sur leaf2
+        }
+        i++; //Iterateur global, et iterateur sur vec1/leaf1
+    }
+    /* Root adding */
+    imc_rrb_t* root = imc_rrb_new_root(leaf1);
+    root->node.next[0]->refs = 1;
+    root->length = 1; //TODO : verifier que c'est bien ça ?
+    if(leaf2 != NULL){
+        root->node.next[1] = leaf2;
+        root->node.next[1]->refs = 1;
+        root->length = 2;
+    }
+
+    return root;
 }
 
 imc_rrb_t* copy_and_add_on_new_root(imc_rrb_t* body, imc_rrb_t* root) {
@@ -644,8 +778,11 @@ imc_rrb_t* copy_and_add_on_new_root(imc_rrb_t* body, imc_rrb_t* root) {
 /*******************/
 
 int imc_rrb_unref(imc_rrb_t* vec) {
+  puts("rrb_unref step 1\n");
+  if(vec==NULL) { return 0; }
   int i, nb_refs = vec->refs-1;
   vec->refs = nb_refs;
+  puts("rrb_unref step 2\n");
   if(nb_refs == 0){
     if(vec->floor == 0){
       /*TODO eventually : error checking*/
@@ -693,11 +830,12 @@ void emit_node(imc_rrb_t* vec, char* from, char* prefix, FILE* fp,
    * Please use after that dot -Tsvg INPUT.dot -o OUTPUT.svg
    * and use a good visualizer if your graph is large.
    */
-
+  puts("emit_node step 1\n");
   fprintf(fp, "node_%s[label = \"", prefix);
   //current node
   char suffix;
   //if intern node, draw it with all its cells
+  puts("emit_node step 2\n");
   if(vec->floor != 0) {
     for(int i =0; i<ARRAY_SIZE; i++) {
       suffix = i<10?i+48:i+55;
@@ -712,11 +850,13 @@ void emit_node(imc_rrb_t* vec, char* from, char* prefix, FILE* fp,
         fprintf(fp, "| ");
       }
     }
+    puts("emit_node step 3\n");
     fprintf(fp, "\"];\n");
     //Draw arrow from parent to first cell, if it is not the root
     if(from != NULL) {
       fprintf(fp, "%s -> \"node_%s\":i%s0;\n", from, prefix, prefix);
     }
+    puts("emit_node step 4\n");
     //recursive calls to draw children
     for(int i =0; i<ARRAY_SIZE; i++) {
       if(vec->node.next[i] != NULL) {
@@ -726,6 +866,7 @@ void emit_node(imc_rrb_t* vec, char* from, char* prefix, FILE* fp,
         emit_node(vec->node.next[i], str_from, concatc(prefix, suffix), fp, print);
       }
     }
+    puts("emit_node step 5\n");
     //If it is a leaf
   } else {
       // draw the leaf and its cells
@@ -740,6 +881,7 @@ void emit_node(imc_rrb_t* vec, char* from, char* prefix, FILE* fp,
           fprintf(fp, "|");
         }
       }
+      puts("emit_node step 6\n");
       fprintf(fp, "\"];\n");
       if(from != NULL) {
         fprintf(fp, "%s -> \"node_%s\":i%s0;\n", from, prefix, prefix);

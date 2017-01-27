@@ -112,14 +112,21 @@ int imc_rrb_unref(imc_rrb_t* vec);
 
 imc_rrb_t* copy_and_add_on_new_root(imc_rrb_t* body, imc_rrb_t* root);
 
-void compress(imc_rrb_t* left, imc_rrb_t* mid, imc_rrb_t* right);
+imc_rrb_t* compress(imc_rrb_t* left, imc_rrb_t* mid, imc_rrb_t* right, int ignore1, int ignore2);
 
 int imc_rrb_is_leaf(imc_rrb_t* vec);
 
-imc_rrb_t* imc_rrb_tail(imc_rrb_t* vec);
+imc_rrb_t* imc_rrb_tail(imc_rrb_t* vec, int* res_index);
 
-imc_rrb_t* imc_rrb_head(imc_rrb_t* vec);
+imc_rrb_t* imc_rrb_head(imc_rrb_t* vec, int* res_index);
 
 int imc_rrb_init(imc_rrb_t* vec);
+
+imc_rrb_t* imc_rrb_merge(imc_rrb_t* vec_front, imc_rrb_t* vec_tail);
+
+imc_rrb_t* imc_rrb_merge_nodes(imc_rrb_t* left, imc_rrb_t* middle,
+                               imc_rrb_t* right, int ignore1, int ignore2);
+
+imc_rrb_t* imc_rrb_merge_leaves(imc_rrb_t* vec1, imc_rrb_t* vec2);
 
 #endif
