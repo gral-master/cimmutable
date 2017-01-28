@@ -25,35 +25,30 @@
  * @example vector_main.c
  */
 
-
-/** avl vectors will all have the type avl_vector_t */
-typedef struct _avl_vector_t avl_vector_t;
-
-
-#ifndef _INT_BOX_H
-#define _INT_BOX_H
+/**********************
+ * Boxing helpers 
+ **********************/
 /** Boxing functions for integers. */
 typedef int int_box_t;
 /** returns a box holding an integer. */
-int_box_t* make_int_box(int i);
+int_box_t* make_int_box(int i) __attribute__((weak));
 /** returns the string representation of a boxed integer. */
-char* int_box_as_string(void* data);
+char* int_box_as_string(void* data) __attribute__((weak));
 /** compares two integers. */
-int compare_int_keys(void* key1, void* key2);
-#endif
+int compare_int_keys(void* key1, void* key2) __attribute__((weak));
 
-#ifndef _STRING_BOX_H
-#define _STRING_BOX_H
 /** Boxing functions for strings (ie. char* ). */
 typedef char* string_box_t;
 /** returns a box holding a string. */
-string_box_t* make_string_box(char* str);
+string_box_t* make_string_box(char* str) __attribute__((weak));
 /** returns the string representation of a boxed string. */
-char* string_box_as_string(void* data);
+char* string_box_as_string(void* data) __attribute__((weak));
 /** compares two strings. */
-int compare_string_keys(void* key1, void* key2);
-#endif
+int compare_string_keys(void* key1, void* key2) __attribute__((weak));
 
+
+/** avl vectors will all have the type avl_vector_t */
+typedef struct _avl_vector_t avl_vector_t;
 
 /**
  * Creates a new vector.

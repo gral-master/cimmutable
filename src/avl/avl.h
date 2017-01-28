@@ -11,6 +11,12 @@
 #ifndef __AVL__
 #define __AVL__
 
+
+/***************************
+ * The AVL Trees.
+ ***************************/
+
+
 typedef void avl_data_t;
 
 typedef struct _avl_node {

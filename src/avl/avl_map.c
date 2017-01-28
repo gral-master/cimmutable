@@ -25,24 +25,23 @@ typedef struct _avl_map_data {
   void*  key;
   void* data;
 } _avl_map_data_t;
-_avl_map_data_t* make_avl_data(void* key, void* data) {
+_avl_map_data_t* make_map_data(void* key, void* data) {
   _avl_map_data_t* ret = malloc(sizeof *ret);
   ret->data = data;
   ret->key = key;
   return ret;
 }
-_avl_map_data_t* clone_avl_data(_avl_map_data_t* data) {
+_avl_map_data_t* clone_map_data(_avl_map_data_t* data) {
     _avl_map_data_t* ret = malloc(sizeof *ret);
     ret->data = data->data;
     ret->key = data->key;
     return ret;
 }
 
+
 /************************
  *   User side boxing   *
  ************************/
-#ifndef _INT_BOX_C
-#define _INT_BOX_C
 /* int box */
 int_box_t* make_int_box(int i) {
   int_box_t* box = malloc(sizeof(*box));
@@ -59,10 +58,7 @@ int compare_int_keys(void* key1, void* key2) {
   else if (*((int_box_t*)key1) < *((int_box_t*)key2)) return -1;
   return 1;
 }
-#endif
 
-#ifndef _STRING_BOX_C
-#define _STRING_BOX_C
 /* char* box */
 string_box_t* make_string_box(char* str) {
   string_box_t* ret = malloc(sizeof *ret);
@@ -75,7 +71,7 @@ char* string_box_as_string(void* box) {
 int compare_string_keys(void* key1, void* key2) {
   return strcmp(*((string_box_t*)key1), *((string_box_t*)key2));
 }
-#endif
+
 
 /*********************************
  *   Map manipulation functions  *
@@ -96,7 +92,7 @@ int avl_map_size (const avl_map_t* map) {
 
 avl_map_t* avl_map_update(const avl_map_t* map, void* key, void* data) {
   avl_map_t* new = malloc(sizeof *new);
-  _avl_map_data_t* boxed_data = make_avl_data(key, data);
+  _avl_map_data_t* boxed_data = make_map_data(key, data);
 
   new->map = avl_insert(map->map, boxed_data);
   new->key_as_string  = map->key_as_string;
@@ -111,7 +107,7 @@ avl_map_t* avl_map_update_mutable(avl_map_t* map, void* key, void* data) {
 }
 
 void* avl_map_lookup(const avl_map_t* map, void* key) {
-  _avl_map_data_t* tmp = make_avl_data(key, NULL);
+  _avl_map_data_t* tmp = make_map_data(key, NULL);
   _avl_map_data_t* data = avl_search(map->map, tmp);
   free(tmp);
   if (data) {
@@ -122,7 +118,7 @@ void* avl_map_lookup(const avl_map_t* map, void* key) {
 }
 
 avl_map_t* avl_map_remove(const avl_map_t* map, void* key, void** data) {
-  _avl_map_data_t* tmp = make_avl_data(key, NULL);
+  _avl_map_data_t* tmp = make_map_data(key, NULL);
   void* return_data = NULL;
 
   avl_map_t* new = malloc(sizeof *new);

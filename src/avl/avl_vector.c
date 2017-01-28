@@ -23,13 +23,13 @@ typedef struct _avl_vector_data {
   int index;
 } _avl_vector_data_t;
 
-_avl_vector_data_t* make_avl_data(void* data, int index) {
+_avl_vector_data_t* make_vector_data(void* data, int index) {
   _avl_vector_data_t* ret = malloc(sizeof *ret);
   ret->data = data;
   ret->index = index;
   return ret;
 }
-_avl_vector_data_t* clone_avl_data(_avl_vector_data_t* data) {
+_avl_vector_data_t* clone_vector_data(_avl_vector_data_t* data) {
     _avl_vector_data_t* ret = malloc(sizeof *ret);
     ret->data = data->data;
     ret->index = data->index;
@@ -44,8 +44,6 @@ int _vector_compare (void* d1, void* d2) {
 /************************
  *   User side boxing   *
  ************************/
-#ifndef _INT_BOX_C
-#define _INT_BOX_C
 /* int box */
 int_box_t* make_int_box(int i) {
   int_box_t* box = malloc(sizeof(*box));
@@ -62,10 +60,7 @@ int compare_int_keys(void* key1, void* key2) {
   else if (*((int_box_t*)key1) < *((int_box_t*)key2)) return -1;
   return 1;
 }
-#endif
 
-#ifndef _STRING_BOX_C
-#define _STRING_BOX_C
 /* char* box */
 string_box_t* make_string_box(char* str) {
   string_box_t* ret = malloc(sizeof *ret);
@@ -78,7 +73,7 @@ char* string_box_as_string(void* box) {
 int compare_string_keys(void* key1, void* key2) {
   return strcmp(*((string_box_t*)key1), *((string_box_t*)key2));
 }
-#endif
+
 
 /*********************************
  * Vector manipulation functions *
@@ -106,7 +101,7 @@ avl_vector_t* avl_vector_update(const avl_vector_t* vec, int index,
     new->max_index = vec->max_index;
   }
 
-  _avl_vector_data_t* boxed_data = make_avl_data(data, index);
+  _avl_vector_data_t* boxed_data = make_vector_data(data, index);
 
   new->vector = avl_insert(vec->vector, boxed_data);
   new->data_as_string = vec->data_as_string;
@@ -121,7 +116,7 @@ avl_vector_t* avl_vector_update_mutable(avl_vector_t* vec, int index,
 }
 
 void* avl_vector_lookup(const avl_vector_t* vec, int index) {
-  _avl_vector_data_t* tmp = make_avl_data(NULL, index);
+  _avl_vector_data_t* tmp = make_vector_data(NULL, index);
   _avl_vector_data_t* data = avl_search(vec->vector, tmp);
   free(tmp);
   if (data) {
@@ -133,7 +128,7 @@ void* avl_vector_lookup(const avl_vector_t* vec, int index) {
 
 avl_vector_t* avl_vector_push(const avl_vector_t* vec, void* data) {
   int index = vec->max_index + 1;
-  _avl_vector_data_t* boxed_data = make_avl_data(data, index);
+  _avl_vector_data_t* boxed_data = make_vector_data(data, index);
 
   avl_vector_t* new = malloc(sizeof *new);
   new->max_index = index;
@@ -151,7 +146,7 @@ avl_vector_t* avl_vector_push_mutable(avl_vector_t* vec, void* data) {
 avl_vector_t* avl_vector_pop(const avl_vector_t* vec, void** data) {
   int index = vec->max_index;
   if (index >= 0) {
-    _avl_vector_data_t* tmp = make_avl_data(NULL, index);
+    _avl_vector_data_t* tmp = make_vector_data(NULL, index);
 
     avl_vector_t* new = malloc(sizeof *new);
     new->max_index = index - 1;
@@ -185,7 +180,7 @@ avl_vector_t* avl_vector_pop_mutable(avl_vector_t* vec, void** data) {
 void _merge_vector_internal(avl_tree* ret, avl_node* orig, int shift) {
   if (orig != NULL) {
     _avl_vector_data_t* data =
-      make_avl_data(((_avl_vector_data_t*)orig->data)->data,
+      make_vector_data(((_avl_vector_data_t*)orig->data)->data,
 		    shift + ((_avl_vector_data_t*)orig->data)->index);
     
     avl_insert_mutable(ret, data);
@@ -217,7 +212,7 @@ avl_vector_t* avl_vector_merge_mutable(avl_vector_t* vec_front,
 void _split_vector_internal(avl_node* node, int index,
 			    avl_vector_t* vec_out1, avl_vector_t* vec_out2) {
   if (node) {
-    _avl_vector_data_t* data = clone_avl_data(node->data);
+    _avl_vector_data_t* data = clone_vector_data(node->data);
     if (data->index <= index) {
       avl_insert_mutable(vec_out1->vector, data);
       vec_out1->max_index = MAX(vec_out1->max_index, data->index);
