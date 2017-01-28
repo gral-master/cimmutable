@@ -358,16 +358,6 @@ imc_avl_node_t* imc_avl_insert_rec( imc_avl_node_t* tree,
     return new_node;
 }
 
-/*void imc_avl_keys(imc_avl_node_t* tree, imc_key_t** tab, int* indice){
-    if (tree != NULL) {
-        imc_avl_keys(tree->left, tab, indice);
-        tab[*indice] = tree->key;
-        *indice = *indice + 1;
-        imc_avl_keys(tree->right, tab, indice);
-    }
-
-}*/
-
 imc_key_t* get_lowest_key(imc_avl_node_t* tree) {
     if (tree == NULL) return NULL;
     if (tree->left == NULL) return tree->key;
@@ -491,7 +481,6 @@ int imc_avl_post_check_insert2(imc_avl_node_t* pre_tree, imc_avl_node_t* post_tr
     }
 }
 
-
 imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
                                 imc_data_t* data, imc_key_t* key,
                                 int (*comparator)(imc_key_t*, imc_key_t*),
@@ -500,15 +489,16 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
 
     imc_avl_node_t* result;
 
+
     imc_avl_node_t* copy_tree = imc_avl_copy(tree);
     int k;
-    
+
     k = check_invariant(tree, comparator);
     if (k == -1) printf("INSERT_ERROR_AV\n");
     else printf("INSERT_OK_AV\n");
 
     result = imc_avl_insert_rec(tree, data, key, comparator, prev_data);
-    
+
     k = check_invariant(result, comparator);
     if (k == -1) printf("INSERT_ERROR_AP\n");
     else printf("INSERT_OK_AP\n");
@@ -1001,7 +991,7 @@ imc_avl_node_t* insert_node(imc_avl_node_t* root, imc_data_t* data, imc_key_t* k
 
 
 //----------------------------------------------------------------------------//
-//-------------------------Functions for Merge and Split----------------------//
+//--------------------------------Copy Functions------------------------------//
 //----------------------------------------------------------------------------//
 
 
@@ -1032,10 +1022,12 @@ imc_avl_node_t* imc_avl_add_tree_rec ( imc_avl_node_t* main_tree,
                             imc_avl_node_t* second_tree,
                             int (*comparator)(imc_key_t*, imc_key_t*)) {
     if (second_tree != NULL) {
-        printf("TEST : %d\n", *second_tree->key);
-        main_tree = imc_avl_add_tree_rec(main_tree, second_tree->left, comparator);
-        main_tree = insert_node(main_tree, second_tree->data, second_tree->key, comparator);
-        main_tree = imc_avl_add_tree_rec(main_tree, second_tree->right, comparator);
+        main_tree = imc_avl_add_tree_rec(main_tree, second_tree->left,
+                                         comparator);
+        main_tree = insert_node(main_tree, second_tree->data,
+                                second_tree->key, comparator);
+        main_tree = imc_avl_add_tree_rec(main_tree, second_tree->right,
+                                         comparator);
     }
 
     return main_tree;
@@ -1049,8 +1041,41 @@ imc_avl_node_t* imc_avl_merge(  imc_avl_node_t* tree_src,
     return imc_avl_add_tree_rec(new_tree, tree_merged, comparator);
 }
 
-
-
+//----------------------------------------------------------------------------//
+//-------------------------split----------------------------------------------//
+//----------------------------------------------------------------------------//
+int imc_avl_split( imc_avl_node_t* tree_src,
+                    imc_key_t* key_splited,
+                    imc_avl_node_t** head_tree,
+                    imc_avl_node_t** tail_tree,
+                    int (*comparator)(imc_key_t*, imc_key_t*)){
+    if(tree_src == NULL){
+        return 0;
+    }
+    int diff = comparator(key_splited, tree_src->key);
+    if(diff == 0){
+        *head_tree = imc_avl_add_tree_rec(*head_tree,tree_src->left,comparator);
+        *head_tree = insert_node(*head_tree, tree_src->data,
+                                 tree_src->key, comparator);
+        *tail_tree = imc_avl_add_tree_rec(*tail_tree,tree_src->right,
+                                          comparator);
+    }else if(diff < 0){
+        *tail_tree = insert_node(*tail_tree, tree_src->data,
+                                 tree_src->key, comparator);
+        *tail_tree = imc_avl_add_tree_rec(*tail_tree,tree_src->right,
+                                          comparator);
+        imc_avl_split(tree_src->left, key_splited,
+                      head_tree, tail_tree, comparator);
+    }else{
+        *head_tree = insert_node(*head_tree, tree_src->data,
+                                 tree_src->key, comparator);
+        *head_tree = imc_avl_add_tree_rec(*head_tree,tree_src->left,
+                                          comparator);
+        imc_avl_split(tree_src->right, key_splited,
+                      head_tree, tail_tree, comparator);
+    }
+    return 0;
+}
 
 //----------------------------------------------------------------------------//
 //-------------------------Dump Function--------------------------------------//

@@ -87,18 +87,19 @@ int imc_avl_map_iterate_rec(imc_avl_node_t* tree, imc_avl_map_iterator_t *iter,
         iter->current_data = tree->data;
         return 1;
     }
-    switch (comparator(tree->key, iter->current_key)){
-        case 1 :
+    int diff =comparator(tree->key, iter->current_key);
+    if (diff > 0){
             if(! imc_avl_map_iterate_rec(tree->left,iter,comparator)){
                 iter->current_data = tree->data;
                 iter->current_key = tree->key;
             }
             return 1;
-        case 0 :
+    } else {
+        if(diff == 0){
             iter->current_data = NULL;
             iter->current_key = NULL;
-        case -1 :
-            return imc_avl_map_iterate_rec(tree->right,iter,comparator);
+        }
+        return imc_avl_map_iterate_rec(tree->right,iter,comparator);
     }
     return 0;
 }
