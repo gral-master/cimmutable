@@ -431,7 +431,6 @@ void imc_avl_get_key_values(imc_avl_node_t* tree, imc_key_t** tab_key, imc_data_
         *indice = *indice + 1;
         imc_avl_get_key_values(tree->right, tab_key, tab_data, indice);
     }
-
 }
 
 int imc_avl_post_check_insert2(imc_avl_node_t* pre_tree, imc_avl_node_t* post_tree, imc_key_t* key, imc_data_t* data) {

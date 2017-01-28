@@ -1,4 +1,4 @@
-
+/*
 #include <stdlib.h>
 #include <stdio.h>
 #include "imc_avl.h"
@@ -62,7 +62,7 @@ int main ()
 
 
 	return 0;
-}
+}*/
 
 
 /*
@@ -153,7 +153,7 @@ int main ()
 */
 
 
-/*
+
 #include <stdlib.h>
 #include <stdio.h>
 #include "imc_avl.h"
@@ -232,9 +232,9 @@ int main ()
 
         imc_vector_avl_dump(vector, print);
 
-	}
+	}*/
 
 	
 	return 0;
 }
-*/
+
