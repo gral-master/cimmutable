@@ -58,7 +58,7 @@ int main () {
   printf("\nCreating an int-char map to test genericity\n");
   avl_map_t* map2 = avl_map_create(int_box_as_string,
 				   string_box_as_string,
-				   compare_string_keys);
+				   compare_int_keys);
   map2 = avl_map_update(map2, make_int_box(1), make_string_box("First"));
   map2 = avl_map_update(map2, make_int_box(2), make_string_box("Second"));
   map2 = avl_map_update(map2, make_int_box(3), make_string_box("Fourth"));

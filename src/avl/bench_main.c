@@ -6,43 +6,50 @@
 #include "avl_vector.h"
 #include "parser.h"
 
+// IMPLEM : AVL or RRB or FINGER
 #define IMPLEM AVL
+// IMPLEM_NAME : doesn't matter, only here for the prints.
 #define IMPLEM_NAME "avl"
 
-double eval_vector_cmds(command** cmds, int size, avl_vector_t** vec) {
+double eval_vector_cmds(Prog* prog, command** cmds,
+			int size, avl_vector_t** vec) {
   struct timeval t1, t2;
   gettimeofday(&t1, NULL);
   
   for (int i = 0; i < size; i++) {
     command* cmd = cmds[i];
     int obj_in   = cmd->obj_in;
-    int obj_in_2  = cmd->obj_in_2;
     int obj_out  = cmd->obj_out;
-    int obj_out_2 = cmd->obj_out_2;
+    int obj_aux  = cmd->obj_aux;
     switch (cmd->type) {
     case CREATE:
-      vec[obj_out] = avl_vector_create(int_box_as_string);
+      vec[obj_out] = avl_vector_create(prog->data_type == INT ?
+				       int_box_as_string :
+				       string_box_as_string);
       break;
     case UNREF:
       avl_vector_unref(vec[obj_in]);
       break;
     case UPDATE:
       vec[obj_out] = avl_vector_update(vec[obj_in], cmd->index,
-				       make_int_box(cmd->data.as_int));
+				       prog->data_type == INT ?
+				       make_int_box(cmd->data.as_int) :
+				       make_string_box(cmd->data.as_string) );
       break;
     case PUSH:
-      vec[obj_out] = avl_vector_push(vec[obj_in],
-				     make_int_box(cmd->data.as_int));
+      vec[obj_out] = avl_vector_push(vec[obj_in], prog->data_type == INT ?
+				     make_int_box(cmd->data.as_int) :
+				     make_string_box(cmd->data.as_string));
       break;
     case POP:
       ;void* data;
       vec[obj_out] = avl_vector_pop(vec[obj_in], &data);
       break;
     case MERGE:
-      vec[obj_out] = avl_vector_merge(vec[obj_in], vec[obj_in_2]);
+      vec[obj_out] = avl_vector_merge(vec[obj_in], vec[obj_aux]);
       break;
     case SPLIT:
-      avl_vector_split(vec[obj_in], cmd->index, &vec[obj_out], &vec[obj_out_2]);
+      avl_vector_split(vec[obj_in], cmd->index, &vec[obj_out], &vec[obj_aux]);
       break;
     case LOOKUP:
       avl_vector_lookup(vec[obj_in], cmd->index);
@@ -53,6 +60,8 @@ double eval_vector_cmds(command** cmds, int size, avl_vector_t** vec) {
     case DUMP:
       avl_vector_dump(vec[obj_in]);
       break;
+    default: // mostly to remove warnings.
+      fprintf(stderr, "Unsupported operation %d. Skipping.\n", cmd->type);
     }
   }
 
@@ -63,16 +72,77 @@ double eval_vector_cmds(command** cmds, int size, avl_vector_t** vec) {
 }
 
 
-// Assuming int data for now.
 double execute_vector (Prog* prog) {
   avl_vector_t** vec = malloc(prog->nb_var * sizeof(*vec));
 
-  eval_vector_cmds(prog->init, prog->init_size, vec);
-  return eval_vector_cmds(prog->bench, prog->bench_size, vec);
+  eval_vector_cmds(prog, prog->init, prog->init_size, vec);
+  return eval_vector_cmds(prog, prog->bench, prog->bench_size, vec);
 }
 
+double eval_map_cmds(Prog* prog, command** cmds,
+		     int size, avl_map_t** map) {
+  struct timeval t1, t2;
+  gettimeofday(&t1, NULL);
+  
+  for (int i = 0; i < size; i++) {
+    command* cmd = cmds[i];
+    int obj_in   = cmd->obj_in;
+    int obj_out  = cmd->obj_out;
+    switch (cmd->type) {
+    case CREATE:
+      map[obj_out] =
+	avl_map_create(
+	 prog->key_type  == INT ? int_box_as_string : string_box_as_string,
+	 prog->data_type == INT ? int_box_as_string : string_box_as_string,
+	 prog->key_type  == INT ? compare_int_keys  : compare_string_keys  );
+      break;
+    case UNREF:
+      avl_map_unref(map[obj_in]);
+      break;
+    case UPDATE:
+      map[obj_out] =
+	avl_map_update(
+	  map[obj_in],
+	  prog->key_type  == INT ? make_int_box(cmd->key.as_int) :
+	                           make_string_box(cmd->key.as_string),
+	  prog->data_type == INT ? make_int_box(cmd->data.as_int) :
+	                           make_string_box(cmd->data.as_string) );
+      break;
+    case REMOVE:
+      ;void* data;
+      map[obj_out] =
+	avl_map_remove(map[obj_in], prog->key_type == INT ?
+		       make_int_box(cmd->key.as_int) :
+		       make_string_box(cmd->key.as_string), &data );
+      break;
+    case LOOKUP:
+      avl_map_lookup(map[obj_in], prog->key_type == INT ?
+		     make_int_box(cmd->key.as_int) :
+		     make_string_box(cmd->key.as_string) );
+      break;
+    case SIZE:
+      avl_map_size(map[obj_in]);
+      break;
+    case DUMP:
+      avl_map_dump(map[obj_in]);
+      break;
+  default: // mostly to remove warnings.
+      fprintf(stderr, "Unsupported operation %d. Skipping.\n", cmd->type);
+    }
+  }
+
+  gettimeofday(&t2, NULL);
+  double elapsed_time = (t2.tv_sec - t1.tv_sec) * 1000.0;
+  elapsed_time += (t2.tv_usec - t1.tv_usec) / 1000.0;
+  return elapsed_time;
+}
+
+
 double execute_map (Prog* prog) {
-  return (double)prog->init_size;
+  avl_map_t** map = malloc(prog->nb_var * sizeof(*map));
+
+  eval_map_cmds(prog, prog->init, prog->init_size, map);
+  return eval_map_cmds(prog, prog->bench, prog->bench_size, map);
 }
 
 
@@ -98,7 +168,7 @@ int main (int argc, char* argv[]) {
     time = execute_map(prog);
   }
 
-  printf("Time elapsed: %f\n", time);
+  printf("Time elapsed: %.3fms\n", time);
 
   return 0;
   

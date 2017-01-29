@@ -54,24 +54,26 @@ char* int_box_as_string(void* data) {
   return buf;
 }
 int compare_int_keys(void* key1, void* key2) {
-  if (*((int_box_t*)key1) == *((int_box_t*)key2)) return 0;
-  else if (*((int_box_t*)key1) < *((int_box_t*)key2)) return -1;
+  int k1 = *(int_box_t*)((_avl_map_data_t*)key1)->key;
+  int k2 = *(int_box_t*)((_avl_map_data_t*)key2)->key;
+  if (k1 == k2) return 0;
+  else if (k1 < k2) return -1;
   return 1;
 }
 
 /* char* box */
 string_box_t* make_string_box(char* str) {
-  string_box_t* ret = malloc(sizeof *ret);
-  *ret = str;
-  return ret;
+  string_box_t* t = malloc(sizeof *t);
+  *t = strdup(str);
+  return t;
 }
 char* string_box_as_string(void* box) {
   return strdup(*((string_box_t*)box));
 }
 int compare_string_keys(void* key1, void* key2) {
-  return strcmp(*((string_box_t*)key1), *((string_box_t*)key2));
+  return strcmp(*(string_box_t*)((_avl_map_data_t*)key1)->key,
+		*(string_box_t*)((_avl_map_data_t*)key2)->key);
 }
-
 
 /*********************************
  *   Map manipulation functions  *
