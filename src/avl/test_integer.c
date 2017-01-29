@@ -33,30 +33,38 @@ int main ()
 	imc_key_t key[8] = {10, 4, 6, 12, 14, 8, 16, 18};
 
 	imc_avl_node_t* tree = NULL;
+    imc_avl_node_t* temp_tree = NULL;
     int i;
 	for (i = 0 ; i < 8 ; i++)
 	{
         replace = NULL;
-		tree = imc_avl_insert(tree, &data[i], &key[i], &compare, &replace);
+		temp_tree = imc_avl_insert(tree, &data[i], &key[i], &compare, &replace);
+        imc_avl_unref(tree);
+        tree = temp_tree;
         //parcour_infix(tree);
 	}
 
 	imc_avl_dump(tree, print);
 	test = imc_avl_lookup(tree, &key[3], &compare);
 	printf("TESTLOOKUP : %d\n", *test);
-	
+
 	replace = NULL;
-	tree = imc_avl_remove(tree, &key[0], &compare, &replace);
+	temp_tree = imc_avl_remove(tree, &key[0], &compare, &replace);
+    imc_avl_unref(tree);
+    tree = temp_tree;
+
     printf("tree->balance = %d\n", tree->balance);
 	imc_avl_dump(tree, print);
     parcour_infix(tree);
 
     replace = NULL;
-    tree = imc_avl_remove(tree, &key[3], &compare, &replace);
+    temp_tree = imc_avl_remove(tree, &key[3], &compare, &replace);
+    imc_avl_unref(tree);
+    tree = temp_tree;
     printf("tree->balance = %d\n", tree->balance);
     imc_avl_dump(tree, print);
     parcour_infix(tree);
-	
+
 
 	//printf("%d\n", (int) *result);
 
@@ -201,7 +209,7 @@ int main ()
 		//imc_avl_map_dump(map, print, print);
         //parcour_infix(tree);
 
-        
+
 
 	}
 
@@ -234,7 +242,7 @@ int main ()
 
 	}
 
-	
+
 	return 0;
 }
 */
