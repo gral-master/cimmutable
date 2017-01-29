@@ -7,4 +7,6 @@ int imc_rrb_check_invariant(imc_rrb_t* vec);
 
 int count_elems(imc_rrb_t* vec);
 
+int verif_balance(imc_rrb_t* vec);
+
 #endif

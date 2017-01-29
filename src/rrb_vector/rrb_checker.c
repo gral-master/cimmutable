@@ -5,7 +5,7 @@
 #include "./rrb_checker.h"
 
 int imc_rrb_check_invariant(imc_rrb_t* vec){
-    return count_elems(vec) == imc_rrb_size(vec); 
+    return (count_elems(vec) == imc_rrb_size(vec));
 }
 
 int count_elems(imc_rrb_t* vec){
@@ -26,7 +26,7 @@ int count_elems(imc_rrb_t* vec){
 
 int verif_balance(imc_rrb_t* vec){
     int i;
-    if(imc_rrb_balanced(vec)){
+    if(imc_rrb_is_balanced(vec)){
         if(vec->floor > 0){
             int cond;            
             int res = 1;

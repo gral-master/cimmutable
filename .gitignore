@@ -37,4 +37,7 @@ docs/*
 # Debug files
 *.dSYM/
 *.su
+
 dot/
+main.c
+test.c
