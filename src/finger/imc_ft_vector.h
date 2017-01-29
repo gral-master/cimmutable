@@ -3,40 +3,40 @@
 
 #include "fingertree.h"
 
-typedef ft imc_vector_t;
+typedef ft imc_ft_vector_t;
 typedef imc_data_t;
 
-imc_vector_t* imc_vector_create();
+imc_ft_vector_t* imc_vector_create();
 
-int imc_vector_size(imc_vector_t* vec);
+int imc_vector_size(imc_ft_vector_t* vec);
 
-imc_vector_t* imc_vector_update(imc_vector_t* vec,
+imc_ft_vector_t* imc_vector_update(imc_ft_vector_t* vec,
                                 int index,
                                 imc_data_t* data);
 
-imc_data_t* imc_vector_lookup(imc_vector_t* vec,
+imc_data_t* imc_vector_lookup(imc_ft_vector_t* vec,
                               int index);
 
 /* stack operations */
 
-imc_vector_t* imc_vector_push(imc_vector_t* vec,
-                              imc_data_t* data);
+imc_ft_vector_t* imc_vector_push(imc_ft_vector_t* vec,
+                                 imc_data_t* data);
 
-imc_vector_t* imc_vector_pop(imc_vector_t* vec,
-                             imc_data_t** data);
+imc_ft_vector_t* imc_vector_pop(imc_ft_vector_t* vec,
+                                imc_data_t** data);
 
-int imc_vector_split(imc_vector_t* vec_in,
+int imc_vector_split(imc_ft_vector_t* vec_in,
                      int index,
-                     imc_vector_t** vec_out1,
-                     imc_vector_t** vec_out2);
+                     imc_ft_vector_t** vec_out1,
+                     imc_ft_vector_t** vec_out2);
 
-imc_vector_t* imc_vector_merge(imc_vector_t* vec_front,
-                               imc_vector_t* vec_tail);
+imc_ft_vector_t* imc_vector_merge(imc_ft_vector_t* vec_front,
+                                  imc_ft_vector_t* vec_tail);
 
 /* user-side memory management */
 
-int imc_vector_unref(imc_vector_t* vec);
+int imc_vector_unref(imc_ft_vector_t* vec);
 
-void imc_vector_dump(imc_vector_t* vec);
+void imc_vector_dump(imc_ft_vector_t* vec);
 
 #endif

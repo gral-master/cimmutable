@@ -3,7 +3,7 @@
 
 // Nodes
 typedef imc_data_t;
-typedef imc_key_t;
+//typedef imc_key_t;
 
 enum node_type {NODE_TYPE, DATA_TYPE};
 
@@ -12,7 +12,7 @@ typedef union true_node_t true_node_t;
 typedef struct {
     true_node_t* true_node;
     enum node_type type;
-    imc_key_t key;
+    //imc_key_t key;
     int size;
     int ref_count;
 } node;
@@ -38,13 +38,13 @@ typedef struct {
     true_ft_t* true_ft;
     enum ft_type type;
     int ref_count;
-    imc_key_t key;
+    //imc_key_t key;
     int size;
 } ft;
 
 typedef struct {
     node* nodes[4];
-    imc_key_t key;
+    //imc_key_t key;
     int size;
 } affix;
 

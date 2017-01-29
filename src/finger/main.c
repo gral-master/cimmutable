@@ -132,8 +132,8 @@ void vector_test() {
         data2[i] = i * 3;
     }
     
-    imc_vector_t* vectorArray[MAX_ADD+1];
-    imc_vector_t* vectorArray2[MAX_ADD+1];;
+    imc_ft_vector_t* vectorArray[MAX_ADD+1];
+    imc_ft_vector_t* vectorArray2[MAX_ADD+1];;
     
     // create & push
     vectorArray[0] = imc_vector_create();
@@ -142,14 +142,14 @@ void vector_test() {
         vectorArray[i] = imc_vector_push(vectorArray[i-1], ((void*)&data[i-1]));
         vectorArray2[i] = imc_vector_push(vectorArray2[i-1], ((void*)&data2[i-1]));
     }
-    imc_vector_t* max_vector = vectorArray[MAX_ADD];
-    imc_vector_t* max_vector2 = vectorArray2[MAX_ADD];
+    imc_ft_vector_t* max_vector = vectorArray[MAX_ADD];
+    imc_ft_vector_t* max_vector2 = vectorArray2[MAX_ADD];
     
     // size
     assert(imc_vector_size(max_vector) == MAX_ADD);
     
     // update
-    imc_vector_t* v_updated = imc_vector_update(max_vector, MAX_ADD/2, &data_u);
+    imc_ft_vector_t* v_updated = imc_vector_update(max_vector, MAX_ADD/2, &data_u);
     printf("\n===updated===\n");
     imc_vector_dump(v_updated);
     
@@ -157,12 +157,12 @@ void vector_test() {
     assert(*imc_vector_lookup(v_updated, MAX_ADD/2) == data_u);
     
     // pop
-    imc_vector_t* v_popped = imc_vector_pop(max_vector, &data_p);
+    imc_ft_vector_t* v_popped = imc_vector_pop(max_vector, &data_p);
     assert(imc_vector_size(v_popped) == MAX_ADD-1);
     assert(*data_p == (MAX_ADD-1)*5);
     
     // split
-    imc_vector_t *vec_out1 = NULL, *vec_out2 = NULL;
+    imc_ft_vector_t *vec_out1 = NULL, *vec_out2 = NULL;
     imc_vector_split(max_vector, MAX_ADD/2, &vec_out1, &vec_out2);
     
     // dump
@@ -172,7 +172,7 @@ void vector_test() {
     imc_vector_dump(vec_out2);
     
     // merge
-    imc_vector_t *merged = imc_vector_merge(max_vector, max_vector2);
+    imc_ft_vector_t *merged = imc_vector_merge(max_vector, max_vector2);
     printf("\n===max_vector===\n");
     imc_vector_dump(max_vector);
     printf("\n===max_vector2===\n");

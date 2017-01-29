@@ -5,17 +5,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-imc_vector_t* imc_vector_create() {
+imc_ft_vector_t* imc_vector_create() {
     return create_empty();
 }
 
-int imc_vector_size(imc_vector_t* vec) {
+int imc_vector_size(imc_ft_vector_t* vec) {
     return vec->size;
 }
 
-imc_vector_t* imc_vector_update(imc_vector_t* vec,
-                                int index,
-                                imc_data_t* data) {
+imc_ft_vector_t* imc_vector_update(imc_ft_vector_t* vec,
+                                   int index,
+                                   imc_data_t* data) {
     assert (index < vec->size);
     
     split s = ft_split(vec, index);
@@ -30,28 +30,28 @@ imc_vector_t* imc_vector_update(imc_vector_t* vec,
     return tmp;
 }
 
-imc_data_t* imc_vector_lookup(imc_vector_t* vec,
+imc_data_t* imc_vector_lookup(imc_ft_vector_t* vec,
                               int index) {
     return ft_lookup(vec, index);
 }
 
 /* stack operations */
-imc_vector_t* imc_vector_push(imc_vector_t* vec,
-                              imc_data_t* data) {
+imc_ft_vector_t* imc_vector_push(imc_ft_vector_t* vec,
+                                 imc_data_t* data) {
     return ft_add(data, vec, 1);
 }
 
-imc_vector_t* imc_vector_pop(imc_vector_t* vec,
-                             imc_data_t** data) {
+imc_ft_vector_t* imc_vector_pop(imc_ft_vector_t* vec,
+                                imc_data_t** data) {
     view v = ft_delete(vec, 1);
     *data = v.elem->true_node->data;
     return v.fg;
 }
 
-int imc_vector_split(imc_vector_t* vec_in,
+int imc_vector_split(imc_ft_vector_t* vec_in,
                      int index,
-                     imc_vector_t** vec_out1,
-                     imc_vector_t** vec_out2) {
+                     imc_ft_vector_t** vec_out1,
+                     imc_ft_vector_t** vec_out2) {
     if (vec_in->type == EMPTY_TYPE) {
       *vec_out1 = imc_vector_create();
       *vec_out2 = imc_vector_create();
@@ -72,20 +72,20 @@ int imc_vector_split(imc_vector_t* vec_in,
     return EXIT_SUCCESS;
 }
 
-imc_vector_t* imc_vector_merge(imc_vector_t* vec_front,
-                               imc_vector_t* vec_tail) {
+imc_ft_vector_t* imc_vector_merge(imc_ft_vector_t* vec_front,
+                                  imc_ft_vector_t* vec_tail) {
   
     return ft_concat(vec_front, vec_tail);
 }
 
 /* user-side memory management */
 
-int imc_vector_unref(imc_vector_t* vec) {
+int imc_vector_unref(imc_ft_vector_t* vec) {
     ft_unref(vec);
     
     return EXIT_SUCCESS;
 }
 
-void imc_vector_dump(imc_vector_t* vec) {
+void imc_vector_dump(imc_ft_vector_t* vec) {
     ft_display(vec);
 }
