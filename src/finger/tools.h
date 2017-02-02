@@ -1,21 +1,78 @@
 #ifndef __TOOLS_H__
 #define __TOOLS_H__
 
-#include "types.h"
-#include "tools.h"
+typedef int finger_data_t;
 
-typedef struct deep_stack_t_def {
+typedef enum {TREE_NODE, DATA_NODE} node_type_t;
+typedef enum {EMPTY_NODE, SINGLE_NODE, DEEP_NODE} deep_type_t;
+typedef enum {FINGER_LEFT, FINGER_RIGHT} side_t;
+
+typedef struct fingernode_t_def{
+  int ref_counter;
+  int tag;
+  int arity;
+  int lookup_idx;
+  node_type_t node_type;
+  union {
+    struct fingernode_t_def** children;
+    finger_data_t** data;
+  } content;
+} fingernode_t;
+
+typedef struct deep_t_def {
+  deep_type_t deep_type;
+  int ref_counter;
+  int tag;
+  fingernode_t* left;
+  fingernode_t* right;
+  union {
+    fingernode_t* single;
+    struct deep_t_def* deeper;
+  } content;
+} deep_t;
+
+/**
+ ** deep_t* simple linked list
+ **/
+typedef struct deep_list_t_def {
   deep_t* content;
-  struct deep_stack_t_def* next;
-} deep_stack_t;
+  struct deep_list_t_def* next;
+} deep_list_t;
 
-void tag_deeps(deep_t*);
-void dump_to_dot(deep_t* tree, char* fname);
+deep_list_t* list_make();
+int list_is_empty(deep_list_t* list);
+void list_push(deep_t* deep, deep_list_t** list);
+deep_t* list_pop(deep_list_t** list);
+int list_size(deep_list_t* list);
+void list_destroy(deep_list_t* list);
 
-int stack_is_empty(deep_stack_t* stack);
-void stack_push(deep_t* deep, deep_stack_t** stack);
-deep_t* stack_pop(deep_stack_t** stack);
-int stack_size(deep_stack_t* stack);
-void stack_destroy(deep_stack_t* stack);
+/**
+ ** fingernode_t* double linked list
+ **/
+typedef struct finger_list_t_def {
+  fingernode_t* content;
+  struct finger_list_t_def* next;
+  struct finger_list_t_def* prev;
+} finger_list_t;
+
+typedef struct finger_deque_t_def {
+  int size;
+  finger_list_t* first;
+  finger_list_t* last;
+} finger_deque_t;
+
+finger_deque_t* deque_make();
+int deque_is_empty(finger_deque_t* deque);
+void deque_push_front(fingernode_t* val, finger_deque_t* deque);
+void deque_push_back(fingernode_t* val, finger_deque_t* deque);
+fingernode_t* deque_pop_first(finger_deque_t* deque);
+fingernode_t* deque_pop_last(finger_deque_t* deque);
+int deque_size(finger_deque_t* deque);
+void deque_destroy(finger_deque_t* deque);
+
+/**
+ ** Miscellaneous
+ **/
+
 
 #endif

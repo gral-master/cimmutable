@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #include "tools.h"
-#include "types.h"
+#include "fingers.h"
 
 /**
  **  DOT TOOLS
@@ -74,36 +74,104 @@ void dump_to_dot(deep_t* tree, char* fname) {
 }
 
 /**
- ** STACK OPERATIONS
+ ** LIST OPERATIONS
  **/
 
-int stack_is_empty(deep_stack_t* stack) {
-  return stack == NULL;
+deep_list_t* list_make() {
+  return malloc(sizeof(deep_list_t));
 }
 
-void stack_push(deep_t* deep, deep_stack_t** stack) {
-  deep_stack_t* new_head = malloc(sizeof(deep_stack_t));
+int list_is_empty(deep_list_t* list) {
+  return list == NULL;
+}
+
+void list_push(deep_t* deep, deep_list_t** list) {
+  deep_list_t* new_head = malloc(sizeof(deep_list_t));
   new_head->content = deep;
-  new_head->next = *stack;
-  *stack = new_head;
+  new_head->next = *list;
+  *list = new_head;
 }
 
-deep_t* stack_pop(deep_stack_t** stack) {
-  deep_t* res = (*stack)->content;
-  *stack = (*stack)->next;
+deep_t* list_pop(deep_list_t** list) {
+  deep_t* res = (*list)->content;
+  *list = (*list)->next;
   return res;
 }
 
-int stack_size(deep_stack_t* stack) {
+int list_size(deep_list_t* list) {
   int i;
-  for (i=0; stack; stack=stack->next, i++);
+  for (i=0; list; list=list->next, i++);
   return i;
 }
 
-void stack_destroy(deep_stack_t* stack) {
-  while (stack) {
-    deep_stack_t* tmp = stack->next;
-    free(stack);
-    stack = tmp;
+void list_destroy(deep_list_t* list) {
+  deep_list_t* tmp;
+  while (list) {
+    tmp = list->next;
+    free(list);
+    list = tmp;
   }
+}
+
+/**
+ ** DEQUE OPERATIONS
+ **/
+
+finger_deque_t* deque_make() {
+  return malloc(sizeof(finger_deque_t));
+}
+
+int deque_is_empty(finger_deque_t* deque) {
+  return deque->first == NULL || deque->last == NULL;
+}
+
+void deque_push_front(fingernode_t* val, finger_deque_t* deque) {
+  finger_list_t* el = malloc(sizeof(deep_list_t));
+  el->content = val;
+  el->next = deque->first;
+  el->prev = NULL;
+  deque->first = el;
+  deque->size++;
+}
+
+void deque_push_back(fingernode_t* val, finger_deque_t* deque) {
+  finger_list_t* el = malloc(sizeof(deep_list_t));
+  el->content = val;
+  el->next = NULL;
+  el->prev = deque->first;
+  deque->last = el;
+  deque->size++;
+}
+
+fingernode_t* deque_pop_first(finger_deque_t* deque) {
+  finger_list_t* first = deque->first;
+  fingernode_t* res = first->content;
+  deque->first = first->next;
+  free(first);
+  deque->size--;
+  return res;
+}
+
+fingernode_t* deque_pop_last(finger_deque_t* deque) {
+  finger_list_t* last = deque->last;
+  fingernode_t* res = last->content;
+  deque->last = last->prev;
+  free(last);
+  deque->size--;
+  return res;
+}
+
+int deque_size(finger_deque_t* deque) {
+  return deque->size;
+}
+
+void deque_destroy(finger_deque_t* deque) {
+  finger_list_t* tmp;
+  finger_list_t* cur = deque->first;
+  while(cur) {
+    tmp = cur->next;
+    free(cur);
+    cur = tmp;
+  }
+  free(deque);
 }

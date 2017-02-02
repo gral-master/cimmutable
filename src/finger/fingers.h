@@ -1,38 +1,6 @@
 #ifndef _FINGER_TYPES_
 #define _FINGER_TYPES_
 
-typedef enum {TREE_NODE, DATA_NODE} node_type_t;
-typedef enum {EMPTY_NODE, SINGLE_NODE, DEEP_NODE} deep_type_t;
-typedef enum {FINGER_LEFT, FINGER_RIGHT} side_t;
-
-struct fingernode_t_def;
-
-typedef int finger_data_t;
-
-typedef struct fingernode_t_def{
-  int ref_counter;
-  int tag;
-  int arity;
-  int lookup_idx;
-  node_type_t node_type;
-  union {
-    struct fingernode_t_def** children;
-    finger_data_t** data;
-  } content;
-} fingernode_t;
-
-typedef struct deep_t_def {
-  deep_type_t deep_type;
-  int ref_counter;
-  int tag;
-  fingernode_t* left;
-  fingernode_t* right;
-  union {
-    fingernode_t* single;
-    struct deep_t_def* deeper;
-  } content;
-} deep_t;
-
 /* Finger node allocation and movement helpers */
 fingernode_t* make_fingernode(int arity, node_type_t type);
 fingernode_t* copy_node(fingernode_t* node);
@@ -83,5 +51,9 @@ int vector_size(deep_t* tree);
 fingernode_t* update_fingernode(fingernode_t* node, int cur_idx, int idx, finger_data_t* new_value);
 deep_t* update_up_to_depth (deep_t* tree, int depth, int cur_idx, int idx, side_t side, finger_data_t* new_value);
 deep_t* update_deep(deep_t* tree, int idx, finger_data_t* new_value);
+
+/* Concatenation */
+deep_t* merge_with_middle(deep_t* left, finger_deque_t* middle, deep_t* right);
+deep_t* merge(deep_t* left, deep_t* right);
 
 #endif

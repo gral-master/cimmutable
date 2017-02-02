@@ -3,8 +3,8 @@
 #include <string.h>
 #include <assert.h>
 
-#include "types.h"
 #include "tools.h"
+#include "fingers.h"
 
 #define NODE_MAX_SIZE 4
 
@@ -507,7 +507,6 @@ deep_t* append_node(deep_t* deep, fingernode_t* node, side_t side) {
   }
 
   if (deep->deep_type == EMPTY_NODE) {
-    finger_debug("empty");
     return make_single_node(node);
   }
   return NULL;
@@ -597,6 +596,7 @@ deep_t* append(deep_t* tree, finger_data_t* value, side_t side) {
       case FINGER_RIGHT:
         return make_deep_node(single, make_empty_node(), valuenode);
       default:
+        fprintf(stderr, "fuck");
         return NULL;
       }
     }
@@ -609,6 +609,7 @@ deep_t* append(deep_t* tree, finger_data_t* value, side_t side) {
     finger_debug("empty");
     return make_single_node(valuenode);
   }
+  fprintf(stderr, "fuck");
   return NULL;
 }
 
@@ -775,14 +776,14 @@ finger_data_t* lookup(deep_t* tree, int idx) {
   finger_debug("lookup");
   int i=0;
   fingernode_t* finger_cur;
-  deep_stack_t* stack = NULL;
+  deep_list_t* stack = NULL;
   while (tree->deep_type == DEEP_NODE) {
     finger_debug("deep node");
     finger_cur = tree->left;
     if (i+finger_cur->lookup_idx >= idx) {
       return lookup_fingernodes(finger_cur, i, idx);
     }
-    stack_push(tree, &stack);
+    list_push(tree, &stack);
     i += finger_cur->lookup_idx;
     tree = tree->content.deeper;
   }
@@ -795,9 +796,9 @@ finger_data_t* lookup(deep_t* tree, int idx) {
     i += finger_cur->lookup_idx;
   }
   deep_t* deep_cur;
-  while (!stack_is_empty(stack)) {
+  while (!list_is_empty(stack)) {
     finger_debug("back up");
-    deep_cur = stack_pop(&stack);
+    deep_cur = list_pop(&stack);
     finger_cur = deep_cur->right;
     if (i+finger_cur->lookup_idx >= idx) {
       return lookup_fingernodes(finger_cur, i, idx);
@@ -818,18 +819,20 @@ fingernode_t* update_fingernode(fingernode_t* node, int cur_idx, int idx, finger
   if (node->node_type == DATA_NODE) {
     res->content.data[idx-cur_idx] = new_value;
   }
-  for (int i=0; i<node->arity; i++) {
-    int child_idx = node->content.children[i]->lookup_idx;
-    if (cur_idx+child_idx >= idx) {
-      res->content.children[i] = update_fingernode(res->content.children[i], cur_idx, idx, new_value);
-      for (int j=0; j<node->arity; j++) {
-        if (j != i) {
-          res->content.children[i]->ref_counter++;
+  else {
+    for (int i=0; i<node->arity; i++) {
+      int child_idx = node->content.children[i]->lookup_idx;
+      if (cur_idx+child_idx >= idx) {
+        res->content.children[i] = update_fingernode(res->content.children[i], cur_idx, idx, new_value);
+        for (int j=0; j<node->arity; j++) {
+          if (j != i) {
+            res->content.children[i]->ref_counter++;
+          }
         }
+        break;
       }
-      break;
+      cur_idx += child_idx;
     }
-    cur_idx += child_idx;
   }
   return res;
 }
@@ -883,7 +886,7 @@ deep_t* update_up_to_depth (deep_t* tree, int depth, int cur_idx, int idx, side_
 deep_t* update_deep(deep_t* tree, int idx, finger_data_t* new_value) {
   finger_debug("update_deep");
   // Get the dorsal position of the value, current index at position and side of the value in the dorsal node
-  deep_stack_t* stack = NULL;
+  deep_list_t* stack = NULL;
   deep_t* deep_cur = tree;
   fingernode_t* finger_cur;
   int cur_idx = 0;
@@ -894,7 +897,7 @@ deep_t* update_deep(deep_t* tree, int idx, finger_data_t* new_value) {
       goto found_deep_index;
     }
     cur_idx += finger_cur->lookup_idx;
-    stack_push(deep_cur, &stack);
+    list_push(deep_cur, &stack);
     deep_cur = deep_cur->content.deeper;
   }
   if (deep_cur->deep_type == SINGLE_NODE) {
@@ -905,8 +908,8 @@ deep_t* update_deep(deep_t* tree, int idx, finger_data_t* new_value) {
     cur_idx += finger_cur->lookup_idx;
   }
   side = FINGER_RIGHT;
-  while (!stack_is_empty(stack)) {
-    deep_cur = stack_pop(&stack);
+  while (!list_is_empty(stack)) {
+    deep_cur = list_pop(&stack);
     finger_cur = deep_cur->right;
     if (cur_idx+finger_cur->lookup_idx >= idx) { // finger_cur == NULL
       goto found_deep_index;
@@ -916,9 +919,59 @@ deep_t* update_deep(deep_t* tree, int idx, finger_data_t* new_value) {
 
  found_deep_index: ;
   // Found. Let's destroy the stack and update up to the depth we found
-  int depth = stack_size(stack);
-  stack_destroy(stack);
+  int depth = list_size(stack);
+  list_destroy(stack);
   return update_up_to_depth(tree, depth, cur_idx, idx, side, new_value);
+}
+
+/**
+ * Recursive merging of 2 finger trees, using
+ * middle as a stack for nodes left
+ */
+deep_t* merge_with_middle(deep_t* left, finger_deque_t* middle, deep_t* right) {
+  finger_debug("merge_with_middle");
+  if (left->deep_type == DEEP_NODE) {
+    if (deque_size(middle) == 0) {
+      return right;
+    }
+    else {
+      fingernode_t* x = deque_pop_first(middle);
+      deep_t* new = merge_with_middle(make_empty_node(), middle, right);
+      return append_node(right, x, FINGER_LEFT);
+    }
+  }
+  else if (left->deep_type == SINGLE_NODE) {
+    fingernode_t* y = left->content.single;
+    deep_t* new = merge_with_middle(make_empty_node(), middle, right);
+    return append_node(new, y, FINGER_LEFT);
+  }
+  else if (right->deep_type == EMPTY_NODE) {
+    if (deque_size(middle) == 0) {
+      return left;
+    }
+    else {
+      fingernode_t* last = deque_pop_last(middle);
+      deep_t* new = merge_with_middle(left, middle, make_empty_node());
+      return append_node(new, last, FINGER_RIGHT);
+    }
+  }
+  else if (right->deep_type == SINGLE_NODE) {
+    fingernode_t* y = left->content.single;
+    deep_t* new = merge_with_middle(left, middle, make_empty_node());
+    return append_node(new, y, FINGER_LEFT);
+  }
+  else {                                   // This is the crazy recursive case
+    deep_t* deeper = NULL;
+  }
+  return NULL;
+}
+
+/**
+ * Merge 2 trees together
+ */
+deep_t* merge(deep_t* left, deep_t* right) {
+  finger_debug("merge");
+  return merge_with_middle(left, deque_make(), right);
 }
 
 /**
@@ -931,14 +984,16 @@ void display(finger_data_t* data) {
 int main(int argc, char** argv) {
   deep_t* tree = make_empty_node();
 
-  int size = 32;
+  int size = 33;
 
   fprintf(stdout, "Append\n");
   for (int i=0; i<size; i++) {
-    fprintf(stderr, "%d, \n", i);
+    fprintf(stderr, "%d, ", i);
     int* data = malloc(sizeof(int));
     *data = i;
     tree = append(tree, data, FINGER_RIGHT);
+    if (!tree)
+      fprintf(stderr, "what the shit\n");
   }
   fprintf(stdout, "Size: %d (should be %d)\n", vector_size(tree), size);
 
