@@ -504,7 +504,7 @@ imc_avl_node_t* imc_avl_insert( imc_avl_node_t* tree,
     else printf("INSERT_OK_AP\n");
 
     k = imc_avl_post_check_insert2(copy_tree, result, key, data);
-    free(copy_tree);
+    imc_avl_unref(copy_tree);
     if (k < 0) printf("INSERT_POSTCONDIPB : %d\n", k);
     else printf("INSERT_POSTCONDI_OK\n");
     //imc_avl_dump(result, print4);
@@ -814,7 +814,7 @@ imc_avl_node_t* imc_avl_remove( imc_avl_node_t* tree,
     else printf("DELETE_OK_AP\n");
 
     k = imc_avl_post_check_delete(copy_tree, result, key, *removed_data);
-    free(copy_tree);
+    imc_avl_unref(copy_tree);
 
     if (k < 0) printf("DELETE_POSTCONDIPB : %d\n", k);
     else printf("DELETE_POSTCONDI_OK\n");
