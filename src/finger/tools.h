@@ -1,6 +1,33 @@
 #ifndef __TOOLS_H__
 #define __TOOLS_H__
 
+#define DEBUG 0
+
+/**
+ * Prints the string provided if debug mode enabled.
+ * @param  fmt The string which must be printed.
+ * @return     None.
+ */
+#define finger_debug(fmt)                  \
+do {                                       \
+    if (DEBUG) {                           \
+        fprintf(stderr, fmt);            \
+    }                                      \
+ } while (0)
+
+/**
+ * Prints the string provided if debug mode enabled. Handle multiple args.
+ * @param  fmt     The string which must be printed.
+ * @param  VARARGS The other arguments.
+ * @return         None.
+ */
+#define finger_args(fmt, ...)                  \
+    do {                                       \
+        if (DEBUG) {                           \
+            fprintf(stderr, fmt, __VA_ARGS__); \
+        }                                      \
+    } while (0)
+
 typedef int finger_data_t;
 
 typedef enum {TREE_NODE, DATA_NODE} node_type_t;
@@ -74,5 +101,6 @@ void deque_destroy(finger_deque_t* deque);
  ** Miscellaneous
  **/
 
+int finger_depth(fingernode_t* finger);
 
 #endif

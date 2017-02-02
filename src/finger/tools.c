@@ -175,3 +175,21 @@ void deque_destroy(finger_deque_t* deque) {
   }
   free(deque);
 }
+
+/**
+ **  MISCELLANEOUS
+ **/
+int finger_depth(fingernode_t* finger) {
+    int depth = 0;
+    while (finger->node_type == TREE_NODE) {
+        int max = 0;
+        for (int i=0; i<finger->arity; i++) {
+            int f_depth = finger_depth(finger->content.children[i]);
+            if (f_depth > max) {
+                max = f_depth;
+            }
+        }
+        depth += 1 + max;
+    }
+    return depth;
+}
