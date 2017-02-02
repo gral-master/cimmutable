@@ -463,7 +463,14 @@ rrb_t* pop(const rrb_t* rrb, imc_data_t** data, int* index, bool meta) {
     debug_print("pop, beginning\n");
     rrb_t* clone = create_clone(rrb, rrb->level);
     if (contains_nodes(rrb)) {
-        return pop_node(clone, data, index, meta);
+        rrb_t* root = pop_node(clone, data, index, meta);
+        if (root->nodes.child[1] == NULL) {
+            rrb_t* child = inc_ref(root->nodes.child[0]);
+            dec_ref(root);
+            return child;
+        } else {
+            return root;
+        }
     } else {
         return pop_data(clone, data, index, meta);
     }
@@ -488,7 +495,13 @@ rrb_t* pop_node(rrb_t* rrb, imc_data_t** data, int* index, bool meta) {
     int position = place_to_look(rrb, index, meta);
     rrb_t* child = pop(rrb->nodes.child[position], data, index, meta);
     dec_ref(rrb->nodes.child[position]);
-    rrb->nodes.child[position] = child;
+    if (rrb_size(child) == 0) {
+        dec_ref(child);
+        rrb->nodes.child[position] = NULL;
+    } else {
+        rrb->nodes.child[position] = child;
+    }
+    rrb->elements -= 1;
     return rrb;
 }
 

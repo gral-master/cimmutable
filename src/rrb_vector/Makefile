@@ -4,7 +4,7 @@ SRC = rrb_vector.c rrb_dumper.c parser.c
 OBJ = $(SRC:%.c=%.o)
 
 CC = clang
-CFLAGS = -Wall -Wextra -std=gnu11 -g
+CFLAGS = -Wall -Wextra -std=gnu11 -O3
 
 all: preparation launch #test
 
@@ -19,7 +19,7 @@ exec/test: bin/test.o $(addprefix bin/, $(OBJ))
 	$(CC) $(CFLAGS) $^ -o $@
 
 launch: exec/rrb
-	@./exec/rrb
+	@./exec/rrb -f src/tests/203_int_vec.bench -b
 
 #@dot -Tps rrb-tree.dot -o rrb-tree.svg
 exec/rrb: $(addprefix bin/, $(OBJ)) bin/rrb_bench.o
