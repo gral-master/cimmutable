@@ -63,10 +63,10 @@ int imc_vector_split(imc_ft_vector_t* vec_in,
     list* l = create_lempty();
     l = add(s.node, l);
     
-    *vec_out1 = s.ft1;
-    *vec_out2 = concat_w_middle(empty_tree, l, s.ft2);
+    *vec_out1 = concat_w_middle(s.ft1, l, empty_tree);
+    *vec_out2 = s.ft2;
     ft_unref(empty_tree);
-    ft_unref(s.ft2);
+    ft_unref(s.ft1);
     node_unref(s.node);
     
     return EXIT_SUCCESS;
