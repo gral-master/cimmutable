@@ -193,3 +193,57 @@ int finger_depth(fingernode_t* finger) {
     }
     return depth;
 }
+
+/**
+ * Using the display function for the finger data type, recursively dump node
+ */
+void dump_finger_debug(fingernode_t* node, int span, void (*display)(finger_data_t**, int)) {
+    fprintf(stdout, "%*s", span, "");
+    fprintf(stdout, "finger {\n");
+    switch (node->node_type) {
+    case TREE_NODE:
+        for (int i=0; i<node->arity; i++) {
+            dump_finger(node->content.children[i], span + 2, display);
+        }
+        break;
+    case DATA_NODE:
+        fprintf(stdout, "%*s", span + 2, "");
+        display(node->content.data, node->arity);
+    default:
+        break;
+    }
+    fprintf(stdout, "%*s}\n", span, "");
+}
+
+/**
+ * Using the display function for the finger data type, recursively dump deep
+ */
+void dump_deep_debug(deep_t* deep, int span, void (*display)(finger_data_t**, int)) {
+    fprintf(stdout, "%*s", span, "");
+    fprintf(stdout, "deep {\n");
+    switch (deep->deep_type) {
+    case DEEP_NODE:
+        fprintf(stdout, "%*s", span + 2, "");
+        fprintf(stdout, "left: ");
+        dump_finger(deep->left, span + 4, display);
+        fprintf(stdout, "%*s", span + 2, "");
+        fprintf(stdout, "right: ");
+        dump_finger(deep->right, span + 4, display);
+        fprintf(stdout, "%*s", span + 2, "");
+        fprintf(stdout, "deeper: ");
+        dump_deep(deep->content.deeper, span + 4, display);
+        break;
+    case SINGLE_NODE:
+        fprintf(stdout, "%*s", span + 2, "");
+        fprintf(stdout, "single: ");
+        dump_finger(deep->content.single, span + 2, display);
+        break;
+    case EMPTY_NODE:
+        fprintf(stdout, "%*s", span + 2, "");
+        fprintf(stdout, "empty!\n");
+    default:
+        break;
+    }
+    fprintf(stdout, "%*s", span, "");
+    fprintf(stdout, "}\n");
+}

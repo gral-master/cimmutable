@@ -102,5 +102,6 @@ void deque_destroy(finger_deque_t* deque);
  **/
 
 int finger_depth(fingernode_t* finger);
-
+void dump_deep_debug(deep_t* deep, int span, void (*display)(finger_data_t**, int));
+void dump_finger_debug(fingernode_t* node, int span, void (*display)(finger_data_t**, int));
 #endif

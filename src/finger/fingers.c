@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #include "tools.h"
 #include "fingers.h"
@@ -335,6 +334,7 @@ int unref_fingernode(fingernode_t* node) {
     if (node->ref_counter) { // i.e. ref_count != 0
         return 1;
     }
+    fprintf(stderr, "destroying, %d", node->ref_counter);
     // recursive unref
     if (node->node_type == TREE_NODE) {
         fingernode_t** children = node->content.children;
@@ -355,6 +355,7 @@ int unref_deep(deep_t* deep) {
     if (deep->ref_counter) {
         return 0;
     }
+    fprintf(stderr, "destroying, %d", deep->ref_counter);
     switch (deep->deep_type) {
     case DEEP_NODE:
         unref_fingernode(deep->left);
@@ -910,23 +911,10 @@ deep_t* update_deep(deep_t* tree, int idx, finger_data_t* new_value) {
     return update_up_to_depth(tree, depth, cur_idx, idx, side, new_value);
 }
 
-deep_t* append_node_to_depth(deep_t* tree, fingernode_t* finger, side_t side) {
-    if (tree->deep_type == DEEP_NODE) {
-        int f_depth = finger_depth(finger);
-        int d_depth = finger_depth(finger->node_type == FINGER_LEFT ? tree->left : tree->right);
-        if (f_depth != d_depth) {
-            deep_t* deeper = append_node_to_depth(tree->content.deeper, finger, side);
-            return make_deep_node(tree->left, deeper, tree->right);
-        } else {
-            return append_node(tree, finger, side);
-        }
-    }
-    if (tree->deep_type == SINGLE_NODE) {
-        return NULL;
-    }
-    if (tree->deep_type == EMPTY_NODE) {
-        return make_single_node(finger);
-    }
+/**
+ * Only add refs once a level is finished
+ */
+deep_t* append_node_to_depth() {
     return NULL;
 }
 
@@ -969,45 +957,7 @@ deep_t* merge_with_middle(deep_t* left, finger_deque_t* middle, deep_t* right) {
 /**
  * Merge 2 trees together
  */
-/*
 deep_t* merge(deep_t* left, deep_t* right) {
     finger_debug("merge\n");
     return merge_with_middle(left, deque_make(), right);
 }
-
-int main(void) {
-    deep_t* tree = make_empty_node();
-
-    int size = 1000;
-
-    fprintf(stdout, "Append\n");
-    for (int i = 0; i < size; i++) {
-        fprintf(stderr, "%d, ", i);
-        int* data = malloc(sizeof(int));
-        *data = i;
-        tree = append(tree, data, FINGER_RIGHT);
-        if (!tree)
-            fprintf(stderr, "what the shit\n");
-    }
-    fprintf(stdout, "Size: %d (should be %d)\n", vector_size(tree), size);
-
-    fprintf(stdout, "Lookup\n");
-    fprintf(stdout, "%d\n", *lookup(tree, 2));
-
-    dump_deep(tree, 0, display);
-
-    fprintf(stdout, "\nUpdate\n");
-    int* upd = malloc(sizeof(int));
-    *upd = 589420;
-    tree = update_deep(tree, 0, upd);
-
-    dump_deep(tree, 0, display);
-
-    fprintf(stdout, "pop \n");
-    int* pop_val;
-    tree = pop(tree, &pop_val);
-    fprintf(stdout, "Last value: %d\n", *pop_val);
-    fprintf(stdout, "Remaining values:\n");
-    dump_deep(tree, 0, display);
-}
-*/
