@@ -1,12 +1,12 @@
 #include "rrb_dumper.h"
 
 /** Adds tabulation to the file, to pad text. */
-void tabulation(int number, FILE *file) {
+void tabulation(int number, FILE* file) {
     fprintf(file, "%*s", number, "");
 }
 
 /** Dump the nodes into the dotfile. */
-void dump_nodes(rrb_t *rrb, FILE *file, int tab) {
+void dump_nodes(rrb_t* rrb, FILE* file, int tab) {
     tabulation(tab, file);
     fprintf(file, "node%p[label = \"", rrb);
     if (rrb->level == 1) {
@@ -34,7 +34,7 @@ void dump_nodes(rrb_t *rrb, FILE *file, int tab) {
 }
 
 /** Dump the edges into the dotfile. */
-void dump_edges(rrb_t *rrb, FILE *file, int tab) {
+void dump_edges(rrb_t* rrb, FILE* file, int tab) {
     tabulation(tab, file);
     if (rrb->level == 1) {
         return;
@@ -52,7 +52,7 @@ void dump_edges(rrb_t *rrb, FILE *file, int tab) {
 }
 
 /** Dump the structure into a dotfile. */
-void rrb_to_dotfile(rrb_t *rrb, char *path) {
+void rrb_to_dotfile(rrb_t* rrb, char* path) {
     FILE *file = fopen(path, "w");
     if (file == NULL) {
         fprintf(stderr, "Unable to open %s\n", path);
@@ -68,7 +68,7 @@ void rrb_to_dotfile(rrb_t *rrb, char *path) {
 }
 
 /** Pretty print the structure into the file. */
-void pp(const rrb_t *rrb, int tab, FILE *file) {
+void pp(const rrb_t* rrb, int tab, FILE* file) {
     if (rrb != NULL) {
         if (rrb->level == 1) {
             tabulation(tab, file);
@@ -96,12 +96,12 @@ void pp(const rrb_t *rrb, int tab, FILE *file) {
 }
 
 /** Pretty print the structure into the stdout. */
-void rrb_pp(const rrb_t *rrb) {
+void rrb_pp(const rrb_t* rrb) {
     pp(rrb, 0, stdout);
 }
 
 /** Pretty print the structure into the file indicated by path. */
-void rrb_pp_file(const rrb_t *rrb, char *path) {
+void rrb_pp_file(const rrb_t* rrb, char* path) {
     FILE *file = fopen(path, "w");
     if (file == NULL) {
         fprintf(stderr, "Unable to open file %s\n", path);
@@ -113,7 +113,7 @@ void rrb_pp_file(const rrb_t *rrb, char *path) {
 }
 
 /** Pretty print the structure with pointers to the file, w/ or w/o leafs. */
-void ppp(const rrb_t *rrb, int tab, bool leafs, FILE *file) {
+void ppp(const rrb_t* rrb, int tab, bool leafs, FILE* file) {
     if (rrb != NULL) {
         if (rrb->level == 1) {
             tabulation(tab, file);
@@ -177,18 +177,18 @@ void ppp(const rrb_t *rrb, int tab, bool leafs, FILE *file) {
 }
 
 /** Pretty print the structure with pointers to the console. */
-void rrb_ppp(const rrb_t *rrb) {
+void rrb_ppp(const rrb_t* rrb) {
     ppp(rrb, 0, false, stdout);
 }
 
 /** Pretty print the structure with pointers and leafs to the console. */
-void rrb_ppp_leafs(const rrb_t *rrb) {
+void rrb_ppp_leafs(const rrb_t* rrb) {
     ppp(rrb, 0, true, stdout);
 }
 
 /** Pretty print the structure with pointers to the file indicated by path. */
-void rrb_ppp_file(const rrb_t *rrb, char *path) {
-    FILE *file = fopen(path, "w");
+void rrb_ppp_file(const rrb_t* rrb, char* path) {
+    FILE* file = fopen(path, "w");
     if (file == NULL) {
         fprintf(stderr, "Unable to open file %s\n", path);
         exit(EXIT_FAILURE);
@@ -198,8 +198,8 @@ void rrb_ppp_file(const rrb_t *rrb, char *path) {
     }
 }
 /** Pretty print the structure with pointers and leafs to the file indicated by path. */
-void rrb_ppp_leafs_file(const rrb_t *rrb, char *path) {
-    FILE *file = fopen(path, "w");
+void rrb_ppp_leafs_file(const rrb_t* rrb, char* path) {
+    FILE* file = fopen(path, "w");
     if (file == NULL) {
         fprintf(stderr, "Unable to open file %s\n", path);
         exit(EXIT_FAILURE);

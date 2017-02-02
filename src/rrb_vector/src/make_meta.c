@@ -1,10 +1,10 @@
 #include "rrb_vector.h"
 
-rrb_t *make_meta_vector() {
+rrb_t* make_meta_vector() {
     int *temp;
     int counter = 0;
 
-    rrb_t *rrb0 = rrb_create();
+    rrb_t* rrb0 = rrb_create();
     for (int i = 0; i < 32; i++) {
         temp = malloc(sizeof *temp);
         *temp = counter++;
@@ -17,7 +17,7 @@ rrb_t *make_meta_vector() {
         }
     }
 
-    rrb_t *rrb1 = rrb_create();
+    rrb_t* rrb1 = rrb_create();
     for (int i = 0; i < 10; i++) {
         temp = malloc(sizeof *temp);
         *temp = counter++;
@@ -32,7 +32,7 @@ rrb_t *make_meta_vector() {
 
     rrb1->full = true;
 
-    rrb_t *rrb2 = rrb_create();
+    rrb_t* rrb2 = rrb_create();
     for (int i = 0; i < 20; i++) {
         temp = malloc(sizeof *temp);
         *temp = counter++;
@@ -45,7 +45,7 @@ rrb_t *make_meta_vector() {
         }
     }
 
-    rrb_t *rrb3 = malloc(sizeof *rrb3);
+    rrb_t* rrb3 = malloc(sizeof *rrb3);
     rrb3->level = 2;
     rrb3->ref = 1;
     rrb3->elements = 62;
