@@ -35,13 +35,11 @@ unref(0)
 unref(2)
 split(3,4,0,1)
 4 = pop(0)
-dump(4)
 unref(0)
 0 = update(4,0,20)
-dump(0)
 unref(4)
-#dump(0)
-#dump(1)
+dump(0)
+dump(1)
 # output should be:
 #  [ 20, 1, 2, 3 ]
 #  [ 5, 0, 1, 2, 3, 4, 5, 6, 10 ]

@@ -651,7 +651,7 @@ int split_node(const rrb_t *rrb, rrb_t **left, rrb_t **right,
 int rrb_split(const rrb_t *rrb, rrb_t **left, rrb_t **right, int index) {
     debug_print("rrb_split, beginning\n");
     int value = 0;
-    if ((size_t) index > rrb_size(rrb)) {
+    if ((size_t) ++index > rrb_size(rrb)) {
         *left  = NULL;
         *right = NULL;
         return value;
