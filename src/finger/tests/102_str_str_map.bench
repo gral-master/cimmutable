@@ -1,0 +1,35 @@
+# Test benchmark.
+
+[struct]
+map
+
+[implem]
+AVL
+FINGER
+
+[type]
+str  # data type
+str  # key type
+
+[init]
+0 = create()
+
+[bench]
+1 = update(0, "first_key", "first_value")
+2 = update(1, "second_key", "second_value")
+3 = update(2, "third_key", "third_value")
+4 = update(3, "fourth_key", "fourth_value")
+dump(1)
+dump(4)
+
+__END__
+Output should be:
+{ 
+	"first_key" => "first_value" 
+}
+{ 
+	"first_key"  => "first_value",
+	"second_key" => "second_value",
+	"fourth_key" => "fourth_value",
+	"third_key"  => "third_value" 
+}
