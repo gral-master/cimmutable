@@ -8,10 +8,10 @@ void newline() {
 }
 
 int main() {
-    int *temp;
+    int* temp;
     int counter = 0, get = 564;
 
-    rrb_t *rrb1 = rrb_create();
+    rrb_t* rrb1 = rrb_create();
 
     for (int i = 0; i < 1025; i++) {
         temp = malloc(sizeof *temp);
@@ -36,7 +36,7 @@ int main() {
 
     rrb_ppp(rrb1);
 
-    rrb_t *meta = make_meta_vector();
+    rrb_t* meta = make_meta_vector();
     rrb_ppp_leafs(meta);
 
     temp = malloc(sizeof *temp);
@@ -46,10 +46,11 @@ int main() {
 
     printf("\nGet number %d: %d\n", get, *rrb_lookup(meta, 62));
 
-    imc_data_t *temp2;
+    imc_data_t* temp2;
     rrb_ppp_leafs(rrb_pop(meta, &temp2));
 
-    rrb_t *left, *right;
+    rrb_t* left;
+    rrb_t* right;
     rrb_split(rrb1, &left, &right, 50);
 
     printf("\nSplitted trees.\n\n");
