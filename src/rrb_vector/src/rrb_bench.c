@@ -90,15 +90,18 @@ int main (int argc, char* argv[]) {
         exit(EXIT_SUCCESS);
     }
 
-    double time;
-    if (prog->struc == VECTOR) {
-        time = execute_vector(prog);
-    } else {
-        fprintf(stderr, "Not map.\n");
-        exit(EXIT_SUCCESS);
-    }
+    double time = 0;
 
-    printf("Time elapsed: %.3fms\n", time);
+    // for (int i = 0; i < 1000; i++) {
+        if (prog->struc == VECTOR) {
+            time += execute_vector(prog);
+        } else {
+            fprintf(stderr, "Not map.\n");
+            exit(EXIT_SUCCESS);
+        }
+    // }
+
+    printf("%.3f\n", time/1);
 
     return 0;
 }
