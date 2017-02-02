@@ -1,6 +1,6 @@
 .PHONY: all clean launch
 
-SRC = rrb_vector.c rrb_dumper.c
+SRC = rrb_vector.c rrb_dumper.c parser.c
 OBJ = $(SRC:%.c=%.o)
 
 CC = clang
@@ -22,7 +22,7 @@ launch: exec/rrb
 	@./exec/rrb
 
 #@dot -Tps rrb-tree.dot -o rrb-tree.svg
-exec/rrb: $(addprefix bin/, $(OBJ)) bin/main.o
+exec/rrb: $(addprefix bin/, $(OBJ)) bin/rrb_bench.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 bin/test.o: tests/test.c

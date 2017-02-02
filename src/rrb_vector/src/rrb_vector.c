@@ -690,8 +690,8 @@ int find_last_index(const rrb_t *rrb) {
 
 /** Balances a data tree. */
 void move_datas(rrb_t *left, rrb_t *right) {
-    int i, j;
-    for (i = rrb_size(left), j = 0; i < 32 && (size_t) j < rrb_size(right); i++, j++) {
+    int i, j; size_t size = rrb_size(right);
+    for (i = rrb_size(left), j = 0; i < 32 && (size_t) j < size; i++, j++) {
         left->nodes.leaf[i] = right->nodes.leaf[j];
         left->elements  += 1;
         right->elements -= 1;
@@ -731,8 +731,8 @@ void delete_first_n_last(rrb_t *left, rrb_t *right, int last) {
 
 /** Balances a child tree. */
 void move_nodes(rrb_t *left, rrb_t *right) {
-    int i, j;
-    for (i = rrb_size(left), j = 0; i < 32 && (size_t) j < rrb_size(right); i++, j++) {
+    int i, j; size_t size = rrb_size(right);
+    for (i = rrb_size(left), j = 0; i < 32 && (size_t) j < size; i++, j++) {
         left->nodes.child[i] = right->nodes.child[j];
         left->elements  += rrb_size(left->nodes.child[i]);
         right->elements -= rrb_size(left->nodes.child[i]);
@@ -838,6 +838,7 @@ rrb_t *rrb_merge(rrb_t *left, rrb_t *right) {
     rrb_t *merged = merge(left, right);
     if (merged->nodes.child[1] == NULL) {
         rrb_t *temp = merged->nodes.child[0];
+        inc_ref(temp);
         dec_ref(merged);
         merged = temp;
     }
