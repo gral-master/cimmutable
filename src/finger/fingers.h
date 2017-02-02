@@ -1,6 +1,8 @@
 #ifndef _FINGER_TYPES_
 #define _FINGER_TYPES_
 
+#include "tools.h"
+
 /* Finger node allocation and movement helpers */
 fingernode_t* make_fingernode(int arity, node_type_t type);
 fingernode_t* copy_node(fingernode_t* node);
@@ -31,8 +33,8 @@ int unref_fingernode(fingernode_t* node);
 int unref_deep(deep_t* deep);
 
 /* Tree content dump */
-void dump_finger(fingernode_t* node, void (*display)(finger_data_t*));
-void dump_deep(deep_t* deep, void (*display)(finger_data_t*));
+void dump_finger(fingernode_t* node, int span, void (*display)(finger_data_t**, int));
+void dump_deep(deep_t* deep, int span, void (*display)(finger_data_t**, int));
 
 /* Queue push */
 deep_t* append_node(deep_t* deep, fingernode_t* node, side_t side);

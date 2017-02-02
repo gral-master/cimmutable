@@ -382,41 +382,57 @@ int unref_deep(deep_t* deep) {
 /**
 * Using the display function for the finger data type, recursively dump node
 */
-void dump_finger(fingernode_t* node, void (*display)(finger_data_t*)) {
+void dump_finger(fingernode_t* node, int span, void (*display)(finger_data_t**, int)) {
     finger_debug("dump_finger");
+    fprintf(stdout, "%*s", span, "");
+    fprintf(stdout, "finger {\n");
     switch (node->node_type) {
         case TREE_NODE:
         for (int i=0; i<node->arity; i++) {
-            dump_finger(node->content.children[i], display);
+            dump_finger(node->content.children[i], span + 2, display);
         }
         break;
         case DATA_NODE:
-        for (int i=0; i<node->arity; i++) {
-            display(node->content.data[i]);
-        }
+            fprintf(stdout, "%*s", span + 2, "");
+            display(node->content.data, node->arity);
         default:
         break;
     }
+    fprintf(stdout, "%*s}\n", span, "");
 }
 
 /**
 * Using the display function for the finger data type, recursively dump deep
 */
-void dump_deep(deep_t* deep, void (*display)(finger_data_t*)) {
+void dump_deep(deep_t* deep, int span, void (*display)(finger_data_t**, int)) {
     finger_debug("dump_deep");
+    fprintf(stdout, "%*s", span, "");
+    fprintf(stdout, "deep {\n");
     switch (deep->deep_type) {
         case DEEP_NODE:
-        dump_finger(deep->left, display);
-        dump_deep(deep->content.deeper, display);
-        dump_finger(deep->right, display);
+        fprintf(stdout, "%*s", span + 2, "");
+        fprintf(stdout, "left: ");
+        dump_finger(deep->left, span + 4, display);
+        fprintf(stdout, "%*s", span + 2, "");
+        fprintf(stdout, "right: ");
+        dump_finger(deep->right, span + 4, display);
+        fprintf(stdout, "%*s", span + 2, "");
+        fprintf(stdout, "deeper: ");
+        dump_deep(deep->content.deeper, span + 4, display);
         break;
         case SINGLE_NODE:
-        dump_finger(deep->content.single, display);
+        fprintf(stdout, "%*s", span + 2, "");
+        fprintf(stdout, "single: ");
+        dump_finger(deep->content.single, span + 2, display);
         break;
         case EMPTY_NODE:
+        fprintf(stdout, "%*s", span + 2, "");
+        fprintf(stdout, "empty!\n");
         default:
         break;
     }
+    fprintf(stdout, "%*s", span, "");
+    fprintf(stdout, "}\n");
 }
 
 /**
@@ -518,18 +534,10 @@ deep_t* append_node(deep_t* deep, fingernode_t* node, side_t side) {
 deep_t* append(deep_t* tree, finger_data_t* value, side_t side) {
     finger_debug("prepend");
     deep_t* newdeep = make_deep();
-    switch (tree->deep_type) {
-        case DEEP_NODE:
-        newdeep->deep_type = DEEP_NODE;
-        break;
-        case SINGLE_NODE:
-        newdeep->deep_type = DEEP_NODE;
-        break;
-        case EMPTY_NODE:
+    if (tree->deep_type == EMPTY_NODE) {
         newdeep->deep_type = SINGLE_NODE;
-        break;
-        default:
-        break;
+    } else {
+        newdeep->deep_type = DEEP_NODE;
     }
 
     if (tree->deep_type == DEEP_NODE) {
@@ -588,9 +596,12 @@ deep_t* append(deep_t* tree, finger_data_t* value, side_t side) {
         if (single->arity >= NODE_MAX_SIZE) {
             single->ref_counter++;
             switch (side) {
+                printf("je suis la 1.\n");
                 case FINGER_LEFT:
+                printf("je suis la 2.\n");
                 return make_deep_node(valuenode, make_empty_node(), single);
                 case FINGER_RIGHT:
+                printf("je suis la 3.\n");
                 return make_deep_node(single, make_empty_node(), valuenode);
                 default:
                 fprintf(stderr, "fuck");
@@ -953,42 +964,45 @@ deep_t* merge(deep_t* left, deep_t* right) {
 /**
 * Basic display function for dump, with int data type
 */
-void display(finger_data_t* data) {
-    fprintf(stdout, "%d, ", *data);
+void display(finger_data_t** data, int size) {
+    for (int i = 0; i < size - 1; i++) {
+        fprintf(stdout, "%d, ", *data[i]);
+    }
+    fprintf(stdout, "%d\n", *data[size - 1]);
 }
 
 int main(void) {
     deep_t* tree = make_empty_node();
 
-    int size = 33;
+    int size = 32;
 
-    fprintf(stdout, "Append\n");
-    for (int i=0; i<size; i++) {
-        fprintf(stderr, "%d, ", i);
+    // fprintf(stdout, "Append\n");
+    for (int i = 0; i < size; i++) {
+        // fprintf(stderr, "%d, ", i);
         int* data = malloc(sizeof(int));
         *data = i;
         tree = append(tree, data, FINGER_RIGHT);
-        if (!tree)
-        fprintf(stderr, "what the shit\n");
+        // if (!tree)
+        // fprintf(stderr, "what the shit\n");
     }
-    fprintf(stdout, "Size: %d (should be %d)\n", vector_size(tree), size);
+    // fprintf(stdout, "Size: %d (should be %d)\n", vector_size(tree), size);
 
-    fprintf(stdout, "Lookup\n");
-    fprintf(stdout, "%d\n", *lookup(tree, 2));
+    // fprintf(stdout, "Lookup\n");
+    // fprintf(stdout, "%d\n", *lookup(tree, 2));
 
-    dump_deep(tree, &display);
+    dump_deep(tree, 0, display);
 
-    fprintf(stdout, "\nUpdate\n");
-    int* upd = malloc(sizeof(int));
-    *upd = 589420;
-    tree = update_deep(tree, 0, upd);
-
-    dump_deep(tree, &display);
-
-    fprintf(stdout, "pop \n");
-    int* pop_val;
-    tree = pop(tree, &pop_val);
-    fprintf(stdout, "Last value: %d\n", *pop_val);
-    fprintf(stdout, "Remaining values:\n");
-    dump_deep(tree, &display);
+    // fprintf(stdout, "\nUpdate\n");
+    // int* upd = malloc(sizeof(int));
+    // *upd = 589420;
+    // tree = update_deep(tree, 0, upd);
+    //
+    // dump_deep(tree, 0, display);
+    //
+    // fprintf(stdout, "pop \n");
+    // int* pop_val;
+    // tree = pop(tree, &pop_val);
+    // fprintf(stdout, "Last value: %d\n", *pop_val);
+    // fprintf(stdout, "Remaining values:\n");
+    // dump_deep(tree, 0, display);
 }
