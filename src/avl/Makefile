@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-W -Wall -std=gnu11 -pedantic -O0 -g
+CFLAGS=-W -Wall -std=gnu11 -pedantic -O3
 LDFLAGS=
 EXEC= vector map bench
 SRC= $(wildcard *.c)
