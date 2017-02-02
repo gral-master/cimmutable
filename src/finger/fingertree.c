@@ -357,15 +357,19 @@ affix* get_right_affix(ft*res,int preorsuf, int inv){
 
 ft* ft_concat(ft* ft1,ft* ft2){
     // Preconditions & Invariants
-    
+    #ifdef CHECK_SAFETY
     checkInvariants(ft1);
     checkInvariants(ft2);
+    #endif
+
      ft* res= NULL;
     list* l=NULL;
    
     res = concat_w_middle(ft1,l,ft2);
-           // Postconditions & Invariants
+    // Postconditions & Invariants
+    #ifdef CHECK_SAFETY
     checkInvariants(res);
+    #endif
     return res;
 }
 
@@ -401,17 +405,19 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data_node){
     ft*res;
     affix*old_affix;
     affix*new_affix;
-      // Save the reference counter of nodes and deeper of fgt.
-    //    reflist* rl_fgt = rl_of_ft(fgt);
-    //refdeep rd_fgt, rd_res;
-    /* if (fgt->type == DEEP_TYPE && fgt->true_ft->d->deeper != NULL) { */
-    /*     rd_fgt.elem = fgt->true_ft->d->deeper; */
-    /*     rd_fgt.ref = rd_fgt.elem->ref_count; */
-    /* } */
-    /* else { */
-    /*     rd_fgt.elem = NULL; */
-    /*     rd_fgt.ref = 0; */
-    /* } */
+    // Save the reference counter of nodes and deeper of fgt.
+    #ifdef CHECK_SAFETY
+    reflist* rl_fgt = rl_of_ft(fgt);
+    refdeep rd_fgt, rd_res;
+     if (fgt->type == DEEP_TYPE && fgt->true_ft->d->deeper != NULL) {
+         rd_fgt.elem = fgt->true_ft->d->deeper;
+         rd_fgt.ref = rd_fgt.elem->ref_count;
+     }
+     else {
+         rd_fgt.elem = NULL;
+         rd_fgt.ref = 0;
+     } 
+     #endif
     
     if(fgt->type==EMPTY_TYPE){
         res = create_single(data_node);
@@ -471,21 +477,23 @@ ft* add_elem_deep_recur(ft* fgt,int preorsuf,node*data_node){
     }
     
     // Compare the reference counters of nodes and deeper of fgt (before the function) and res
-    /* reflist* rl_res = rl_of_ft(res); */
-    /* inter_verify(rl_fgt, rl_res); */
-    /* if (res->type == DEEP_TYPE && res->true_ft->d->deeper != NULL) { */
-    /*     rd_res.elem = res->true_ft->d->deeper; */
-    /*     rd_res.ref = rd_res.elem->ref_count; */
+    #ifdef CHECK_SAFETY
+     reflist* rl_res = rl_of_ft(res);
+     inter_verify(rl_fgt, rl_res);
+     if (res->type == DEEP_TYPE && res->true_ft->d->deeper != NULL) {
+         rd_res.elem = res->true_ft->d->deeper;
+         rd_res.ref = rd_res.elem->ref_count;
         
-    /*     // Compare rd_res and rd_fgt */
-    /*     if (rd_fgt.elem != NULL) { */
-    /*         if (rd_fgt.elem == rd_res.elem) { */
-    /*             assert(rd_fgt.ref + 1 == rd_res.ref); */
-    /*         } */
-    /*     } */
-    /* } */
-    /* free_reflist(rl_fgt); */
-    /* free_reflist(rl_res); */
+         // Compare rd_res and rd_fgt
+         if (rd_fgt.elem != NULL) {
+             if (rd_fgt.elem == rd_res.elem) {
+                 assert(rd_fgt.ref + 1 == rd_res.ref);
+             }
+         }
+    }
+    free_reflist(rl_fgt);
+    free_reflist(rl_res);
+    #endif
 
     return res;
 }
@@ -519,7 +527,9 @@ list* affix_to_list(ft* fg,int preorsuf){
 
 ft* ft_add(imc_data_t* data, ft* fgt,int preorsuf) {
     // Preconditions & Invariants
+    #ifdef CHECK_SAFETY
     checkInvariants(fgt);
+    #endif
 
     ft* res;
     node* new_elem = create_data_node(data);
@@ -527,7 +537,9 @@ ft* ft_add(imc_data_t* data, ft* fgt,int preorsuf) {
     res->size = fgt->size+1;
 
     // Postconditions & Invariants
+    #ifdef CHECK_SAFETY
     checkInvariants(fgt);
+    #endif
     return res;
 }
 
@@ -742,7 +754,9 @@ void ft_unref_rec(ft* ft) {
 
 void ft_unref(ft* ft) {
     // Preconditions & Invariants
+    #ifdef CHECK_SAFETY
   checkInvariants(ft);
+  #endif
   ft_unref_rec(ft);
    
     // Postconditions & Invariants
@@ -929,6 +943,7 @@ view ft_delete_rec(ft* fgt, int preorsuf) {
 
 view ft_delete(ft* fgt,int preorsuf){
     // Preconditions & Invariants
+    #ifdef CHECK_SAFETY
     checkInvariants(fgt);
     // Save the reference counter of nodes and deeper of fgt.
     reflist* rl_fgt = rl_of_ft(fgt);
@@ -941,10 +956,12 @@ view ft_delete(ft* fgt,int preorsuf){
         rd_fgt.elem = NULL;
         rd_fgt.ref = 0;
     }
+    #endif
     
     view stres = ft_delete_rec(fgt, preorsuf);
     
     // Postconditions & Invariants
+    #ifdef CHECK_SAFETY
     checkInvariants(stres.fg);
     
     // Compare the reference counters of nodes and deeper of fgt (before the function) and res
@@ -963,6 +980,7 @@ view ft_delete(ft* fgt,int preorsuf){
     }
     free_reflist(rl_fgt);
     free_reflist(rl_res);
+    #endif
     
     return stres;
 }
@@ -1101,6 +1119,7 @@ affix* node_to_affix(node* n, int preorsuf) {
     affix* res = malloc(sizeof(affix));
     node** nodes = n->true_node->internal_node;
     int i, j;
+    res->size = 0;
     
     if (preorsuf == 0) {
         for (i = 0, j = 0; i < 3; i++) {
@@ -1540,11 +1559,15 @@ split ft_split_rec(ft* fgt, int index) {
 
 split ft_split(ft* fgt, int index) {
     // Preconditions & Invariants
+    #ifdef CHECK_SAFETY
     checkInvariants(fgt);
     assert(fgt->type != EMPTY_TYPE);
+    #endif
     split s = ft_split_rec(fgt, index);
+    #ifdef CHECK_SAFETY
     checkInvariants(s.ft1);
     checkInvariants(s.ft2);
+    #endif
     
     return s;
 }

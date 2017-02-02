@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-c -Wall -g -std=c11
+CFLAGS=-c -Wall -g -std=c11 -O3
 BDIR=bin
 ODIR=obj
 SRC:=$(wildcard $(SDIR)/*.c)

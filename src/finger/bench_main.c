@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <getopt.h>
 
 #include "imc_ft_map.h"
 #include "imc_ft_vector.h"
@@ -10,6 +11,8 @@
 #define IMPLEM FINGER
 // IMPLEM_NAME : doesn't matter, only here for the prints.
 #define IMPLEM_NAME "finger"
+
+int is_test = 0, is_bench = 0;
 
 double eval_vector_cmds(Prog* prog, command** cmds,
 			int size, imc_ft_vector_t** vec) {
@@ -53,6 +56,7 @@ double eval_vector_cmds(Prog* prog, command** cmds,
             imc_ft_vector_size(vec[obj_in]);
       break;
     case DUMP:
+        if (is_test)
             imc_ft_vector_dump(vec[obj_in]);
       break;
     default: // mostly to remove warnings.
@@ -144,12 +148,37 @@ double execute_map (Prog* prog) {
 
 int main (int argc, char* argv[]) {
 
-  if (argc <= 1) {
-    fprintf(stderr, "Bench filename missing. Aborting.\n");
+  char* filename = NULL;
+
+  struct option long_options[] = {
+    { "file", required_argument, NULL, 'f' },
+    { "test", no_argument, NULL, 't'},
+    { "bench", no_argument, NULL, 'b'} };
+
+  char c;
+  int option_index = 0;
+  while ((c = getopt_long(argc, argv, "f:bt", long_options, &option_index)) != -1) {
+    switch (c) {
+    case 'f': 
+      filename = optarg;
+      break;
+    case 't': 
+      is_test = 1;
+      break;
+    case 'b':
+      is_bench = 1;
+      break;
+    default:
+      fprintf(stderr, "Unknown option %c. Ignoring it.\n", c);
+      exit (EXIT_FAILURE);
+    }
+  }
+  if ( filename == NULL) {
+    fprintf(stderr, "Filename missing. Aborting.\n");
     exit (EXIT_FAILURE);
   }
 
-  Prog* prog = read_file(argv[1]);
+  Prog* prog = read_file(filename);
 
   if (! ( prog->implem & IMPLEM )) {
     fprintf(stderr, "Benchmark '%s' doesn't support %s. Aborting\n",
@@ -157,15 +186,32 @@ int main (int argc, char* argv[]) {
     exit (EXIT_FAILURE);
   }
 
-  double time;
-  if (prog->struc == VECTOR) {
-    time = execute_vector(prog);
-  } else {
-    //time = execute_map(prog);
-      printf("Maps not implemented\n");
+  if ( ! is_test && ! is_bench ) {
+    fprintf(stderr, "Mode isn't specified. Assuming test.\n");
+    is_test = 1;
   }
 
-  printf("Time elapsed: %.3fms\n", time);
+  double time = 0;
+  if (is_test) {
+    if (prog->struc == VECTOR) {
+      time = execute_vector(prog);
+    } else {
+      //time = execute_map(prog);
+    }
+    printf("Time elapsed: %.3fms\n", time);
+  }
+  else if (is_bench) {
+    for (int i = 0; i < 100; i++) {
+      if (prog->struc == VECTOR) {
+	time += execute_vector(prog);
+      } else {
+	//time += execute_map(prog);
+      }
+    }
+    time /= 1000;
+    printf("Total time: %.6fs\n", time);
+    printf("Average time: %.6fs\n", time / 100);
+  }
 
   return 0;
   

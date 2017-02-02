@@ -63,7 +63,7 @@ Prog* read_file(char* name) {
   char output[20];
   int nb_var;
   char* cmd = malloc((151+strlen(name))*sizeof(char));
-    /*
+  
   sprintf(cmd, "perl -pi -e 's{ (\\w+) (\\s*=) }{ ($c{$1}//=$i++).$2 }gex; s{ ([a-z]\\w*) (\\s*[,)]) }{ ($c{$1}//=$i++).$2 }gex; END { print 0+(sort values %%c)[-1] }' %s", name);
   fp = popen(cmd, "r");
   
@@ -73,7 +73,7 @@ Prog* read_file(char* name) {
   } else {
     die("Convertion didn't return anything");
   }
-  pclose(fp);*/
+  pclose(fp);
 
   
   fp = fopen(name, "r");

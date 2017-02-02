@@ -1,6 +1,8 @@
 #ifndef FINGER_H
 #define FINGER_H
 
+//#define CHECK_SAFETY
+
 // Nodes
 typedef imc_data_t;
 //typedef imc_key_t;

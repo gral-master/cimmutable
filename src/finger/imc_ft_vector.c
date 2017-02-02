@@ -16,7 +16,9 @@ int imc_ft_vector_size(imc_ft_vector_t* vec) {
 imc_ft_vector_t* imc_ft_vector_update(imc_ft_vector_t* vec,
                                    int index,
                                    imc_data_t* data) {
+    #ifdef CHECK_SAFETY
     assert (index < vec->size);
+    #endif
     
     split s = ft_split(vec, index);
     
