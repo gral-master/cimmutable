@@ -5,6 +5,7 @@ HSD=hs_ref
 
 CC=gcc
 CFLAGS=-g --std=c11 -Wall -Wextra
+LDFLAGS=
 
 all: fingers
 
@@ -14,8 +15,8 @@ all: fingers
 fingers: fingers.o tools.o
 	$(CC) $(CFLAGS) fingers.o tools.o -o fingers
 
-hs-example: $(HSD)/haskell_impl.hs
-	ghc -XOverloadedLists -XTypeFamilies  $(HSD)/haskell_impl.hs && $(HSD)/haskell_impl
+bench: bench_main.o vector.o fingers.o tools.o parser.o
+	@$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -rf *.o a.out
