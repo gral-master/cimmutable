@@ -16,12 +16,13 @@
 #include "avl.h"
 
 #ifdef DEBUG
-#define assert(x) if (! (x) ) { \
-    fprintf(stderr, "Assert false, file %s line %d.\n", __FILE__, __LINE__); \
+#define assert(s, x) if (! (x) ) {					\
+    fprintf(stderr, "Assert '%s' false, file %s line %d.\n",		\
+	    s, __FILE__, __LINE__);					\
     exit(EXIT_FAILURE); \
   }
 #else
-#define assert(x)
+#define assert(s, x)
 #endif
 
 
@@ -318,11 +319,11 @@ avl_tree* avl_insert(avl_tree* tree, avl_data_t* data) {
   }
 
   // Checking the depth of the tree.
-  assert( new_tree->size <= 1 ||
+  assert( "depth", new_tree->size <= 1 ||
 	  depth_tree(new_tree) <= 1.44 * log(tree->size) / log(2) );
 
   // Checking that size if valid.
-  assert( new_tree->size == size_tree(new_tree) );
+  assert( "size", new_tree->size == size_tree(new_tree) );
 
   return new_tree;
 }
@@ -419,11 +420,11 @@ avl_tree* avl_remove(avl_tree* tree, avl_data_t* data, avl_data_t** ret_data) {
   }
 
   // Checking the depth of the tree.
-  assert( new_tree->size <= 1 ||
+  assert( "depth", new_tree->size <= 1 ||
 	  depth_tree(new_tree) <= 1.44 * log(tree->size) / log(2) );
 
   // Checking that size if valid.
-  assert( new_tree->size == size_tree(new_tree) );
+  assert( "size", new_tree->size == size_tree(new_tree) );
 
   return new_tree;
 }
