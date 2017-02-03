@@ -1265,7 +1265,7 @@ affix* ft_to_affix(ft* fgt, int preorsuf) {
         return NULL;
     
     affix* res = malloc(sizeof(affix));
-    
+    res->size = 0;
     if (preorsuf == 0) {
         // We make a prefix
         if (fgt->type == SINGLE_TYPE) {
