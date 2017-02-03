@@ -11,14 +11,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <math.h>
 
 #include "avl.h"
+
+#ifdef DEBUG
+#define assert(x) if (! (x) ) { \
+    fprintf(stderr, "Assert false, file %s line %d.\n", __FILE__, __LINE__); \
+    exit(EXIT_FAILURE); \
+  }
+#else
+#define assert(x)
+#endif
 
 
 #define MAX(x,y) x < y ? y : x
 
 void avl_update(avl_tree* tree, avl_data_t* data);
 void avl_insert_mutable(avl_tree* tree, void* data);
+int depth_tree (avl_tree* tree);
+int size_tree (avl_tree* tree);
   
 /*******************
  *   Constructors   *
@@ -305,6 +317,13 @@ avl_tree* avl_insert(avl_tree* tree, avl_data_t* data) {
     avl_update(new_tree, data);
   }
 
+  // Checking the depth of the tree.
+  assert( new_tree->size <= 1 ||
+	  depth_tree(new_tree) <= 1.44 * log(tree->size) / log(2) );
+
+  // Checking that size if valid.
+  assert( new_tree->size == size_tree(new_tree) );
+
   return new_tree;
 }
 
@@ -399,6 +418,13 @@ avl_tree* avl_remove(avl_tree* tree, avl_data_t* data, avl_data_t** ret_data) {
     new_tree->size = tree->size;
   }
 
+  // Checking the depth of the tree.
+  assert( new_tree->size <= 1 ||
+	  depth_tree(new_tree) <= 1.44 * log(tree->size) / log(2) );
+
+  // Checking that size if valid.
+  assert( new_tree->size == size_tree(new_tree) );
+
   return new_tree;
 }
 
@@ -454,8 +480,20 @@ int depth_node (avl_node* node) {
   }
 }
 
-int depth (avl_tree* tree) {
+int depth_tree (avl_tree* tree) {
   return depth_node(tree->root);
+}
+
+int size_node (avl_node* node) {
+  if (node) {
+    return 1 + size_node(node->sons[0]) + size_node(node->sons[1]);
+  } else {
+    return 0;
+  }
+}
+
+int size_tree (avl_tree* tree) {
+  return size_node(tree->root);
 }
 
 

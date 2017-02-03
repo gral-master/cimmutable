@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-W -Wall -std=gnu11 -pedantic -O3
-LDFLAGS=
+LDFLAGS= -lm
 EXEC= vector map bench
 SRC= $(wildcard *.c)
 OBJ= $(SRC:.c=.o)
