@@ -74,7 +74,7 @@ int imc_vector_avl_split(imc_vector_avl_t* vec_in,
         return 1;
     }
 
-    imc_avl_node_t* head_tree,* tail_tree;
+    imc_avl_node_t* head_tree = NULL,* tail_tree = NULL;
 
     if(imc_avl_split(vec_in->tree,index,&head_tree,&tail_tree, &int_comparator) == 1)
         return 1;
