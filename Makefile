@@ -1,17 +1,11 @@
-# Makefile placeholder for shared library
-# From : https://gist.github.com/xuhdev/1873316
-# TODO finish it
 
 LIBNAME = cimmutable.a
 
 UTILDIR = ./src
 OBJDIR = ./obj
-#AVLDIR = ./src/avl
-#FINGERDIR = ./src/finger
+AVLDIR = ./src/avl
+FINGERDIR = ./src/finger
 RRBDIR = ./src/rrb_vector
-BENCHDIR = ./bench
-
-B_FILE := ./bench/tests/202_int_vec.bench
 
 CC = gcc
 
@@ -22,17 +16,13 @@ SHELL = /bin/sh
 RM = rm -f
 ECHO = echo -e
 
+.PHONY: clean doc
+
 all: clean $(LIBNAME)
 
-$(LIBNAME): comp build_rrb
+$(LIBNAME): comp build_rrb build_avl build_finger
 	@ar -cvq $@ $(OBJDIR)/*.o
 	@$(ECHO) "\e[32mLibrary "$@" linked!\e[0m"
-
-bench: comp build_rrb build_bench
-	@$(CC) $(CFLAGS) $(OBJDIR)/*.o -lm
-
-exec: bench
-	./a.out -f $(B_FILE) -b
 
 comp:
 	@$(CC) $(CFLAGS) -c ./src/debug.c -o ./obj/debug.o
@@ -50,8 +40,12 @@ build_rrb:
 build_bench:
 	@cd $(BENCHDIR) && $(MAKE)
 
+doc:
+	@doxygen doxygen-config
+
 clean:
 	@$(RM) -v $(LIBNAME)
 	@$(RM) -v ./a.out
 	@find ./src -type f -iname '*.o' -delete
+	@find ./src -type f -iname 'log' -delete
 	@$(RM) -v $(OBJDIR)/*.o 

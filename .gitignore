@@ -44,6 +44,7 @@ docs/*
 *.dSYM/
 *.su
 
+# Misc
 dot/
-main.c
-test.c
+bench/
+src/finger/tests/
