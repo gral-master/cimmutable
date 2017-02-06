@@ -15,14 +15,14 @@ void imc_set_debug_settings(char* filename, int level) {
     dbgstream = fopen(filename, "w");
     if(dbgstream == NULL){
         fprintf(stderr, "Error opening log file %s : %s\n",
-               filename,
-               strerror(errno));
+                filename,
+                strerror(errno));
 
         dbgstream = fopen("./debug.log", "w");
         
         if(dbgstream == NULL){
             fprintf(stderr, "Error opening default log file: %s\n",
-                   strerror(errno));            
+                    strerror(errno));            
             // can't open log files, we choose stderr as output 
             dbgstream = stderr;
         }
@@ -34,8 +34,8 @@ void imc_set_debug_settings(char* filename, int level) {
 void imc_close_debug() {
     int err = fflush(dbgstream);
     if(err != 0) fprintf(stderr, "Error when flushing dgbstream : %s\n",
-                        strerror(errno));
+                         strerror(errno));
     err = fclose(dbgstream);
     if(err != 0) fprintf(stderr, "Error when closing dgbstream : %s\n",
-                        strerror(errno));    
+                         strerror(errno));    
 }
