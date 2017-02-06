@@ -388,7 +388,7 @@ imc_rrb_t* imc_rrb_pop(imc_rrb_t* vec, imc_data_t** data) {
     // is not in first position
     // 3) While copying the data, we remove the last value
     if(vec->length<=0) {
-        puts("vector is already empty !\n");
+        //puts("vector is already empty !\n");
         return vec;
     }
 
@@ -499,7 +499,11 @@ int imc_rrb_split(imc_rrb_t* vec_in, int index, imc_rrb_t** vec_out1,
 void imc_rrb_build_left(imc_rrb_t* vec_in, imc_rrb_t* left,
                         int index){
     int i, split_index = imc_rrb_subindex(vec_in, index);
-
+    
+    if(left == NULL){
+        left = imc_rrb_create();
+    }
+    
     left->floor = vec_in->floor;
     if(vec_in->floor == 0){
         for(i = 0; i <= split_index; i++){
@@ -545,6 +549,7 @@ void imc_rrb_build_right(imc_rrb_t* vec_in, imc_rrb_t* right,
                          int index){
     /* Looking where we need to split in the node */
     int i, j, split_index = imc_rrb_subindex(vec_in, index);
+    if(right == NULL) right = imc_rrb_create();
     right->floor = vec_in->floor;
     /* If vec_in is a leaf, and we try to split at the end, we don't need it */
     if(vec_in->floor == 0){
