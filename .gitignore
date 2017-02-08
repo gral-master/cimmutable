@@ -1,3 +1,12 @@
+
+#Mac
+*.DS_Store
+*.xcodeproj
+/src/finger/bin
+
+#Doc
+docs/*
+
 # Temp files
 *~
 
@@ -34,3 +43,8 @@
 # Debug files
 *.dSYM/
 *.su
+
+# Misc
+dot/
+bench/
+src/finger/tests/
