@@ -1,0 +1,63 @@
+# Test benchmark.
+
+[struct]
+vector
+
+[implem]
+AVL
+RRB
+FINGER
+
+[type]
+int
+
+[init]
+0 = create()
+
+[bench]
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+0 = push(0, 1)
+dump(0)
+0 = pop(0)
+0 = pop(0)
+0 = pop(0)
+#0 = pop(0)
+#0 = pop(0)
+#0 = pop(0)
+#0 = pop(0)
+#0 = pop(0)
+#0 = pop(0)
+dump(0)
+#dump(1)
