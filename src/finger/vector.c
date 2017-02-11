@@ -9,13 +9,13 @@ deep_t* finger_vector_create() {
 }
 
 int finger_vector_size(deep_t* vec) {
-    return 0;
+    return vector_size(vec);
 }
 
 deep_t* finger_vector_update(deep_t* vec,
                                 int index,
                           finger_data_t* data) {
-    return NULL;
+    return update_deep(vec, index, data);
 }
 
 finger_data_t* finger_vector_lookup(deep_t* vec,
@@ -30,7 +30,7 @@ deep_t* finger_vector_push(deep_t* vec,
 
 deep_t* finger_vector_pop(deep_t* vec,
                        finger_data_t** data) {
-    return NULL;
+    return pop(vec, data);
 }
 
 int finger_vector_split(deep_t* vec_in,

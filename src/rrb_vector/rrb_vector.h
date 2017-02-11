@@ -24,7 +24,7 @@ typedef struct _rrb {
  * @param  fmt The string which must be printed.
  * @return     None.
  */
-// #define debug_print(fmt)                       \
+// #define // debug_print(fmt)                       \
 //     do {                                       \
 //         if (DEBUG) {                           \
 //             fprintf(stderr, fmt);              \
