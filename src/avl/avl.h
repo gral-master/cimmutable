@@ -45,7 +45,7 @@ avl_tree* avl_remove(avl_tree* tree, avl_data_t* data, avl_data_t** ret_data);
 
 void avl_print(avl_tree* tree, char* (*data_to_string)(avl_data_t*));
 
-avl_tree* merge(avl_tree* tree1, avl_tree* tree2);
+avl_tree* avl_merge(avl_tree* tree1, avl_tree* tree2);
 
 
 #endif

@@ -1,5 +1,0 @@
-
-Finger trees
-============
-
-TODO

@@ -6,7 +6,7 @@
 #include "tools.h"
 #include "fingers.h"
 #include "vector.h"
-#include "parser.h"
+#include "../parser/parser.h"
 
 // IMPLEM : AVL or RRB or FINGER
 #define IMPLEM AVL
@@ -20,7 +20,7 @@ int* int_ptr(int val) {
     int* res = malloc(sizeof res);
     *res = val;
     return res;
-} 
+}
 
 double eval_vector_cmds(Prog* prog, command** cmds,
                         int size, deep_t** vec) {
@@ -97,10 +97,10 @@ int main (int argc, char* argv[]) {
     int option_index = 0;
     while ((c = getopt_long(argc, argv, "f:bt", long_options, &option_index)) != -1) {
         switch (c) {
-        case 'f': 
+        case 'f':
             filename = optarg;
             break;
-        case 't': 
+        case 't':
             is_test = 1;
             break;
         case 'b':
@@ -133,14 +133,14 @@ int main (int argc, char* argv[]) {
     if (is_test) {
         if (prog->struc == VECTOR) {
             time = execute_vector(prog);
-        } 
+        }
         printf("Time elapsed: %.3fms\n", time);
     }
     else if (is_bench) {
         for (int i = 0; i < 100; i++) {
             if (prog->struc == VECTOR) {
                 time += execute_vector(prog);
-            } 
+            }
         }
         time /= 1000;
         printf("Total time: %.6fs\n", time);
@@ -148,5 +148,5 @@ int main (int argc, char* argv[]) {
     }
 
     return 0;
-  
+
 }

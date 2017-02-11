@@ -1,5 +1,0 @@
-
-Immutable AVL trees
-===================
-
-TODO

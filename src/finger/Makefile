@@ -1,22 +1,21 @@
-.PHONY: all clean
+CC = gcc
+CFLAGS = -g -std=gnu11 -Wall -Wextra
+LDFLAGS =
+EXEC = $(addprefix ../../exe/, fingers finger_bench)
+SRC = $(wildcard *.c)
+OBJ = $(addprefix ../../bin/, $(SRC:.c=.o))
 
-INCLUDES=tools.h fingers.h
-HSD=hs_ref
+all: $(OBJ)
 
-CC=gcc
-CFLAGS=-g --std=c11 -Wall -Wextra
-LDFLAGS=
+executable: $(EXEC)
 
-all: fingers
+../../bin/%.o: %.c
+	@$(CC) -o $@ -c $< $(CFLAGS)
 
-%.o: %.c %.h
-	$(CC) $(CFLAGS) -c $<
+../../exe/fingers: $(addprefix ../../bin/, finger_test.o fingers.o tools.o)
+	$(CC) $(CFLAGS) $^ -o $@
 
-test: finger_test.o fingers.o tools.o
-	$(CC) $(CFLAGS) finger_test.o fingers.o tools.o -o fingers
-
-bench: bench_main.o vector.o fingers.o tools.o parser.o
+../../exe/finger_bench: $(addprefix ../../bin/, bench_main.o vector.o fingers.o tools.o parser.o avl_map.o avl.o avl_vector.o)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-clean:
-	rm -rf *.o a.out
+.PHONY: all clean
