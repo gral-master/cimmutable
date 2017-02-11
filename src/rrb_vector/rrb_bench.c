@@ -5,7 +5,7 @@
 
 #include "rrb_vector.h"
 #include "rrb_dumper.h"
-#include "parser.h"
+#include "../parser/parser.h"
 
 // IMPLEM : AVL or RRB or FINGER
 #define IMPLEM AVL

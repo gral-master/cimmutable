@@ -5,7 +5,7 @@
 
 #include "avl_map.h"
 #include "avl_vector.h"
-#include "parser.h"
+#include "../parser/parser.h"
 
 // IMPLEM : AVL or RRB or FINGER
 #define IMPLEM AVL
@@ -20,7 +20,7 @@ double eval_vector_cmds(Prog* prog, command** cmds,
 			int size, avl_vector_t** vec) {
   struct timeval t1, t2;
   gettimeofday(&t1, NULL);
-  
+
   for (int i = 0; i < size; i++) {
     command* cmd = cmds[i];
     int obj_in   = cmd->obj_in;
@@ -90,7 +90,7 @@ double eval_map_cmds(Prog* prog, command** cmds,
 		     int size, avl_map_t** map) {
   struct timeval t1, t2;
   gettimeofday(&t1, NULL);
-  
+
   for (int i = 0; i < size; i++) {
     command* cmd = cmds[i];
     int obj_in   = cmd->obj_in;
@@ -166,10 +166,10 @@ int main (int argc, char* argv[]) {
   int option_index = 0;
   while ((c = getopt_long(argc, argv, "f:bt", long_options, &option_index)) != -1) {
     switch (c) {
-    case 'f': 
+    case 'f':
       filename = optarg;
       break;
-    case 't': 
+    case 't':
       is_test = 1;
       break;
     case 'b':
@@ -221,5 +221,5 @@ int main (int argc, char* argv[]) {
   }
 
   return 0;
-  
+
 }

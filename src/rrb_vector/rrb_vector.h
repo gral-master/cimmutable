@@ -24,12 +24,12 @@ typedef struct _rrb {
  * @param  fmt The string which must be printed.
  * @return     None.
  */
-#define debug_print(fmt)                       \
-    do {                                       \
-        if (DEBUG) {                           \
-            fprintf(stderr, fmt);              \
-        }                                      \
-    } while (0)
+// #define debug_print(fmt)                       \
+//     do {                                       \
+//         if (DEBUG) {                           \
+//             fprintf(stderr, fmt);              \
+//         }                                      \
+//     } while (0)
 
 /**
  * Prints the string provided if debug mode enabled. Handle multiple args.

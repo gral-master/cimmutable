@@ -32,7 +32,7 @@ void avl_update(avl_tree* tree, avl_data_t* data);
 void avl_insert_mutable(avl_tree* tree, void* data);
 int depth_tree (avl_tree* tree);
 int size_tree (avl_tree* tree);
-  
+
 /*******************
  *   Constructors   *
  *******************/
@@ -129,7 +129,7 @@ avl_data_t* search_r(avl_node* root, avl_data_t* data,
 		 int (*compare)(avl_data_t*, avl_data_t*)) {
   if (root == NULL) {
     return NULL;
-  } else { 
+  } else {
     if ((*compare)(data, root->data) == 0) {
       return root->data;
     } else {
@@ -262,18 +262,18 @@ avl_node* insert_node(avl_node* root, avl_data_t* data,
       dir = comp < 0;
       if(p->sons[dir]) p->sons[dir]->ref_count--; // undo the increment done by avl_copy_node.
       q = p->sons[dir] = avl_copy_node(p->sons[dir]);
-	
+
       if (q == NULL)
 	break;
-	
+
       if (q->balance != 0) {
 	t = p;
 	s = q;
       }
     }
     *node_inserted = 1; // the node will be created.
-    
-    
+
+
     /* Insert the new node */
     p->sons[dir] = q = make_node(data);
 
@@ -364,7 +364,7 @@ avl_node* remove_node(avl_node* root, avl_data_t* data, int* done,
     if ((*compare)(root->data, data) == 0) {
 
       if (*ret_data == NULL) *ret_data = root->data;
-      
+
       /* Unsons and fix parent */
       if (root->sons[0] == NULL || root->sons[1] == NULL) {
 	dir = root->sons[0] == NULL;
@@ -460,12 +460,12 @@ void merge_r(avl_tree* ret, avl_node* orig) {
   }
 }
 
-avl_tree* merge(avl_tree* tree1, avl_tree* tree2) {
+avl_tree* avl_merge(avl_tree* tree1, avl_tree* tree2) {
   avl_tree* new = avl_make_empty_tree(tree1->compare);
 
   merge_r(new, tree1->root);
   merge_r(new, tree2->root);
-  
+
   return new;
 }
 
@@ -540,10 +540,10 @@ avl_node* insert_node_mutable( avl_node* root, void* data,
       avl_node *s, *t;     /* Place to rebalance and parent */
       avl_node *p, *q;     /* Iterator and save pointer */
       int dir;
-      
+
       t = head;
       t->sons[1] = root;
-      
+
       /* Search down the tree, saving rebalance points */
       for (s = p = t->sons[1];; p = q) {
 	int comp = (*compare)(p->data, data);
@@ -552,7 +552,7 @@ avl_node* insert_node_mutable( avl_node* root, void* data,
 	}
 	dir = comp < 0;
 	q = p->sons[dir];
-          
+
 	if (q == NULL)
 	  break;
 
@@ -564,7 +564,7 @@ avl_node* insert_node_mutable( avl_node* root, void* data,
 
       /* Insert the new node */
       p->sons[dir] = q = make_node(data);
-      
+
       /* Update balance factors */
       for (p = s; p != q; p = p->sons[dir]) {
 	dir = (*compare)(p->data, data) < 0;
