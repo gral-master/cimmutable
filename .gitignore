@@ -39,4 +39,8 @@
 *.txt
 *.dot
 *.svg
-rrb
+
+# Folders used after compiling.
+bin/
+exe/
+lib/

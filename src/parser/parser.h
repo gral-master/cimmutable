@@ -6,7 +6,7 @@ typedef struct _command command;
 Prog* read_file(char* name);
 void debug_print (Prog* prog);
 
-  
+
 typedef enum {
   VECTOR = 1,
   MAP = 2
@@ -28,7 +28,7 @@ typedef enum {
 } cmd_type;
 
 /* note: some fields can be empty */
-/* examples: 
+/* examples:
   - obj_out = create()
   - obj_out = update(obj_in, index, data)
   - obj_out = push(obj_in, data)
@@ -47,7 +47,7 @@ struct _command {
   int obj_in;
   int obj_out;
   int obj_aux;
-  int index; 
+  int index;
   union { /* type should be deduced from prog->data_type */
     int as_int;
     char* as_string;

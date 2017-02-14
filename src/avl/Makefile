@@ -1,28 +1,24 @@
-CC=gcc
-CFLAGS=-W -Wall -std=gnu11 -pedantic -O3
-LDFLAGS= -lm
-EXEC= vector map bench
-SRC= $(wildcard *.c)
-OBJ= $(SRC:.c=.o)
+CC = gcc
+CFLAGS = -W -Wall -std=gnu11 -pedantic -O3
+LDFLAGS = -lm
+EXEC = $(addprefix ../../exe/, avl_vector avl_map avl_bench)
+SRC = $(wildcard *.c)
+OBJ = $(addprefix ../../bin/, $(SRC:.c=.o))
 
-all: $(EXEC)
+all: $(OBJ)
 
-vector: vector_main.o avl.o avl_vector.o
+executable: $(EXEC)
+
+../../exe/avl_vector: $(addprefix ../../bin/, vector_main.o avl.o avl_vector.o)
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
-map: map_main.o avl.o avl_map.o
+../../exe/avl_map: $(addprefix ../../bin/, map_main.o avl.o avl_map.o)
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
-bench: bench_main.o avl_map.o avl_vector.o avl.o parser.o
+../../exe/avl_bench: $(addprefix ../../bin/, bench_main.o avl_map.o avl_vector.o avl.o parser.o)
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
-%.o: %.c
+../../bin/%.o: %.c
 	@$(CC) -o $@ -c $< $(CFLAGS)
 
-.PHONY: clean mrproper
-
-clean:
-	@rm -rf *.o
-
-mrproper: clean
-	@rm -rf $(EXEC)
+.PHONY: all executable
